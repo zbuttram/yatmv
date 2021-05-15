@@ -17,8 +17,6 @@ export default function TwitchStream({ channel, primary = false }) {
         width: "100%",
         height: "100%",
       });
-    } else {
-      player.current.setChannel(channel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
