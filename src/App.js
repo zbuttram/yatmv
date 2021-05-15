@@ -6,7 +6,7 @@ import TwitchStream from "./TwitchStream";
 const pageURL = new URL(window.location.href);
 const urlStreams = pageURL.searchParams.get("streams")
   ? pageURL.searchParams.get("streams").split(",")
-  : ["Kate"];
+  : [];
 const urlPrimary = pageURL.searchParams.get("primary");
 
 function App() {
@@ -19,8 +19,6 @@ function App() {
 
   const [newStream, setNewStream] = useState("");
 
-  const [primaryPlayerSettings, setPrimaryPlayerSettings] = useState({});
-
   function addNewStream(e) {
     e.preventDefault();
     setStreams((s) => [...s, newStream]);
@@ -29,7 +27,7 @@ function App() {
   }
 
   function removeStream(streamIndex) {
-    setStreams((s) => s.filter((_, i) => i === streamIndex));
+    setStreams((s) => s.filter((_, i) => i !== streamIndex));
   }
 
   useEffect(() => {
@@ -39,17 +37,19 @@ function App() {
     primaryStream && params.set("primary", primaryStream);
     url.search = params.toString();
     window.history.replaceState({}, window.document.title, url);
-  }, [streams, primaryStreamIndex]);
+  }, [streams, primaryStream]);
 
   return (
     <>
       <main className="m-2">
         <div className="flex mb-4">
           <div className="flex-grow">
-            <TwitchStream channel={primaryStream} primary={true} />
+            {primaryStream && (
+              <TwitchStream channel={primaryStream} primary={true} />
+            )}
           </div>
           <div className="w-1/5">
-            <TwitchChat channel={primaryStream} />
+            {primaryStream && <TwitchChat channel={primaryStream} />}
           </div>
         </div>
         <div className="h-60 mx-auto flex">
@@ -73,10 +73,11 @@ function App() {
               </div>
             </div>
           ))}
-          <div className="my-auto w-48">
+          <div className="mt-4 mb-auto w-48">
             <form onSubmit={addNewStream} className="flex">
               <input
                 type="text"
+                placeholder="Channel"
                 className="mr-1 bg-black border w-4/5"
                 value={newStream}
                 onChange={(e) => setNewStream(e.target.value)}

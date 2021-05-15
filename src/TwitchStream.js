@@ -20,6 +20,13 @@ export default function TwitchStream({ channel, primary = false }) {
     } else {
       player.current.setChannel(channel);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (player.current) {
+      player.current.setChannel(channel);
+    }
   }, [channel]);
 
   return (

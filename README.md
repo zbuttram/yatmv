@@ -1,2 +1,1 @@
-# YATMV
-## Yet Another Twitch Multi-View
+# YATMV - Yet Another Twitch Multi-View
