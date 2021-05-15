@@ -5,6 +5,7 @@ import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
 import events from "./events";
+import classNames from "classnames";
 
 const pageURL = new URL(window.location.href);
 const urlStreams = pageURL.searchParams.get("streams")
@@ -14,13 +15,16 @@ const urlPrimary = pageURL.searchParams.get("primary");
 
 function App() {
   const [streams, setStreams] = useState(urlStreams);
-  const [primaryStream, setPrimaryStream] = useState(urlPrimary);
+  const [primaryStream, setPrimaryStream] = useState(urlPrimary || streams[0]);
 
   const [newStream, setNewStream] = useState("");
 
   function addNewStream(e) {
     e.preventDefault();
     if (newStream && newStream !== "") {
+      if (streams.length < 1) {
+        setPrimaryStream(newStream);
+      }
       setStreams((s) => [...s, newStream]);
       setNewStream("");
     }
@@ -57,12 +61,12 @@ function App() {
   return (
     <>
       <main className="pb-3 h-screen">
-        {primaryStream && (
-          <div className="flex pb-4 h-4/5">
-            <div id="primary-stream-container" className="flex-grow h-full" />
-            <TwitchChat channel={primaryStream} className="w-1/5" />
-          </div>
-        )}
+        <div
+          className={classNames("flex pb-4 h-4/5", !primaryStream && "hidden")}
+        >
+          <div id="primary-stream-container" className="flex-grow h-full" />
+          <TwitchChat channel={primaryStream} className="w-1/5" />
+        </div>
         <div className="h-1/5 mx-auto flex">
           {streams.map((s, i) => {
             const isPrimary = s === primaryStream;
