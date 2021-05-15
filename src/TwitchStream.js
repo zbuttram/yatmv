@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-export default function TwitchStream({ channel, primary = false }) {
+export default function TwitchStream({ channel, primary = false, className }) {
   const divId = primary
     ? "twitch-stream-embed-primary"
     : `twitch-stream-embed-${channel}`;
@@ -27,10 +27,5 @@ export default function TwitchStream({ channel, primary = false }) {
     }
   }, [channel]);
 
-  return (
-    <div
-      id={divId}
-      style={{ height: primary ? "calc(80vh - 0.5rem)" : undefined }}
-    ></div>
-  );
+  return <div id={divId} className={className}></div>;
 }
