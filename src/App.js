@@ -12,11 +12,7 @@ const urlPrimary = pageURL.searchParams.get("primary");
 
 function App() {
   const [streams, setStreams] = useState(urlStreams);
-  const [primaryStreamIndex, setPrimaryStreamIndex] = useState(
-    urlPrimary ? urlStreams.findIndex((s) => s === urlPrimary) : 0
-  );
-
-  const primaryStream = streams[primaryStreamIndex];
+  const [primaryStream, setPrimaryStream] = useState(urlPrimary);
 
   const [newStream, setNewStream] = useState("");
 
@@ -28,14 +24,21 @@ function App() {
   }
 
   function removeStream(streamIndex) {
+    if (streams.indexOf(primaryStream) === streamIndex) {
+      setPrimaryStream(streams[streamIndex - 1]);
+    }
     setStreams((s) => s.filter((_, i) => i !== streamIndex));
   }
 
   useEffect(() => {
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
-    params.set("streams", streams);
-    primaryStream && params.set("primary", primaryStream);
+
+    streams ? params.set("streams", streams) : params.delete("streams");
+    primaryStream
+      ? params.set("primary", primaryStream)
+      : params.delete("primary");
+
     url.search = params.toString();
     window.history.replaceState({}, window.document.title, url);
   }, [streams, primaryStream]);
@@ -56,7 +59,7 @@ function App() {
         )}
         <div className="h-1/4 mx-auto flex">
           {streams.map((s, i) => {
-            const isPrimary = i === primaryStreamIndex;
+            const isPrimary = s === primaryStream;
             return (
               <div key={s} className="w-48 h-full mx-4 flex flex-col">
                 {isPrimary ? (
@@ -73,7 +76,7 @@ function App() {
                       "px-1 mx-1 border w-full",
                       isPrimary ? "bg-gray-800" : "bg-green-400"
                     )}
-                    onClick={() => setPrimaryStreamIndex(i)}
+                    onClick={() => setPrimaryStream(s)}
                     disabled={isPrimary}
                   >
                     Primary
