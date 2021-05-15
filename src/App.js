@@ -67,11 +67,11 @@ function App() {
                   primary={isPrimary}
                   primaryContainerRect={primaryContainerRect}
                 />
-                {isPrimary && (
+                {/* {isPrimary && (
                   <div className="flex-grow flex">
                     <span className="m-auto">Watching</span>
                   </div>
-                )}
+                )} */}
                 <div className="mx-1">{s}</div>
                 <div className="flex">
                   {!isPrimary && (
