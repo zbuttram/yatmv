@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import classNames from "classnames";
+
 import useBounding from "./useBounding";
 
 export default function TwitchStream({
   channel,
   primary = false,
   primaryContainerRect,
-  className,
 }) {
   const divId = `twitch-stream-embed-${channel}`;
 
@@ -32,10 +32,15 @@ export default function TwitchStream({
     }
   }, [channel]);
 
+  useEffect(() => {
+    if (!player.current) return;
+    player.current.setMuted(primary ? false : true);
+  }, [primary]);
+
   const posDivId = divId + "-pos";
   const channelRect = useBounding(posDivId);
 
-  console.log({ channelRect, primaryContainerRect });
+  // console.log({ channelRect, primaryContainerRect });
 
   const { top, left, width, height } = primary
     ? primaryContainerRect
@@ -49,13 +54,11 @@ export default function TwitchStream({
   return (
     <>
       <div id={posDivId} className="flex-grow flex">
-        <span className="m-auto">Watching</span>
+        <span className={classNames("m-auto", primary ? "" : "hidden")}>
+          Watching
+        </span>
       </div>
-      <div
-        id={divId}
-        style={style}
-        className={classNames(className, "transition-all")}
-      ></div>
+      <div id={divId} style={style} className={"transition-all"}></div>
     </>
   );
 }
