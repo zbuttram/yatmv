@@ -1,11 +1,15 @@
 /* global Twitch */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import classNames from "classnames";
 
-export default function TwitchStream({ channel, primary = false, className }) {
-  const divId = primary
-    ? "twitch-stream-embed-primary"
-    : `twitch-stream-embed-${channel}`;
+export default function TwitchStream({
+  channel,
+  primary = false,
+  primaryContainerRect,
+  className,
+}) {
+  const divId = `twitch-stream-embed-${channel}`;
 
   const player = useRef();
 
@@ -27,5 +31,19 @@ export default function TwitchStream({ channel, primary = false, className }) {
     }
   }, [channel]);
 
-  return <div id={divId} className={className}></div>;
+  const { top, left, width, height } = primaryContainerRect;
+
+  return (
+    <div
+      id={divId}
+      style={
+        primary ? { top, left, width, height, position: "absolute" } : undefined
+      }
+      className={classNames(
+        className,
+        "transition-all",
+        primary ? "" : "flex-grow"
+      )}
+    ></div>
+  );
 }

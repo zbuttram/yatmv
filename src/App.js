@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
+import useBounding from "./useBounding";
 
 const pageURL = new URL(window.location.href);
 const urlStreams = pageURL.searchParams.get("streams")
@@ -44,31 +45,32 @@ function App() {
     window.history.replaceState({}, window.document.title, url);
   }, [streams, primaryStream]);
 
+  const primaryContainerRect = useBounding("primary-stream-container");
+
   return (
     <>
       <main className="px-2 pt-2 pb-3 h-screen">
         {primaryStream && (
-          <div className="flex pb-4 h-3/4">
-            <TwitchStream
-              channel={primaryStream}
-              primary={true}
-              className="flex-grow h-full"
-            />
-
+          <div className="flex pb-4 h-4/5">
+            <div id="primary-stream-container" className="flex-grow h-full" />
             <TwitchChat channel={primaryStream} className="w-1/5" />
           </div>
         )}
-        <div className="h-1/4 mx-auto flex">
+        <div className="h-1/5 mx-auto flex">
           {streams.map((s, i) => {
             const isPrimary = s === primaryStream;
             return (
               <div key={s} className="w-48 h-full mx-4 flex flex-col">
-                {isPrimary ? (
+                <TwitchStream
+                  channel={s}
+                  className=""
+                  primary={isPrimary}
+                  primaryContainerRect={primaryContainerRect}
+                />
+                {isPrimary && (
                   <div className="flex-grow flex">
-                    <span className="m-auto">WATCHING</span>
+                    <span className="m-auto">Watching</span>
                   </div>
-                ) : (
-                  <TwitchStream channel={s} className="flex-grow" />
                 )}
                 <div className="mx-1">{s}</div>
                 <div className="flex">
