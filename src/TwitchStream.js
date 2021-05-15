@@ -47,7 +47,7 @@ export default function TwitchStream({
     : channelRect;
 
   let style;
-  if (top && left && width && height) {
+  if (top !== undefined && left !== undefined && width && height) {
     style = { top, left, width, height, position: "absolute" };
   }
 
@@ -58,7 +58,7 @@ export default function TwitchStream({
           Watching
         </span>
       </div>
-      <div id={divId} style={style} className={"transition-all"}></div>
+      <div id={divId} style={style} className={"transition-all"} />
     </>
   );
 }

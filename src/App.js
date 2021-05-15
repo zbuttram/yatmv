@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import produce from "immer";
 
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
@@ -25,11 +26,15 @@ function App() {
     return false;
   }
 
-  function removeStream(streamIndex) {
-    if (streams.indexOf(primaryStream) === streamIndex) {
-      setPrimaryStream(streams[streamIndex - 1]);
+  function removeStream(index) {
+    if (streams.indexOf(primaryStream) === index) {
+      setPrimaryStream(streams[index - 1]);
     }
-    setStreams((s) => s.filter((_, i) => i !== streamIndex));
+    setStreams(
+      produce((draft) => {
+        draft.splice(index, 1);
+      })
+    );
   }
 
   useEffect(() => {
@@ -49,7 +54,7 @@ function App() {
 
   return (
     <>
-      <main className="px-2 pt-2 pb-3 h-screen">
+      <main className="pb-3 h-screen">
         {primaryStream && (
           <div className="flex pb-4 h-4/5">
             <div id="primary-stream-container" className="flex-grow h-full" />
