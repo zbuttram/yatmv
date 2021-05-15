@@ -4,6 +4,7 @@ import produce from "immer";
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
+import events from "./events";
 
 const pageURL = new URL(window.location.href);
 const urlStreams = pageURL.searchParams.get("streams")
@@ -35,6 +36,7 @@ function App() {
         draft.splice(index, 1);
       })
     );
+    events.emit("removeStream");
   }
 
   useEffect(() => {
