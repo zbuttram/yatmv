@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import classNames from "classnames";
 
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
