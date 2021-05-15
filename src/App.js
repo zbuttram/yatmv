@@ -18,8 +18,10 @@ function App() {
 
   function addNewStream(e) {
     e.preventDefault();
-    setStreams((s) => [...s, newStream]);
-    setNewStream("");
+    if (newStream && newStream !== "") {
+      setStreams((s) => [...s, newStream]);
+      setNewStream("");
+    }
     return false;
   }
 
@@ -45,7 +47,7 @@ function App() {
 
   return (
     <>
-      <main className="p-2 h-screen">
+      <main className="px-2 pt-2 pb-3 h-screen">
         {primaryStream && (
           <div className="flex pb-4 h-3/4">
             <TwitchStream
@@ -71,16 +73,14 @@ function App() {
                 )}
                 <div className="mx-1">{s}</div>
                 <div className="flex">
-                  <button
-                    className={classNames(
-                      "px-1 mx-1 border w-full",
-                      isPrimary ? "bg-gray-800" : "bg-green-400"
-                    )}
-                    onClick={() => setPrimaryStream(s)}
-                    disabled={isPrimary}
-                  >
-                    Primary
-                  </button>
+                  {!isPrimary && (
+                    <button
+                      className={"px-1 mx-1 border w-full bg-green-400"}
+                      onClick={() => setPrimaryStream(s)}
+                    >
+                      Watch
+                    </button>
+                  )}
                   <button
                     className="px-1 mx-1 border w-full"
                     onClick={() => removeStream(i)}
