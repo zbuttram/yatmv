@@ -61,7 +61,7 @@ export default function AddStream({ addNewStream }) {
         <input
           type="text"
           placeholder="Channel"
-          className="flex-grow bg-black border"
+          className="flex-grow bg-black border border-gray-400 focus:outline-none focus:border-white"
           onKeyDown={(e) => {
             if (e.key === "Tab" && newStream) {
               e.preventDefault();

@@ -111,6 +111,7 @@ export default function App() {
           <div id="primary-stream-container" className="flex-grow h-full" />
           {loadedChats.map((s) => (
             <TwitchChat
+              key={s}
               channel={s}
               className={classNames(
                 showChat && s.toLowerCase() === primaryStream.toLowerCase()
