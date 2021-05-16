@@ -78,7 +78,7 @@ export default function AddStream({ addNewStream }) {
         />
         {newStream &&
           (searching ? (
-            <div>Loading...</div>
+            <div>Searching...</div>
           ) : (
             searchResults.map((suggestion) => (
               <div
@@ -89,6 +89,7 @@ export default function AddStream({ addNewStream }) {
                 )}
                 onClick={() => {
                   addNewStream(suggestion);
+                  setNewStream("");
                 }}
               >
                 {suggestion}

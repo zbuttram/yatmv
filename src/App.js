@@ -51,7 +51,7 @@ export default function App() {
   const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
 
   function addNewStream(stream) {
-    if (streams.includes(stream)) {
+    if (streams.map((s) => s.toLowerCase()).includes(stream.toLowerCase())) {
       setPrimaryStream(stream);
     } else {
       if (streams.length < 1) {
@@ -94,6 +94,14 @@ export default function App() {
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
+  const [loadedChats, setLoadedChats] = useState([...(primaryStream || [])]);
+
+  useEffect(() => {
+    if (!loadedChats.includes(primaryStream)) {
+      setLoadedChats([primaryStream, ...loadedChats]);
+    }
+  }, [primaryStream, loadedChats, setLoadedChats]);
+
   return (
     <>
       <main className="pb-3 h-screen">
@@ -101,14 +109,21 @@ export default function App() {
           className={classNames("flex pb-4 h-4/5", !primaryStream && "hidden")}
         >
           <div id="primary-stream-container" className="flex-grow h-full" />
-          <TwitchChat
-            channel={primaryStream}
-            className={classNames(showChat ? "w-1/5" : "w-0", "transition-all")}
-          />
+          {loadedChats.map((s) => (
+            <TwitchChat
+              channel={s}
+              className={classNames(
+                showChat && s.toLowerCase() === primaryStream.toLowerCase()
+                  ? "w-1/5"
+                  : "w-0",
+                "transition-all"
+              )}
+            />
+          ))}
         </div>
         <div className="h-1/5 mx-auto flex">
           {streams.map((s, i) => {
-            const isPrimary = s === primaryStream;
+            const isPrimary = s.toLowerCase() === primaryStream.toLowerCase();
             return (
               <div key={s} className="w-48 h-full mx-4 flex flex-col">
                 <TwitchStream
