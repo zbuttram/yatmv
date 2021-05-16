@@ -168,47 +168,47 @@ function App() {
           })}
           <div className="my-auto w-48 flex flex-col">
             <form onSubmit={submitNewStream} className="flex">
-              <input
-                type="text"
-                placeholder="Channel"
-                className="w-4/5 bg-black border"
-                onKeyDown={(e) => {
-                  if (e.key === "Tab" && newStream) {
-                    e.preventDefault();
-                  }
-                }}
-                onKeyUp={(e) => {
-                  if (e.key === "Tab" && searchResults[0]) {
-                    e.preventDefault();
-                    setNewStream(searchResults[0]);
-                  }
-                }}
-                value={newStream}
-                onChange={(e) => setNewStream(e.target.value)}
-              />
+              <div className="flex flex-col w-4/5 overflow-y-auto">
+                <input
+                  type="text"
+                  placeholder="Channel"
+                  className="flex-grow bg-black border"
+                  onKeyDown={(e) => {
+                    if (e.key === "Tab" && newStream) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onKeyUp={(e) => {
+                    if (e.key === "Tab" && searchResults[0]) {
+                      e.preventDefault();
+                      setNewStream(searchResults[0]);
+                    }
+                  }}
+                  value={newStream}
+                  onChange={(e) => setNewStream(e.target.value)}
+                />
+                {searching ? (
+                  <div>Loading...</div>
+                ) : (
+                  searchResults.map((suggestion) => (
+                    <div
+                      key={suggestion}
+                      className="cursor-pointer hover:bg-gray-400"
+                      onClick={() => {
+                        addNewStream(suggestion);
+                      }}
+                    >
+                      {suggestion}
+                    </div>
+                  ))
+                )}
+              </div>
               <input
                 type="submit"
                 value="Add"
-                className="w-1/5 ml-1 px-1 bg-black border"
+                className="w-1/5 ml-1 mb-auto px-1 bg-black border"
               />
             </form>
-            <div className="flex flex-col w-4/5 overflow-y-auto">
-              {searching ? (
-                <div>Loading...</div>
-              ) : (
-                searchResults.map((suggestion) => (
-                  <div
-                    key={suggestion}
-                    className="cursor-pointer hover:bg-gray-400"
-                    onClick={() => {
-                      addNewStream(suggestion);
-                    }}
-                  >
-                    {suggestion}
-                  </div>
-                ))
-              )}
-            </div>
           </div>
           <div className="flex flex-col ml-auto">
             {!hasTwitchAuth && (
