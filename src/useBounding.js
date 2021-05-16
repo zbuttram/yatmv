@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 
-import events from "./events";
+import events, { GLOBAL_RECALC_BOUNDING } from "./events";
 
 export default function useBounding(id) {
   const [rect, _setRect] = useState({});
@@ -17,7 +17,7 @@ export default function useBounding(id) {
       setRect();
     });
     ro.observe(document.getElementById(id));
-    events.on("removeStream", () => {
+    events.on(GLOBAL_RECALC_BOUNDING, () => {
       setTimeout(setRect);
     });
   }, []);

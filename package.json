@@ -49,6 +49,7 @@
   "devDependencies": {
     "autoprefixer": "9",
     "postcss": "7",
+    "prettier": "^2.3.0",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat"
   }
 }

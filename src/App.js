@@ -1,18 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
-import { debounce } from "lodash";
 
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
-import events from "./events";
+import events, { GLOBAL_RECALC_BOUNDING } from "./events";
 import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
-import { searchChannels } from "./twitch";
+import AddStream from "./AddStream";
+import { checkTwitchAuth } from "./twitch";
 
 const STREAM_STATE_COOKIE = "yatmv-state";
 
@@ -41,33 +41,24 @@ const TWITCH_SCOPES = [];
 const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbcdy1eg1p9n122ptcloxvg7wm&redirect_uri=${encodeURIComponent(
   window.location.origin
 )}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
-const hasTwitchAuth = !!Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
 
-function App() {
+export default function App() {
   const [showChat, setShowChat] = useState(true);
   const [streams, setStreams] = useState(reloadFromAuthStreams || urlStreams);
   const [primaryStream, setPrimaryStream] = useState(
     reloadFromAuthPrimary || urlPrimary || streams[0]
   );
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [newStream, setNewStream] = useState("");
+  const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
 
-  function addNewStream(stream = newStream) {
-    if (stream && stream !== "") {
+  function addNewStream(stream) {
+    if (streams.includes(stream)) {
+      setPrimaryStream(stream);
+    } else {
       if (streams.length < 1) {
         setPrimaryStream(stream);
       }
       setStreams((s) => [...s, stream]);
-      setNewStream("");
-      setSearchResults([]);
     }
-  }
-
-  function submitNewStream(e) {
-    e.preventDefault();
-    addNewStream();
-    return false;
   }
 
   function removeStream(index) {
@@ -79,7 +70,7 @@ function App() {
         draft.splice(index, 1);
       })
     );
-    events.emit("removeStream");
+    events.emit(GLOBAL_RECALC_BOUNDING);
   }
 
   useEffect(() => {
@@ -100,27 +91,6 @@ function App() {
       );
     });
   }, [streams, primaryStream]);
-
-  const loadSuggestions = useCallback(
-    debounce(async function loadSuggestions(newStream) {
-      const result = await searchChannels(newStream);
-      setSearchResults(result.data.slice(0, 5).map((res) => res.display_name));
-      setSearching(false);
-    }, 500),
-    [setSearchResults]
-  );
-
-  useEffect(() => {
-    if (!hasTwitchAuth) {
-      return;
-    }
-    if (!newStream) {
-      setSearchResults([]);
-      return;
-    }
-    setSearching(true);
-    loadSuggestions(newStream);
-  }, [newStream, loadSuggestions]);
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
@@ -167,48 +137,7 @@ function App() {
             );
           })}
           <div className="my-auto w-48 flex flex-col">
-            <form onSubmit={submitNewStream} className="flex">
-              <div className="flex flex-col w-4/5 overflow-y-auto">
-                <input
-                  type="text"
-                  placeholder="Channel"
-                  className="flex-grow bg-black border"
-                  onKeyDown={(e) => {
-                    if (e.key === "Tab" && newStream) {
-                      e.preventDefault();
-                    }
-                  }}
-                  onKeyUp={(e) => {
-                    if (e.key === "Tab" && searchResults[0]) {
-                      e.preventDefault();
-                      setNewStream(searchResults[0]);
-                    }
-                  }}
-                  value={newStream}
-                  onChange={(e) => setNewStream(e.target.value)}
-                />
-                {searching ? (
-                  <div>Loading...</div>
-                ) : (
-                  searchResults.map((suggestion) => (
-                    <div
-                      key={suggestion}
-                      className="cursor-pointer hover:bg-gray-400"
-                      onClick={() => {
-                        addNewStream(suggestion);
-                      }}
-                    >
-                      {suggestion}
-                    </div>
-                  ))
-                )}
-              </div>
-              <input
-                type="submit"
-                value="Add"
-                className="w-1/5 ml-1 mb-auto px-1 bg-black border"
-              />
-            </form>
+            <AddStream addNewStream={addNewStream} />
           </div>
           <div className="flex flex-col ml-auto">
             {!hasTwitchAuth && (
@@ -234,5 +163,3 @@ function App() {
     </>
   );
 }
-
-export default App;
