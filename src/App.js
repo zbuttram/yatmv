@@ -49,7 +49,8 @@ function App() {
   const [primaryStream, setPrimaryStream] = useState(
     reloadFromAuthPrimary || urlPrimary || streams[0]
   );
-
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const [newStream, setNewStream] = useState("");
 
   function addNewStream(stream = newStream) {
@@ -59,6 +60,7 @@ function App() {
       }
       setStreams((s) => [...s, stream]);
       setNewStream("");
+      setSearchResults([]);
     }
   }
 
@@ -98,9 +100,6 @@ function App() {
       );
     });
   }, [streams, primaryStream]);
-
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
 
   const loadSuggestions = useCallback(
     debounce(async function loadSuggestions(newStream) {
@@ -197,8 +196,9 @@ function App() {
               {searching ? (
                 <div>Loading...</div>
               ) : (
-                searchResults.map((suggestion, idx) => (
+                searchResults.map((suggestion) => (
                   <div
+                    key={suggestion}
                     className="cursor-pointer hover:bg-gray-400"
                     onClick={() => {
                       addNewStream(suggestion);
