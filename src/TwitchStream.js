@@ -54,7 +54,7 @@ export default function TwitchStream({
   return (
     <>
       <div id={posDivId} className="flex-grow flex">
-        <span className={classNames("m-auto", primary ? "" : "hidden")}>
+        <span className={classNames("m-auto", !primary && "hidden")}>
           Watching
         </span>
       </div>
