@@ -115,7 +115,7 @@ export default function App() {
           if (chatToAdd) {
             chats.push(chatToAdd);
           }
-          chatsToRemove.forEach((chat) => chat.splice(chats.indexOf(chat), 1));
+          chatsToRemove.forEach((chat) => chats.splice(chats.indexOf(chat), 1));
           if (chats.length > 4) {
             chats.shift();
           }
