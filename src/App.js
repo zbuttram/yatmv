@@ -63,7 +63,7 @@ export default function App() {
 
   function removeStream(index) {
     if (streams.indexOf(primaryStream) === index) {
-      setPrimaryStream(streams[index - 1]);
+      setPrimaryStream(streams[index + (index === 0 ? 1 : -1)]);
     }
     setStreams(
       produce((draft) => {
@@ -94,7 +94,9 @@ export default function App() {
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
-  const [loadedChats, setLoadedChats] = useState([...(primaryStream || [])]);
+  const [loadedChats, setLoadedChats] = useState(
+    primaryStream ? [primaryStream] : []
+  );
 
   useEffect(() => {
     let chatToAdd,
