@@ -97,10 +97,30 @@ export default function App() {
   const [loadedChats, setLoadedChats] = useState([...(primaryStream || [])]);
 
   useEffect(() => {
+    let chatToAdd,
+      chatsToRemove = [];
+    loadedChats.forEach((chat) => {
+      if (!streams.includes(chat)) {
+        chatsToRemove.push(chat);
+      }
+    });
     if (!loadedChats.includes(primaryStream)) {
-      setLoadedChats([primaryStream, ...loadedChats]);
+      chatToAdd = primaryStream;
     }
-  }, [primaryStream, loadedChats, setLoadedChats]);
+    if (chatToAdd || chatsToRemove) {
+      setLoadedChats(
+        produce((chats) => {
+          if (chatToAdd) {
+            chats.push(chatToAdd);
+          }
+          chatsToRemove.forEach((chat) => chat.splice(chats.indexOf(chat), 1));
+          if (chats.length > 4) {
+            chats.shift();
+          }
+        })
+      );
+    }
+  }, [primaryStream, loadedChats, setLoadedChats, streams]);
 
   return (
     <>
