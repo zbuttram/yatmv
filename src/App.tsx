@@ -12,7 +12,7 @@ import useBounding from "./useBounding";
 import events, { GLOBAL_RECALC_BOUNDING } from "./events";
 import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
 import AddStream from "./AddStream";
-import { checkTwitchAuth, Stream } from "./twitch";
+import { checkTwitchAuth, searchChannels, Stream } from "./twitch";
 
 const STREAM_STATE_COOKIE = "yatmv-state";
 
@@ -144,6 +144,48 @@ export default function App() {
       );
     }
   }, [primaryStreamName, loadedChats, setLoadedChats, streams]);
+
+  const [fetchingStreamData, setFetchingStreamData] =
+    useState<string | null>(null);
+  useEffect(() => {
+    if (!hasTwitchAuth || fetchingStreamData) {
+      return;
+    }
+    let streamToFetch;
+    streams.some((stream) => {
+      if (!stream.hasTwitchData) {
+        streamToFetch = stream;
+        return true;
+      } else {
+        return false;
+      }
+    });
+    if (!streamToFetch) {
+      return;
+    }
+    setFetchingStreamData(streamToFetch.displayName);
+    (async function getStreamData(streamToFetch) {
+      const results = await searchChannels(streamToFetch.displayName, {
+        first: 5,
+      });
+      const found = results.data.find(
+        (res) =>
+          res.displayName.toLowerCase() ===
+          streamToFetch.displayName.toLowerCase()
+      );
+      if (found) {
+        setStreams(
+          produce((streams) => {
+            const idxToUpdate = streams.findIndex(
+              (s) => s.displayName === streamToFetch.displayName
+            );
+            streams[idxToUpdate] = { ...streams[idxToUpdate], ...found };
+          })
+        );
+      }
+      setFetchingStreamData(null);
+    })(streamToFetch);
+  }, [streams, setStreams, fetchingStreamData, setFetchingStreamData]);
 
   return (
     <>

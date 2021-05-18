@@ -15,6 +15,7 @@ export type Stream = {
   thumbnailUrl?: string;
   title?: string;
   startedAt?: string;
+  hasTwitchData?: boolean;
 };
 
 export type StreamWithTwitchData = Required<Stream> & { hasTwitchData: true };
@@ -51,7 +52,7 @@ async function callTwitch<T>(url, init): Promise<T> {
   return mapKeysDeep(parsed, (_, key) => camelCase(key));
 }
 
-export function searchChannels(
+export async function searchChannels(
   query: string,
   { first, signal }: Partial<{ first: number; signal: AbortSignal }> = {}
 ) {
@@ -60,8 +61,10 @@ export function searchChannels(
     live_only: "true",
     ...(first ? { first: first.toString() } : {}),
   });
-  return callTwitch<{ data: StreamWithTwitchData[] }>(
+  const result = await callTwitch<{ data: StreamWithTwitchData[] }>(
     "https://api.twitch.tv/helix/search/channels?" + queryString,
     { signal }
   );
+  result.data = result.data.map((res) => ({ ...res, hasTwitchData: true }));
+  return result;
 }

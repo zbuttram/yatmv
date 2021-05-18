@@ -34,7 +34,7 @@ export default function TwitchStream({
 
   useEffect(() => {
     if (!player.current) return;
-    player.current.setMuted(primary ? false : true);
+    player.current.setMuted(!primary);
   }, [primary]);
 
   const posDivId = divId + "-pos";
