@@ -42,9 +42,13 @@ const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbc
   window.location.origin
 )}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
 
+type Stream = string;
+
 export default function App() {
   const [showChat, setShowChat] = useState(true);
-  const [streams, setStreams] = useState(reloadFromAuthStreams || urlStreams);
+  const [streams, setStreams] = useState<Stream[]>(
+    reloadFromAuthStreams || urlStreams
+  );
   const [primaryStream, setPrimaryStream] = useState(
     reloadFromAuthPrimary || urlPrimary || streams[0]
   );
@@ -77,13 +81,15 @@ export default function App() {
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
 
-    streams ? params.set("streams", streams) : params.delete("streams");
+    streams
+      ? params.set("streams", streams.toString())
+      : params.delete("streams");
     primaryStream
       ? params.set("primary", primaryStream)
       : params.delete("primary");
 
     url.search = params.toString();
-    window.history.replaceState({}, window.document.title, url);
+    window.history.replaceState({}, window.document.title, url.toString());
     setTimeout(() => {
       Cookies.set(
         STREAM_STATE_COOKIE,
