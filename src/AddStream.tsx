@@ -1,33 +1,51 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import classNames from "classnames";
-import { debounce } from "lodash";
-import { checkTwitchAuth, searchChannels } from "./twitch";
+import { debounce, DebouncedFunc } from "lodash";
+import {
+  checkTwitchAuth,
+  searchChannels,
+  StreamWithTwitchData,
+} from "./twitch";
 
 export default function AddStream({ addNewStream }) {
   const [newStream, setNewStream] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<StreamWithTwitchData[]>(
+    []
+  );
   const [searching, setSearching] = useState(false);
   const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
 
   function submitNewStream(e) {
     e.preventDefault();
     if (newStream && newStream !== "") {
-      addNewStream(newStream);
+      const found = searchResults.find(
+        (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
+      );
+      if (found) {
+        addNewStream(found);
+      } else {
+        addNewStream({ displayName: newStream });
+      }
       setNewStream("");
       setSearchResults([]);
     }
     return false;
   }
 
-  const loadSuggestions = useCallback(
-    debounce(async function _loadSuggestions(newStream, signal) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadSuggestions = useCallback<
+    DebouncedFunc<(newStream: string, signal: AbortSignal) => Promise<void>>
+  >(
+    debounce(async function _loadSuggestions(
+      newStream: string,
+      signal: AbortSignal
+    ) {
       try {
         const result = await searchChannels(newStream, {
+          first: 6,
           signal,
         });
-        setSearchResults(
-          result.data.slice(0, 5).map((res) => res.display_name)
-        );
+        setSearchResults(result.data.map((res) => res));
       } catch (e) {
         if (e.name !== "AbortError") {
           throw e;
@@ -35,7 +53,8 @@ export default function AddStream({ addNewStream }) {
       } finally {
         setSearching(false);
       }
-    }, 500),
+    },
+    500),
     [setSearchResults]
   );
 
@@ -70,7 +89,7 @@ export default function AddStream({ addNewStream }) {
           onKeyUp={(e) => {
             if (e.key === "Tab" && searchResults[0]) {
               e.preventDefault();
-              setNewStream(searchResults[0]);
+              setNewStream(searchResults[0].displayName);
             }
           }}
           value={newStream}
@@ -80,19 +99,20 @@ export default function AddStream({ addNewStream }) {
           (searching ? (
             <div>Searching...</div>
           ) : (
-            searchResults.map((suggestion) => (
+            searchResults.map((result) => (
               <div
-                key={suggestion}
+                key={result.displayName}
                 className={classNames(
                   "cursor-pointer hover:bg-gray-400",
-                  suggestion === newStream && "bg-gray-400"
+                  result.displayName.toLowerCase() ===
+                    newStream.toLowerCase() && "bg-gray-400"
                 )}
                 onClick={() => {
-                  addNewStream(suggestion);
+                  addNewStream(result);
                   setNewStream("");
                 }}
               >
-                {suggestion}
+                {result.displayName}
               </div>
             ))
           ))}

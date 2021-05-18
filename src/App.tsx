@@ -12,26 +12,35 @@ import useBounding from "./useBounding";
 import events, { GLOBAL_RECALC_BOUNDING } from "./events";
 import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
 import AddStream from "./AddStream";
-import { checkTwitchAuth } from "./twitch";
+import { checkTwitchAuth, Stream } from "./twitch";
 
 const STREAM_STATE_COOKIE = "yatmv-state";
 
+function streamNameToObject(streamName) {
+  return { displayName: streamName };
+}
+
 const pageURL = new URL(window.location.href);
-const urlStreams = pageURL.searchParams.get("streams")
-  ? pageURL.searchParams.get("streams").split(",")
-  : [];
+let parsedUrlStreams: Stream[] = [];
+const urlStreams = pageURL.searchParams.get("streams");
+if (urlStreams) {
+  parsedUrlStreams = urlStreams.split(",").map(streamNameToObject);
+}
+
 const urlPrimary = pageURL.searchParams.get("primary");
 
-let reloadFromAuthStreams, reloadFromAuthPrimary;
+let reloadFromAuthStreams: Stream[], reloadFromAuthPrimary: string;
 if (document.location.hash) {
   const hashParams = new URLSearchParams(document.location.hash.slice(1));
-  if (hashParams.has("access_token")) {
-    Cookies.set(TWITCH_ACCESS_TOKEN_COOKIE, hashParams.get("access_token"));
+  const accessTokenParam = hashParams.get("access_token");
+  if (accessTokenParam) {
+    Cookies.set(TWITCH_ACCESS_TOKEN_COOKIE, accessTokenParam);
     document.location.hash = "";
     const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
     if (rawStreamState) {
-      const parsedStreamState = JSON.parse(rawStreamState);
-      reloadFromAuthStreams = parsedStreamState.streams;
+      const parsedStreamState: { streams: string[]; primaryStream: string } =
+        JSON.parse(rawStreamState);
+      reloadFromAuthStreams = parsedStreamState.streams.map(streamNameToObject);
       reloadFromAuthPrimary = parsedStreamState.primaryStream;
     }
   }
@@ -42,20 +51,22 @@ const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbc
   window.location.origin
 )}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
 
-type Stream = string;
-
 export default function App() {
   const [showChat, setShowChat] = useState(true);
   const [streams, setStreams] = useState<Stream[]>(
-    reloadFromAuthStreams || urlStreams
+    reloadFromAuthStreams || parsedUrlStreams
   );
-  const [primaryStream, setPrimaryStream] = useState(
-    reloadFromAuthPrimary || urlPrimary || streams[0]
+  const [primaryStreamName, setPrimaryStreamName] = useState<Lowercase<string>>(
+    reloadFromAuthPrimary || urlPrimary || streams[0]?.displayName
   );
   const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
 
-  function addNewStream(stream) {
-    if (streams.map((s) => s.toLowerCase()).includes(stream.toLowerCase())) {
+  function setPrimaryStream(stream) {
+    setPrimaryStreamName(stream.displayName.toLowerCase());
+  }
+
+  function addNewStream(stream: Stream) {
+    if (streams.map((s) => s.displayName).includes(stream.displayName)) {
       setPrimaryStream(stream);
     } else {
       if (streams.length < 1) {
@@ -66,7 +77,11 @@ export default function App() {
   }
 
   function removeStream(index) {
-    if (streams.indexOf(primaryStream) === index) {
+    if (
+      streams.find(
+        (s) => s.displayName.toLowerCase() === primaryStreamName.toLowerCase()
+      ) === index
+    ) {
       setPrimaryStream(streams[index + (index === 0 ? 1 : -1)]);
     }
     setStreams(
@@ -82,10 +97,10 @@ export default function App() {
     const params = new URLSearchParams(url.search);
 
     streams
-      ? params.set("streams", streams.toString())
+      ? params.set("streams", streams.map((s) => s.displayName).toString())
       : params.delete("streams");
-    primaryStream
-      ? params.set("primary", primaryStream)
+    primaryStreamName
+      ? params.set("primary", primaryStreamName)
       : params.delete("primary");
 
     url.search = params.toString();
@@ -93,27 +108,27 @@ export default function App() {
     setTimeout(() => {
       Cookies.set(
         STREAM_STATE_COOKIE,
-        JSON.stringify({ streams, primaryStream })
+        JSON.stringify({ streams, primaryStream: primaryStreamName })
       );
     });
-  }, [streams, primaryStream]);
+  }, [streams, primaryStreamName]);
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
   const [loadedChats, setLoadedChats] = useState(
-    primaryStream ? [primaryStream] : []
+    primaryStreamName ? [primaryStreamName] : []
   );
 
   useEffect(() => {
     let chatToAdd,
-      chatsToRemove = [];
+      chatsToRemove: string[] = [];
     loadedChats.forEach((chat) => {
-      if (!streams.includes(chat)) {
+      if (!streams.map((s) => s.displayName.toLowerCase()).includes(chat)) {
         chatsToRemove.push(chat);
       }
     });
-    if (!loadedChats.includes(primaryStream)) {
-      chatToAdd = primaryStream;
+    if (!loadedChats.includes(primaryStreamName)) {
+      chatToAdd = primaryStreamName;
     }
     if (chatToAdd || chatsToRemove) {
       setLoadedChats(
@@ -128,13 +143,16 @@ export default function App() {
         })
       );
     }
-  }, [primaryStream, loadedChats, setLoadedChats, streams]);
+  }, [primaryStreamName, loadedChats, setLoadedChats, streams]);
 
   return (
     <>
       <main className="pb-3 h-screen">
         <div
-          className={classNames("flex pb-4 h-4/5", !primaryStream && "hidden")}
+          className={classNames(
+            "flex pb-4 h-4/5",
+            !primaryStreamName && "hidden"
+          )}
         >
           <div id="primary-stream-container" className="flex-grow h-full" />
           {loadedChats.map((s) => (
@@ -142,7 +160,7 @@ export default function App() {
               key={s}
               channel={s}
               className={classNames(
-                showChat && s.toLowerCase() === primaryStream.toLowerCase()
+                showChat && s.toLowerCase() === primaryStreamName
                   ? "w-1/5"
                   : "w-0",
                 "transition-all"
@@ -152,15 +170,18 @@ export default function App() {
         </div>
         <div className="h-1/5 mx-auto flex">
           {streams.map((s, i) => {
-            const isPrimary = s.toLowerCase() === primaryStream.toLowerCase();
+            const isPrimary = s.displayName.toLowerCase() === primaryStreamName;
             return (
-              <div key={s} className="w-48 h-full mx-4 flex flex-col">
+              <div
+                key={s.displayName}
+                className="w-48 h-full mx-4 flex flex-col"
+              >
                 <TwitchStream
-                  channel={s}
+                  channel={s.broadcasterLogin || s.displayName}
                   primary={isPrimary}
                   primaryContainerRect={primaryContainerRect}
                 />
-                <div className="mx-1">{s}</div>
+                <div className="mx-1">{s.displayName}</div>
                 <div className="flex">
                   {!isPrimary && (
                     <button
