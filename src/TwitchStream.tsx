@@ -29,7 +29,7 @@ export default function TwitchStream({
 }: {
   channel: string;
   primary: boolean;
-  primaryContainerRect: DOMRect;
+  primaryContainerRect: Partial<DOMRect>;
 }) {
   const divId = `twitch-stream-embed-${channel}`;
 
@@ -58,21 +58,29 @@ export default function TwitchStream({
   const posDivId = divId + "-pos";
   const channelRect = useBounding(posDivId);
 
-  const style = useMemo(() => {
+  const style = useMemo(():
+    | {
+        top: number;
+        left: number;
+        width: number;
+        height: number;
+        position: "absolute";
+      }
+    | undefined => {
     const { top, left, width, height } = primary
       ? primaryContainerRect
       : channelRect;
     if (top !== undefined && left !== undefined && width && height) {
-      return mapValues(
-        { top, left, width, height, position: "absolute" },
-        (val) => {
+      return {
+        position: "absolute",
+        ...mapValues({ top, left, width, height }, (val) => {
           if (typeof val === "number") {
             return Math.round(val);
           } else {
             return val;
           }
-        }
-      );
+        }),
+      };
     }
   }, [primary, primaryContainerRect, channelRect]);
 
