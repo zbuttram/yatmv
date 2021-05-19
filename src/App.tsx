@@ -43,10 +43,10 @@ if (document.location.hash) {
     document.location.hash = "";
     const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
     if (rawStreamState) {
-      const parsedStreamState: { streams: string[]; primaryStream: string } =
+      const parsedStreamState: { streams: string[]; primary: string } =
         JSON.parse(rawStreamState);
       reloadFromAuthStreams = parsedStreamState.streams.map(streamNameToObject);
-      reloadFromAuthPrimary = parsedStreamState.primaryStream;
+      reloadFromAuthPrimary = parsedStreamState.primary;
     }
   }
 }
@@ -84,7 +84,7 @@ export default function App() {
         setStreams((s) => [...s, stream]);
       }
     },
-    [streams]
+    [setPrimaryStream, streams]
   );
 
   const removeStream = useCallback(
@@ -104,9 +104,10 @@ export default function App() {
       );
       events.emit(GLOBAL_RECALC_BOUNDING);
     },
-    [primaryStreamName, streams]
+    [primaryStreamName, setPrimaryStream, streams]
   );
 
+  // set URL params
   useEffect(() => {
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
@@ -123,7 +124,10 @@ export default function App() {
     setTimeout(() => {
       Cookies.set(
         STREAM_STATE_COOKIE,
-        JSON.stringify({ streams, primaryStream: primaryStreamName })
+        JSON.stringify({
+          streams: streams.map((s) => s.displayName),
+          primaryStream: primaryStreamName,
+        })
       );
     });
   }, [streams, primaryStreamName]);
@@ -134,6 +138,7 @@ export default function App() {
     primaryStreamName ? [primaryStreamName.toLowerCase()] : []
   );
 
+  // lazy loading chats
   useEffect(() => {
     let chatToAdd,
       chatsToRemove: string[] = [];
@@ -166,6 +171,7 @@ export default function App() {
   const [fetchingStreamData, setFetchingStreamData] =
     useState<string | null>(null);
 
+  // fetch channel data from Twitch
   useEffect(() => {
     if (!hasTwitchAuth || fetchingStreamData) {
       return;
@@ -255,19 +261,21 @@ export default function App() {
                 className="mx-4 my-2 bg-purple-700 border px-2 py-1"
                 href={TWITCH_AUTH_URL}
               >
-                <FontAwesomeIcon icon={faTwitch} />
+                <FontAwesomeIcon icon={faTwitch} fixedWidth />
               </a>
             )}
-            <button
-              className={classNames("mx-4 my-2 border px-2 py-1")}
-              onClick={() => setShowChat((state) => !state)}
-            >
-              {showChat ? (
-                <FontAwesomeIcon icon={faCommentSlash} fixedWidth />
-              ) : (
-                <FontAwesomeIcon icon={faComment} fixedWidth />
-              )}
-            </button>
+            {primaryStreamName && (
+              <button
+                className={classNames("mx-4 my-2 border px-2 py-1")}
+                onClick={() => setShowChat((state) => !state)}
+              >
+                {showChat ? (
+                  <FontAwesomeIcon icon={faCommentSlash} fixedWidth />
+                ) : (
+                  <FontAwesomeIcon icon={faComment} fixedWidth />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </main>
@@ -297,7 +305,11 @@ function StreamContainer({
         primary={isPrimary}
         primaryContainerRect={primaryContainerRect}
       />
-      {hasTwitchData && <div className="text-xs truncate">{title}</div>}
+      {hasTwitchData && (
+        <div className="text-xs truncate" title={title}>
+          {title}
+        </div>
+      )}
       <div className="text-sm">{displayName}</div>
       <div className="flex">
         {!isPrimary && (

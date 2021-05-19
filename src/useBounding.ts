@@ -10,7 +10,7 @@ export default function useBounding(id): Partial<DOMRect> {
     if (!element) return;
     const rect = element.getBoundingClientRect();
     _setRect(rect);
-  }, [_setRect]);
+  }, [id, _setRect]);
 
   useEffect(() => {
     const ro = new ResizeObserver(() => {

@@ -72,7 +72,7 @@ export default function AddStream({ addNewStream }) {
     return () => {
       abortController.abort();
     };
-  }, [newStream, loadSuggestions]);
+  }, [newStream, loadSuggestions, hasTwitchAuth]);
 
   return (
     <form onSubmit={submitNewStream} className="flex">
