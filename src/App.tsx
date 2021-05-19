@@ -1,9 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
-import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
+import {
+  faComment,
+  faCommentSlash,
+  faExpand,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 
 import TwitchChat from "./TwitchChat";
@@ -56,41 +61,51 @@ export default function App() {
   const [streams, setStreams] = useState<Stream[]>(
     reloadFromAuthStreams || parsedUrlStreams
   );
-  const [primaryStreamName, setPrimaryStreamName] = useState<Lowercase<string>>(
-    reloadFromAuthPrimary || urlPrimary || streams[0]?.displayName
-  );
+  const [primaryStreamName, setPrimaryStreamName] = useState<
+    string | undefined
+  >(reloadFromAuthPrimary || urlPrimary || streams[0]?.displayName);
   const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
 
-  function setPrimaryStream(stream) {
+  const setPrimaryStream = useCallback(function setPrimaryStream(
+    stream: Stream
+  ) {
     setPrimaryStreamName(stream.displayName.toLowerCase());
-  }
+  },
+  []);
 
-  function addNewStream(stream: Stream) {
-    if (streams.map((s) => s.displayName).includes(stream.displayName)) {
-      setPrimaryStream(stream);
-    } else {
-      if (streams.length < 1) {
+  const addNewStream = useCallback(
+    function addNewStream(stream: Stream) {
+      if (streams.map((s) => s.displayName).includes(stream.displayName)) {
         setPrimaryStream(stream);
+      } else {
+        if (streams.length < 1) {
+          setPrimaryStream(stream);
+        }
+        setStreams((s) => [...s, stream]);
       }
-      setStreams((s) => [...s, stream]);
-    }
-  }
+    },
+    [streams]
+  );
 
-  function removeStream(index) {
-    if (
-      streams.find(
-        (s) => s.displayName.toLowerCase() === primaryStreamName.toLowerCase()
-      ) === index
-    ) {
-      setPrimaryStream(streams[index + (index === 0 ? 1 : -1)]);
-    }
-    setStreams(
-      produce((draft) => {
-        draft.splice(index, 1);
-      })
-    );
-    events.emit(GLOBAL_RECALC_BOUNDING);
-  }
+  const removeStream = useCallback(
+    function removeStream(index: number) {
+      if (
+        streams.findIndex(
+          (s) =>
+            s.displayName.toLowerCase() === primaryStreamName?.toLowerCase()
+        ) === index
+      ) {
+        setPrimaryStream(streams[index + (index === 0 ? 1 : -1)]);
+      }
+      setStreams(
+        produce((draft) => {
+          draft.splice(index, 1);
+        })
+      );
+      events.emit(GLOBAL_RECALC_BOUNDING);
+    },
+    [primaryStreamName, streams]
+  );
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -116,7 +131,7 @@ export default function App() {
   const primaryContainerRect = useBounding("primary-stream-container");
 
   const [loadedChats, setLoadedChats] = useState(
-    primaryStreamName ? [primaryStreamName] : []
+    primaryStreamName ? [primaryStreamName.toLowerCase()] : []
   );
 
   useEffect(() => {
@@ -127,8 +142,11 @@ export default function App() {
         chatsToRemove.push(chat);
       }
     });
-    if (!loadedChats.includes(primaryStreamName)) {
-      chatToAdd = primaryStreamName;
+    if (
+      primaryStreamName &&
+      !loadedChats.includes(primaryStreamName.toLowerCase())
+    ) {
+      chatToAdd = primaryStreamName.toLowerCase();
     }
     if (chatToAdd || chatsToRemove) {
       setLoadedChats(
@@ -147,6 +165,7 @@ export default function App() {
 
   const [fetchingStreamData, setFetchingStreamData] =
     useState<string | null>(null);
+
   useEffect(() => {
     if (!hasTwitchAuth || fetchingStreamData) {
       return;
@@ -185,7 +204,13 @@ export default function App() {
       }
       setFetchingStreamData(null);
     })(streamToFetch);
-  }, [streams, setStreams, fetchingStreamData, setFetchingStreamData]);
+  }, [
+    streams,
+    setStreams,
+    fetchingStreamData,
+    setFetchingStreamData,
+    hasTwitchAuth,
+  ]);
 
   return (
     <>
@@ -211,38 +236,16 @@ export default function App() {
           ))}
         </div>
         <div className="h-1/5 mx-auto flex">
-          {streams.map((s, i) => {
-            const isPrimary = s.displayName.toLowerCase() === primaryStreamName;
-            return (
-              <div
-                key={s.displayName}
-                className="w-48 h-full mx-4 flex flex-col"
-              >
-                <TwitchStream
-                  channel={s.broadcasterLogin || s.displayName}
-                  primary={isPrimary}
-                  primaryContainerRect={primaryContainerRect}
-                />
-                <div className="mx-1">{s.displayName}</div>
-                <div className="flex">
-                  {!isPrimary && (
-                    <button
-                      className={"px-1 mx-1 border w-full bg-green-400"}
-                      onClick={() => setPrimaryStream(s)}
-                    >
-                      Watch
-                    </button>
-                  )}
-                  <button
-                    className="px-1 mx-1 border w-full"
-                    onClick={() => removeStream(i)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {streams.map((stream, i) => (
+            <StreamContainer
+              key={stream.displayName}
+              stream={stream}
+              isPrimary={stream.displayName.toLowerCase() === primaryStreamName}
+              primaryContainerRect={primaryContainerRect}
+              setPrimaryStream={setPrimaryStream}
+              remove={() => removeStream(i)}
+            />
+          ))}
           <div className="my-auto w-48 flex flex-col">
             <AddStream addNewStream={addNewStream} />
           </div>
@@ -256,17 +259,59 @@ export default function App() {
               </a>
             )}
             <button
-              className={classNames(
-                "mx-4 my-2 border px-2 py-1",
-                showChat ? "text-white" : "bg-white text-black"
-              )}
+              className={classNames("mx-4 my-2 border px-2 py-1")}
               onClick={() => setShowChat((state) => !state)}
             >
-              <FontAwesomeIcon icon={faCommentDots} />
+              {showChat ? (
+                <FontAwesomeIcon icon={faCommentSlash} fixedWidth />
+              ) : (
+                <FontAwesomeIcon icon={faComment} fixedWidth />
+              )}
             </button>
           </div>
         </div>
       </main>
     </>
+  );
+}
+
+function StreamContainer({
+  stream,
+  isPrimary,
+  primaryContainerRect,
+  remove,
+  setPrimaryStream,
+}: {
+  stream: Stream;
+  isPrimary: boolean;
+  primaryContainerRect: Partial<DOMRect>;
+  remove: () => void;
+  setPrimaryStream: (stream: Stream) => void;
+}) {
+  const { broadcasterLogin, displayName, hasTwitchData, title } = stream;
+
+  return (
+    <div key={displayName} className="w-48 h-full mx-4 flex flex-col">
+      <TwitchStream
+        channel={broadcasterLogin || displayName.toLowerCase()}
+        primary={isPrimary}
+        primaryContainerRect={primaryContainerRect}
+      />
+      {hasTwitchData && <div className="text-xs truncate">{title}</div>}
+      <div className="text-sm">{displayName}</div>
+      <div className="flex">
+        {!isPrimary && (
+          <button
+            className={"px-1 mr-2 border w-full text-black bg-green-400"}
+            onClick={() => setPrimaryStream(stream)}
+          >
+            <FontAwesomeIcon icon={faExpand} />
+          </button>
+        )}
+        <button className="px-1 border w-full" onClick={remove}>
+          <FontAwesomeIcon icon={faTrash} />
+        </button>
+      </div>
+    </div>
   );
 }

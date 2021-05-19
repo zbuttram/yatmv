@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import classNames from "classnames";
+import { mapValues } from "lodash";
 
 import useBounding from "./useBounding";
 
@@ -49,6 +50,13 @@ export default function TwitchStream({
   let style;
   if (top !== undefined && left !== undefined && width && height) {
     style = { top, left, width, height, position: "absolute" };
+    style = mapValues(style, (val) => {
+      if (typeof val === "number") {
+        return Math.round(val);
+      } else {
+        return val;
+      }
+    });
   }
 
   return (
