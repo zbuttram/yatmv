@@ -260,11 +260,6 @@ export default function App() {
                 )}
               </button>
             )}
-            {process.env.NODE_ENV === "development" && (
-              <button onClick={() => events.emit(GLOBAL_RECALC_BOUNDING)}>
-                GR
-              </button>
-            )}
           </div>
         </div>
         <div className="h-1/5 mx-4 flex flex-wrap">

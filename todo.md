@@ -1,5 +1,10 @@
 ## todo
 
 * different layouts (oof)
+  * 2-up
+  * 4-up
 * reordering streams
-* online streams list
+  * issues with repositioning streams
+* followed streams picker
+    * favorites?
+* reload stream data
