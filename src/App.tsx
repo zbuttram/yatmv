@@ -19,6 +19,10 @@ import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
 import AddStream from "./AddStream";
 import { checkTwitchAuth, searchChannels, Stream } from "./twitch";
 
+const TWITCH_SCOPES = [];
+const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbcdy1eg1p9n122ptcloxvg7wm&redirect_uri=${encodeURIComponent(
+  window.location.origin
+)}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
 const STREAM_STATE_COOKIE = "yatmv-state";
 
 function streamNameToObject(streamName) {
@@ -39,7 +43,7 @@ if (document.location.hash) {
   const hashParams = new URLSearchParams(document.location.hash.slice(1));
   const accessTokenParam = hashParams.get("access_token");
   if (accessTokenParam) {
-    Cookies.set(TWITCH_ACCESS_TOKEN_COOKIE, accessTokenParam);
+    Cookies.set(TWITCH_ACCESS_TOKEN_COOKIE, accessTokenParam, { expires: 59 });
     document.location.hash = "";
     const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
     if (rawStreamState) {
@@ -50,11 +54,6 @@ if (document.location.hash) {
     }
   }
 }
-
-const TWITCH_SCOPES = [];
-const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbcdy1eg1p9n122ptcloxvg7wm&redirect_uri=${encodeURIComponent(
-  window.location.origin
-)}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
 
 export default function App() {
   const [showChat, setShowChat] = useState(true);
@@ -297,6 +296,24 @@ function StreamContainer({
   setPrimaryStream: (stream: Stream) => void;
 }) {
   const { broadcasterLogin, displayName, hasTwitchData, title } = stream;
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const onClickRemove = useCallback(
+    function onClickRemove() {
+      let timeout: ReturnType<typeof setTimeout>;
+      if (!isRemoving) {
+        setIsRemoving(true);
+        timeout = setTimeout(() => {
+          setIsRemoving(false);
+        }, 1500);
+      } else {
+        // @ts-ignore
+        clearTimeout(timeout);
+        remove();
+      }
+    },
+    [remove, isRemoving, setIsRemoving]
+  );
 
   return (
     <div key={displayName} className="w-48 h-full mx-4 flex flex-col">
@@ -320,7 +337,13 @@ function StreamContainer({
             <FontAwesomeIcon icon={faExpand} />
           </button>
         )}
-        <button className="px-1 border w-full" onClick={remove}>
+        <button
+          className={classNames(
+            "px-1 border w-full",
+            isRemoving && "bg-red-500"
+          )}
+          onClick={onClickRemove}
+        >
           <FontAwesomeIcon icon={faTrash} />
         </button>
       </div>
