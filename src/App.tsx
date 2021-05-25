@@ -261,14 +261,6 @@ export default function App() {
                 )}
               </button>
             )}
-            {process.env.NODE_ENV === "development" && (
-              <button
-                className="mt-auto mb-1"
-                onClick={() => events.emit(GLOBAL_RECALC_BOUNDING)}
-              >
-                GR
-              </button>
-            )}
           </div>
         </div>
         <div className="flex justify-center bg-gray-900">

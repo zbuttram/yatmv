@@ -33,30 +33,8 @@ export default function TwitchStream({
 }) {
   const divId = `twitch-stream-embed-${channel}`;
 
-  const player = useRef<TwitchPlayer>();
-
-  useEffect(() => {
-    if (!player.current) {
-      player.current = new Twitch.Player(divId, {
-        channel,
-        muted: !primary,
-        width: "100%",
-        height: "100%",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    player?.current?.setChannel(channel);
-  }, [channel]);
-
-  useEffect(() => {
-    player?.current?.setMuted(!primary);
-  }, [primary]);
-
   const posDivId = divId + "-pos";
-  const channelRect = useBounding(posDivId);
+  const channelRect = useBounding(posDivId, { recalcInterval: 750 });
 
   const style = useMemo(():
     | {
@@ -83,6 +61,28 @@ export default function TwitchStream({
       };
     }
   }, [primary, primaryContainerRect, channelRect]);
+
+  const player = useRef<TwitchPlayer>();
+
+  useEffect(() => {
+    if (!player.current) {
+      player.current = new Twitch.Player(divId, {
+        channel,
+        muted: !primary,
+        width: "100%",
+        height: "100%",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    player?.current?.setChannel(channel);
+  }, [channel]);
+
+  useEffect(() => {
+    player?.current?.setMuted(!primary);
+  }, [primary]);
 
   return (
     <>
