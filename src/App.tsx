@@ -80,7 +80,7 @@ export default function App() {
         if (streams.length < 1) {
           setPrimaryStream(stream);
         }
-        setStreams((s) => [...s, stream]);
+        setStreams((s) => [stream, ...s]);
       }
     },
     [setPrimaryStream, streams]
@@ -219,10 +219,10 @@ export default function App() {
 
   return (
     <>
-      <main className="pb-3 h-screen">
+      <main className="pb-3 h-screen flex flex-col">
         <div
           className={classNames(
-            "flex pb-4 h-4/5",
+            "flex pb-2 h-4/5",
             !primaryStreamName && "hidden"
           )}
         >
@@ -239,8 +239,38 @@ export default function App() {
               )}
             />
           ))}
+          <div className="flex flex-col ml-auto">
+            {!hasTwitchAuth && (
+              <a
+                className="mx-3 my-2 bg-purple-700 border px-2 py-1"
+                href={TWITCH_AUTH_URL}
+              >
+                <FontAwesomeIcon icon={faTwitch} fixedWidth />
+              </a>
+            )}
+            {primaryStreamName && (
+              <button
+                className={classNames("mx-3 my-2 border px-2 py-1")}
+                onClick={() => setShowChat((state) => !state)}
+              >
+                {showChat ? (
+                  <FontAwesomeIcon icon={faCommentSlash} fixedWidth />
+                ) : (
+                  <FontAwesomeIcon icon={faComment} fixedWidth />
+                )}
+              </button>
+            )}
+            {process.env.NODE_ENV === "development" && (
+              <button onClick={() => events.emit(GLOBAL_RECALC_BOUNDING)}>
+                GR
+              </button>
+            )}
+          </div>
         </div>
-        <div className="h-1/5 mx-auto flex">
+        <div className="h-1/5 mx-4 flex flex-wrap">
+          <div className="my-auto mx-4 w-48 flex flex-col">
+            <AddStream addNewStream={addNewStream} />
+          </div>
           {streams.map((stream, i) => (
             <StreamContainer
               key={stream.displayName}
@@ -251,31 +281,6 @@ export default function App() {
               remove={() => removeStream(i)}
             />
           ))}
-          <div className="my-auto w-48 flex flex-col">
-            <AddStream addNewStream={addNewStream} />
-          </div>
-          <div className="flex flex-col ml-auto">
-            {!hasTwitchAuth && (
-              <a
-                className="mx-4 my-2 bg-purple-700 border px-2 py-1"
-                href={TWITCH_AUTH_URL}
-              >
-                <FontAwesomeIcon icon={faTwitch} fixedWidth />
-              </a>
-            )}
-            {primaryStreamName && (
-              <button
-                className={classNames("mx-4 my-2 border px-2 py-1")}
-                onClick={() => setShowChat((state) => !state)}
-              >
-                {showChat ? (
-                  <FontAwesomeIcon icon={faCommentSlash} fixedWidth />
-                ) : (
-                  <FontAwesomeIcon icon={faComment} fixedWidth />
-                )}
-              </button>
-            )}
-          </div>
         </div>
       </main>
     </>
@@ -316,7 +321,7 @@ function StreamContainer({
   );
 
   return (
-    <div key={displayName} className="w-48 h-full mx-4 flex flex-col">
+    <div className="h-full w-48 mx-4 flex flex-col">
       <TwitchStream
         channel={broadcasterLogin || displayName.toLowerCase()}
         primary={isPrimary}

@@ -8,8 +8,13 @@ export default function useBounding(id): Partial<DOMRect> {
   const setRect = useCallback(() => {
     const element = document.getElementById(id);
     if (!element) return;
-    const rect = element.getBoundingClientRect();
-    _setRect(rect);
+    const { top, left, width, height } = element.getBoundingClientRect();
+    _setRect({
+      top: top + window.scrollY,
+      left: left + window.scrollX,
+      width,
+      height,
+    });
   }, [id, _setRect]);
 
   useEffect(() => {
