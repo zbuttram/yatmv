@@ -7,7 +7,7 @@ import {
   StreamWithTwitchData,
 } from "./twitch";
 
-export default function AddStream({ addNewStream }) {
+export default function AddStream({ addNewStream, className = "" }) {
   const [newStream, setNewStream] = useState("");
   const [searchResults, setSearchResults] = useState<StreamWithTwitchData[]>(
     []
@@ -75,7 +75,7 @@ export default function AddStream({ addNewStream }) {
   }, [newStream, loadSuggestions, hasTwitchAuth]);
 
   return (
-    <form onSubmit={submitNewStream} className="flex">
+    <form onSubmit={submitNewStream} className={"flex " + className}>
       <div className="flex flex-col w-4/5 overflow-y-auto">
         <input
           type="text"

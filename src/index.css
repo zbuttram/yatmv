@@ -6,3 +6,11 @@ body {
   background-color: black;
   color: white;
 }
+
+.primary-container {
+  height: 80vh;
+}
+
+.stream-container {
+  max-height: 20vh;
+}

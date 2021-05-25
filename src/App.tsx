@@ -81,6 +81,7 @@ export default function App() {
           setPrimaryStream(stream);
         }
         setStreams((s) => [stream, ...s]);
+        setTimeout(() => events.emit(GLOBAL_RECALC_BOUNDING));
       }
     },
     [setPrimaryStream, streams]
@@ -101,7 +102,7 @@ export default function App() {
           draft.splice(index, 1);
         })
       );
-      events.emit(GLOBAL_RECALC_BOUNDING);
+      requestAnimationFrame(() => events.emit(GLOBAL_RECALC_BOUNDING));
     },
     [primaryStreamName, setPrimaryStream, streams]
   );
@@ -219,10 +220,10 @@ export default function App() {
 
   return (
     <>
-      <main className="pb-3 h-screen flex flex-col">
+      <main className="flex flex-col">
         <div
           className={classNames(
-            "flex pb-2 h-4/5",
+            "flex primary-container",
             !primaryStreamName && "hidden"
           )}
         >
@@ -239,7 +240,7 @@ export default function App() {
               )}
             />
           ))}
-          <div className="flex flex-col ml-auto">
+          <div className="flex flex-col ml-auto bg-indigo-900">
             {!hasTwitchAuth && (
               <a
                 className="mx-3 my-2 bg-purple-700 border px-2 py-1"
@@ -260,22 +261,35 @@ export default function App() {
                 )}
               </button>
             )}
+            {process.env.NODE_ENV === "development" && (
+              <button
+                className="mt-auto mb-1"
+                onClick={() => events.emit(GLOBAL_RECALC_BOUNDING)}
+              >
+                GR
+              </button>
+            )}
           </div>
         </div>
-        <div className="h-1/5 mx-4 flex flex-wrap">
-          <div className="my-auto mx-4 w-48 flex flex-col">
-            <AddStream addNewStream={addNewStream} />
+        <div className="flex justify-center bg-gray-900">
+          <div className="flex justify-center flex-wrap px-4 gap-4">
+            <div className="w-56 flex flex-col p-3 stream-container">
+              <AddStream addNewStream={addNewStream} className="my-auto" />
+            </div>
+            {streams.map((stream, i) => (
+              <StreamContainer
+                className="h-full w-56 flex flex-col justify-center p-3 bg-black stream-container"
+                key={stream.displayName}
+                stream={stream}
+                isPrimary={
+                  stream.displayName.toLowerCase() === primaryStreamName
+                }
+                primaryContainerRect={primaryContainerRect}
+                setPrimaryStream={setPrimaryStream}
+                remove={() => removeStream(i)}
+              />
+            ))}
           </div>
-          {streams.map((stream, i) => (
-            <StreamContainer
-              key={stream.displayName}
-              stream={stream}
-              isPrimary={stream.displayName.toLowerCase() === primaryStreamName}
-              primaryContainerRect={primaryContainerRect}
-              setPrimaryStream={setPrimaryStream}
-              remove={() => removeStream(i)}
-            />
-          ))}
         </div>
       </main>
     </>
@@ -288,12 +302,14 @@ function StreamContainer({
   primaryContainerRect,
   remove,
   setPrimaryStream,
+  className,
 }: {
   stream: Stream;
   isPrimary: boolean;
   primaryContainerRect: Partial<DOMRect>;
   remove: () => void;
   setPrimaryStream: (stream: Stream) => void;
+  className?: string;
 }) {
   const { broadcasterLogin, displayName, hasTwitchData, title } = stream;
   const [isRemoving, setIsRemoving] = useState(false);
@@ -316,18 +332,20 @@ function StreamContainer({
   );
 
   return (
-    <div className="h-full w-48 mx-4 flex flex-col">
+    <div className={className}>
       <TwitchStream
         channel={broadcasterLogin || displayName.toLowerCase()}
         primary={isPrimary}
         primaryContainerRect={primaryContainerRect}
       />
-      {hasTwitchData && (
-        <div className="text-xs truncate" title={title}>
-          {title}
-        </div>
-      )}
-      <div className="text-sm">{displayName}</div>
+      <div className="py-2">
+        {hasTwitchData && (
+          <div className="text-xs truncate" title={title}>
+            {title}
+          </div>
+        )}
+        <div className="text-sm">{displayName}</div>
+      </div>
       <div className="flex">
         {!isPrimary && (
           <button
