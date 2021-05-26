@@ -24,9 +24,14 @@ const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbc
   window.location.origin
 )}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
 const STREAM_STATE_COOKIE = "yatmv-state";
+const CHAT_EVICT_SEC = 60 * 15;
 
 function streamNameToObject(streamName) {
   return { displayName: streamName };
+}
+
+function epoch(diff: number = 0) {
+  return Date.now() / 1000 + diff;
 }
 
 const pageURL = new URL(window.location.href);
@@ -56,21 +61,29 @@ if (document.location.hash) {
 }
 
 export default function App() {
+  const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
   const [showChat, setShowChat] = useState(true);
   const [streams, setStreams] = useState<Stream[]>(
     reloadFromAuthStreams || parsedUrlStreams
   );
-  const [primaryStreamName, setPrimaryStreamName] = useState<
-    string | undefined
-  >(reloadFromAuthPrimary || urlPrimary || streams[0]?.displayName);
-  const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
 
-  const setPrimaryStream = useCallback(function setPrimaryStream(
-    stream: Stream
-  ) {
-    setPrimaryStreamName(stream.displayName.toLowerCase());
-  },
-  []);
+  const [primaryStreamName, _setPrimaryStreamName] = useState<
+    string | undefined
+  >(
+    reloadFromAuthPrimary || urlPrimary || streams[0]?.displayName.toLowerCase()
+  );
+  const setPrimaryStreamName = useCallback(
+    function setPrimaryStreamName(streamName: string) {
+      _setPrimaryStreamName(streamName.toLowerCase());
+    },
+    [_setPrimaryStreamName]
+  );
+  const setPrimaryStream = useCallback(
+    function setPrimaryStream(stream: Stream) {
+      setPrimaryStreamName(stream.displayName);
+    },
+    [setPrimaryStreamName]
+  );
 
   const addNewStream = useCallback(
     function addNewStream(stream: Stream) {
@@ -91,8 +104,7 @@ export default function App() {
     function removeStream(index: number) {
       if (
         streams.findIndex(
-          (s) =>
-            s.displayName.toLowerCase() === primaryStreamName?.toLowerCase()
+          (s) => s.displayName.toLowerCase() === primaryStreamName
         ) === index
       ) {
         setPrimaryStream(streams[index + (index === 0 ? 1 : -1)]);
@@ -134,38 +146,57 @@ export default function App() {
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
-  const [loadedChats, setLoadedChats] = useState(
-    primaryStreamName ? [primaryStreamName.toLowerCase()] : []
+  const [loadedChats, setLoadedChats] = useState<
+    Array<{
+      lastOpened: number;
+      channel: string;
+    }>
+  >(
+    primaryStreamName
+      ? [{ channel: primaryStreamName, lastOpened: epoch() }]
+      : []
   );
 
   // lazy loading chats
   useEffect(() => {
-    let chatToAdd,
-      chatsToRemove: string[] = [];
-    loadedChats.forEach((chat) => {
-      if (!streams.map((s) => s.displayName.toLowerCase()).includes(chat)) {
-        chatsToRemove.push(chat);
-      }
-    });
     if (
       primaryStreamName &&
-      !loadedChats.includes(primaryStreamName.toLowerCase())
+      !loadedChats.some(({ channel }) => channel === primaryStreamName)
     ) {
-      chatToAdd = primaryStreamName.toLowerCase();
+      setLoadedChats((state) => [
+        ...state,
+        { channel: primaryStreamName, lastOpened: epoch() },
+      ]);
     }
-    if (chatToAdd || chatsToRemove) {
-      setLoadedChats(
-        produce((chats) => {
-          if (chatToAdd) {
-            chats.push(chatToAdd);
-          }
-          chatsToRemove.forEach((chat) => chats.splice(chats.indexOf(chat), 1));
-          if (chats.length > 4) {
-            chats.shift();
-          }
-        })
+
+    const channelsToRemove: string[] = [];
+    loadedChats.forEach(({ channel }) => {
+      if (!streams.map((s) => s.displayName.toLowerCase()).includes(channel)) {
+        channelsToRemove.push(channel);
+      }
+    });
+    if (channelsToRemove.length) {
+      setLoadedChats((state) =>
+        state.filter(({ channel }) => !channelsToRemove.includes(channel))
       );
     }
+
+    function evictOldChats() {
+      if (
+        loadedChats.length > 4 &&
+        loadedChats.some(
+          ({ lastOpened }) => lastOpened < epoch(-CHAT_EVICT_SEC)
+        )
+      ) {
+        setLoadedChats((state) =>
+          state.filter(({ lastOpened }) => lastOpened < epoch(-CHAT_EVICT_SEC))
+        );
+      }
+    }
+
+    evictOldChats();
+    const interval = setInterval(evictOldChats, 10000);
+    return () => clearInterval(interval);
   }, [primaryStreamName, loadedChats, setLoadedChats, streams]);
 
   const [fetchingStreamData, setFetchingStreamData] =
@@ -227,19 +258,6 @@ export default function App() {
             !primaryStreamName && "hidden"
           )}
         >
-          <div id="primary-stream-container" className="flex-grow h-full" />
-          {loadedChats.map((s) => (
-            <TwitchChat
-              key={s}
-              channel={s}
-              className={classNames(
-                showChat && s.toLowerCase() === primaryStreamName
-                  ? "w-1/5"
-                  : "w-0",
-                "transition-all"
-              )}
-            />
-          ))}
           <div className="flex flex-col ml-auto bg-indigo-900">
             {!hasTwitchAuth && (
               <a
@@ -262,6 +280,17 @@ export default function App() {
               </button>
             )}
           </div>
+          <div id="primary-stream-container" className="flex-grow h-full" />
+          {loadedChats.map(({ channel }) => (
+            <TwitchChat
+              key={channel}
+              channel={channel}
+              className={classNames(
+                showChat && channel === primaryStreamName ? "w-1/5" : "w-0",
+                "transition-all"
+              )}
+            />
+          ))}
         </div>
         <div className="flex justify-center bg-gray-900">
           <div className="flex justify-center flex-wrap px-4 gap-4">
