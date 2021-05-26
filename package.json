@@ -40,7 +40,12 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "react/jsx-curly-brace-presence": ["warn", {
+        "props": "never"
+      }]
+    }
   },
   "browserslist": {
     "production": [

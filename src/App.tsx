@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -250,27 +250,25 @@ export default function App() {
     hasTwitchAuth,
   ]);
 
+  //region AppReturn
   return (
     <>
-      <main className="flex flex-col">
+      <main className="flex flex-col ring-white ring-opacity-60">
         <div
           className={classNames(
             "flex primary-container",
             !primaryStreamName && "hidden"
           )}
         >
-          <div className="flex flex-col ml-auto bg-indigo-900">
+          <div className="flex flex-col ml-auto bg-blue-800">
             {!hasTwitchAuth && (
-              <a
-                className="mx-3 my-2 bg-purple-700 border px-2 py-1"
-                href={TWITCH_AUTH_URL}
-              >
+              <a className="btn-sidebar bg-black" href={TWITCH_AUTH_URL}>
                 <FontAwesomeIcon icon={faTwitch} fixedWidth />
               </a>
             )}
             {primaryStreamName && (
               <button
-                className={classNames("mx-3 my-2 border px-2 py-1")}
+                className="btn-sidebar bg-black"
                 onClick={() => setShowChat((state) => !state)}
               >
                 {showChat ? (
@@ -280,8 +278,9 @@ export default function App() {
                 )}
               </button>
             )}
+            <div className="flex-grow" />
             <a
-              className="mx-3 bg-black my-2 border px-2 py-1"
+              className="btn-sidebar bg-black"
               href={PROJECT_URL}
               target="_blank"
               rel="noreferrer"
@@ -343,18 +342,17 @@ function StreamContainer({
 }) {
   const { broadcasterLogin, displayName, hasTwitchData, title } = stream;
   const [isRemoving, setIsRemoving] = useState(false);
+  const timeout = useRef<ReturnType<typeof setTimeout> | undefined>();
 
   const onClickRemove = useCallback(
     function onClickRemove() {
-      let timeout: ReturnType<typeof setTimeout>;
       if (!isRemoving) {
         setIsRemoving(true);
-        timeout = setTimeout(() => {
+        timeout.current = setTimeout(() => {
           setIsRemoving(false);
         }, 1500);
       } else {
-        // @ts-ignore
-        clearTimeout(timeout);
+        timeout.current && clearTimeout(timeout.current);
         remove();
       }
     },
@@ -379,17 +377,14 @@ function StreamContainer({
       <div className="flex">
         {!isPrimary && (
           <button
-            className={"px-1 mr-2 border w-full text-black bg-green-400"}
+            className="btn mr-2 w-full text-black bg-green-400"
             onClick={() => setPrimaryStream(stream)}
           >
             <FontAwesomeIcon icon={faExpand} />
           </button>
         )}
         <button
-          className={classNames(
-            "px-1 border w-full",
-            isRemoving && "bg-red-500"
-          )}
+          className={classNames("btn w-full", isRemoving && "bg-red-500")}
           onClick={onClickRemove}
         >
           <FontAwesomeIcon icon={faTrash} />

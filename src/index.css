@@ -14,3 +14,11 @@ body {
 .stream-container {
   max-height: 20vh;
 }
+
+.btn {
+  @apply focus:ring-2 outline-none border-2 rounded-sm;
+}
+
+.btn-sidebar {
+  @apply btn px-2 py-1 m-3;
+}
