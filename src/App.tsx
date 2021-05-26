@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTwitch } from "@fortawesome/free-brands-svg-icons";
+import { faTwitch, faGithub } from "@fortawesome/free-brands-svg-icons";
 import {
   faComment,
   faCommentSlash,
@@ -19,6 +19,7 @@ import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
 import AddStream from "./AddStream";
 import { checkTwitchAuth, searchChannels, Stream } from "./twitch";
 
+const PROJECT_URL = "https://github.com/zbuttram/yatmv";
 const TWITCH_SCOPES = [];
 const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbcdy1eg1p9n122ptcloxvg7wm&redirect_uri=${encodeURIComponent(
   window.location.origin
@@ -279,6 +280,14 @@ export default function App() {
                 )}
               </button>
             )}
+            <a
+              className="mx-3 bg-black my-2 border px-2 py-1"
+              href={PROJECT_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FontAwesomeIcon icon={faGithub} fixedWidth />
+            </a>
           </div>
           <div id="primary-stream-container" className="flex-grow h-full" />
           {loadedChats.map(({ channel }) => (
