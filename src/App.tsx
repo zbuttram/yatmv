@@ -8,6 +8,7 @@ import {
   faCommentSlash,
   faExpand,
   faTrash,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 
@@ -60,9 +61,9 @@ if (document.location.hash) {
     }
   }
 }
+const hasTwitchAuth = checkTwitchAuth();
 
 export default function App() {
-  const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
   const [showChat, setShowChat] = useState(true);
   const [streams, setStreams] = useState<Stream[]>(
     reloadFromAuthStreams || parsedUrlStreams
@@ -260,34 +261,11 @@ export default function App() {
             !primaryStreamName && "hidden"
           )}
         >
-          <div className="flex flex-col ml-auto bg-blue-800">
-            {!hasTwitchAuth && (
-              <a className="btn-sidebar bg-black" href={TWITCH_AUTH_URL}>
-                <FontAwesomeIcon icon={faTwitch} fixedWidth />
-              </a>
-            )}
-            {primaryStreamName && (
-              <button
-                className="btn-sidebar bg-black"
-                onClick={() => setShowChat((state) => !state)}
-              >
-                {showChat ? (
-                  <FontAwesomeIcon icon={faCommentSlash} fixedWidth />
-                ) : (
-                  <FontAwesomeIcon icon={faComment} fixedWidth />
-                )}
-              </button>
-            )}
-            <div className="flex-grow" />
-            <a
-              className="btn-sidebar bg-black"
-              href={PROJECT_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <FontAwesomeIcon icon={faGithub} fixedWidth />
-            </a>
-          </div>
+          <Sidebar
+            className="flex flex-col bg-blue-800"
+            showingChat={showChat}
+            setShowChat={setShowChat}
+          />
           <div id="primary-stream-container" className="flex-grow h-full" />
           {loadedChats.map(({ channel }) => (
             <TwitchChat
@@ -389,6 +367,71 @@ function StreamContainer({
         >
           <FontAwesomeIcon icon={faTrash} />
         </button>
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({ setShowChat, showingChat, className }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className={classNames(
+        "sidebar flex flex-col",
+        open ? "open w-52" : "w-16",
+        className
+      )}
+    >
+      <div className="self-end">
+        <button
+          className="btn-sidebar"
+          onClick={() => setOpen((state) => !state)}
+        >
+          <FontAwesomeIcon
+            icon={faArrowLeft}
+            className={classNames(
+              "transition-transform",
+              !open && "flip-horizontal"
+            )}
+            fixedWidth
+          />
+        </button>
+      </div>
+      {!hasTwitchAuth && (
+        <div>
+          <a
+            className="btn-sidebar bg-black bg-purple-700"
+            href={TWITCH_AUTH_URL}
+          >
+            <FontAwesomeIcon icon={faTwitch} fixedWidth />
+          </a>
+          <label htmlFor="">Connect to Twitch</label>
+        </div>
+      )}
+      <div>
+        <button
+          className="btn-sidebar bg-black"
+          onClick={() => setShowChat((state) => !state)}
+        >
+          <FontAwesomeIcon
+            icon={showingChat ? faCommentSlash : faComment}
+            fixedWidth
+          />
+        </button>
+        <label htmlFor="">Toggle Chat</label>
+      </div>
+      <div className="flex-grow" />
+      <div className="mb-3">
+        <a
+          className="btn-sidebar bg-black"
+          href={PROJECT_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <FontAwesomeIcon icon={faGithub} fixedWidth />
+        </a>
+        <label htmlFor="">GitHub</label>
       </div>
     </div>
   );

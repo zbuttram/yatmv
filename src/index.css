@@ -22,3 +22,15 @@ body {
 .btn-sidebar {
   @apply btn px-2 py-1 m-3;
 }
+
+.sidebar .btn-sidebar + label {
+  display: none;
+}
+
+.sidebar.open .btn-sidebar + label {
+  display: unset;
+}
+
+.flip-horizontal {
+  transform: scaleX(-1);
+}
