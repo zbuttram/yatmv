@@ -34,3 +34,7 @@ body {
 .flip-horizontal {
   transform: scaleX(-1);
 }
+
+.explainer p {
+  @apply mb-4;
+}

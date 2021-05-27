@@ -280,7 +280,7 @@ export default function App() {
         </div>
         <div className="flex justify-center bg-gray-900">
           <div className="flex justify-center flex-wrap px-4 gap-4">
-            <div className="w-56 flex flex-col p-3 stream-container">
+            <div className="w-56 flex flex-col p-3">
               <AddStream addNewStream={addNewStream} className="my-auto" />
             </div>
             {streams.map((stream, i) => (
@@ -296,6 +296,31 @@ export default function App() {
                 remove={() => removeStream(i)}
               />
             ))}
+          </div>
+        </div>
+        <div className="mx-auto p-8 mt-16 mb-8 bg-gray-900 rounded-md text-center">
+          <h1 className="text-6xl mb-2">YATMV</h1>
+          <h2 className="text-lg mb-8">Yet Another Twitch Multi-View</h2>
+          {!primaryStreamName && (
+            <p className="mx-auto mb-8 font-bold">
+              Add a channel above to start.
+            </p>
+          )}
+          <div className="explainer max-w-prose mx-auto">
+            <p>
+              <a href={TWITCH_AUTH_URL} className="underline">
+                Connect to Twitch
+              </a>{" "}
+              to enable additional features like live channel searching and
+              stream titles! Your open channels will be saved.
+            </p>
+            <p>
+              YATMV is open-source! Check us out on{" "}
+              <a href={PROJECT_URL} className="underline">
+                GitHub
+              </a>
+              .
+            </p>
           </div>
         </div>
       </main>
