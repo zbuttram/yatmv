@@ -89,7 +89,11 @@ export default function App() {
 
   const addNewStream = useCallback(
     function addNewStream(stream: Stream) {
-      if (streams.map((s) => s.displayName).includes(stream.displayName)) {
+      if (
+        streams
+          .map((s) => s.displayName.toLowerCase())
+          .includes(stream.displayName.toLowerCase())
+      ) {
         setPrimaryStream(stream);
       } else {
         if (streams.length < 1) {
