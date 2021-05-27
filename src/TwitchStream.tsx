@@ -86,12 +86,16 @@ export default function TwitchStream({
 
   return (
     <>
-      <div id={posDivId} className="flex-grow flex bg-black">
+      <div
+        id={divId}
+        style={style || { height: 0 }}
+        className="transition-all"
+      />
+      <div id={posDivId} className="flex flex-grow bg-black">
         <span className={classNames("m-auto", !primary && "hidden")}>
           Watching
         </span>
       </div>
-      <div id={divId} style={style} className="transition-all" />
     </>
   );
 }

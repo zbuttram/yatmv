@@ -33,7 +33,7 @@ function streamNameToObject(streamName) {
 }
 
 function epoch(diff: number = 0) {
-  return Date.now() / 1000 + diff;
+  return Math.floor(Date.now() / 1000) + diff;
 }
 
 const pageURL = new URL(window.location.href);
@@ -161,14 +161,30 @@ export default function App() {
 
   // lazy loading chats
   useEffect(() => {
-    if (
-      primaryStreamName &&
-      !loadedChats.some(({ channel }) => channel === primaryStreamName)
-    ) {
+    let primaryChatIndex, primaryChatLastOpened;
+    const hasLoadedPrimary = loadedChats.some(({ channel, lastOpened }, i) => {
+      const isPrimary = channel === primaryStreamName;
+      if (isPrimary) {
+        primaryChatIndex = i;
+        primaryChatLastOpened = lastOpened;
+        return true;
+      }
+    });
+
+    if (primaryStreamName && !hasLoadedPrimary) {
       setLoadedChats((state) => [
         ...state,
         { channel: primaryStreamName, lastOpened: epoch() },
       ]);
+    } else {
+      const now = epoch();
+      if (primaryChatLastOpened <= now - 1) {
+        setLoadedChats(
+          produce((state) => {
+            state[primaryChatIndex].lastOpened = epoch();
+          })
+        );
+      }
     }
 
     const channelsToRemove: string[] = [];
@@ -243,13 +259,7 @@ export default function App() {
       }
       setFetchingStreamData(null);
     })(streamToFetch);
-  }, [
-    streams,
-    setStreams,
-    fetchingStreamData,
-    setFetchingStreamData,
-    hasTwitchAuth,
-  ]);
+  }, [streams, setStreams, fetchingStreamData, setFetchingStreamData]);
 
   //region AppReturn
   return (
@@ -378,29 +388,31 @@ function StreamContainer({
         primary={isPrimary}
         primaryContainerRect={primaryContainerRect}
       />
-      <div className="pt-2 pb-1">
-        {hasTwitchData && (
-          <div className="text-xs truncate" title={title}>
-            {title}
-          </div>
-        )}
-        <div className="text-sm">{displayName}</div>
-      </div>
-      <div className="flex">
-        {!isPrimary && (
+      <div className="w-full flex flex-col self-end">
+        <div className="pt-2 pb-1">
+          {hasTwitchData && (
+            <div className="text-xs truncate" title={title}>
+              {title}
+            </div>
+          )}
+          <div className="text-sm">{displayName}</div>
+        </div>
+        <div className="flex">
+          {!isPrimary && (
+            <button
+              className="btn mr-2 w-full text-black bg-green-400"
+              onClick={() => setPrimaryStream(stream)}
+            >
+              <FontAwesomeIcon icon={faExpand} />
+            </button>
+          )}
           <button
-            className="btn mr-2 w-full text-black bg-green-400"
-            onClick={() => setPrimaryStream(stream)}
+            className={classNames("btn w-full", isRemoving && "bg-red-500")}
+            onClick={onClickRemove}
           >
-            <FontAwesomeIcon icon={faExpand} />
+            <FontAwesomeIcon icon={faTrash} />
           </button>
-        )}
-        <button
-          className={classNames("btn w-full", isRemoving && "bg-red-500")}
-          onClick={onClickRemove}
-        >
-          <FontAwesomeIcon icon={faTrash} />
-        </button>
+        </div>
       </div>
     </div>
   );
