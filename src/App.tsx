@@ -320,7 +320,12 @@ export default function App() {
             </p>
             <p>
               YATMV is open-source! Check us out on{" "}
-              <a href={PROJECT_URL} className="underline">
+              <a
+                href={PROJECT_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
                 GitHub
               </a>
               .
@@ -408,59 +413,65 @@ function Sidebar({ setShowChat, showingChat, className }) {
     <div
       className={classNames(
         "sidebar flex flex-col",
-        open ? "open w-52" : "w-16",
+        open ? "open w-56" : "w-16",
         className
       )}
     >
-      <div className="self-end">
-        <button
-          className="btn-sidebar"
-          onClick={() => setOpen((state) => !state)}
-        >
-          <FontAwesomeIcon
-            icon={faArrowLeft}
-            className={classNames(
-              "transition-transform",
-              !open && "flip-horizontal"
-            )}
-            fixedWidth
-          />
-        </button>
+      <div className="self-end mb-2">
+        <label>
+          <span className="btn-txt">Collapse</span>
+          <button
+            className="btn-sidebar"
+            onClick={() => setOpen((state) => !state)}
+          >
+            <FontAwesomeIcon
+              icon={faArrowLeft}
+              className={classNames(
+                "transition-transform",
+                !open && "flip-horizontal"
+              )}
+              fixedWidth
+            />
+          </button>
+        </label>
       </div>
       {!hasTwitchAuth && (
         <div>
-          <a
-            className="btn-sidebar bg-black bg-purple-700"
-            href={TWITCH_AUTH_URL}
-          >
-            <FontAwesomeIcon icon={faTwitch} fixedWidth />
-          </a>
-          <label htmlFor="">Connect to Twitch</label>
+          <label>
+            <a
+              className="btn-sidebar bg-black bg-purple-700"
+              href={TWITCH_AUTH_URL}
+            >
+              <FontAwesomeIcon icon={faTwitch} fixedWidth />
+            </a>
+            <span className="btn-txt">Connect to Twitch</span>
+          </label>
         </div>
       )}
       <div>
-        <button
-          className="btn-sidebar bg-black"
-          onClick={() => setShowChat((state) => !state)}
-        >
-          <FontAwesomeIcon
-            icon={showingChat ? faCommentSlash : faComment}
-            fixedWidth
-          />
-        </button>
-        <label htmlFor="">Toggle Chat</label>
+        <label>
+          <button
+            className="btn-sidebar bg-black"
+            onClick={() => setShowChat((state) => !state)}
+          >
+            <FontAwesomeIcon
+              icon={showingChat ? faCommentSlash : faComment}
+              fixedWidth
+            />
+          </button>
+          <span className="btn-txt">Toggle Chat</span>
+        </label>
       </div>
       <div className="flex-grow" />
       <div className="mb-3">
-        <a
-          className="btn-sidebar bg-black"
-          href={PROJECT_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <FontAwesomeIcon icon={faGithub} fixedWidth />
-        </a>
-        <label htmlFor="">GitHub</label>
+        <label>
+          <a href={PROJECT_URL} target="_blank" rel="noreferrer">
+            <span className="btn-sidebar bg-black">
+              <FontAwesomeIcon icon={faGithub} fixedWidth />
+            </span>
+            <span className="btn-txt">GitHub</span>
+          </a>
+        </label>
       </div>
     </div>
   );

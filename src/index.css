@@ -23,11 +23,15 @@ body {
   @apply btn px-2 py-1 m-3;
 }
 
-.sidebar .btn-sidebar + label {
+.btn-txt {
+  cursor: pointer;
+}
+
+.sidebar .btn-txt {
   display: none;
 }
 
-.sidebar.open .btn-sidebar + label {
+.sidebar.open .btn-txt {
   display: unset;
 }
 
