@@ -34,7 +34,7 @@ export default function TwitchStream({
   const divId = `twitch-stream-embed-${channel}`;
 
   const posDivId = divId + "-pos";
-  const channelRect = useBounding(posDivId, { recalcInterval: 750 });
+  const channelRect = useBounding(posDivId, { recalcInterval: 250 });
 
   const style = useMemo(():
     | {
@@ -86,12 +86,10 @@ export default function TwitchStream({
 
   return (
     <>
-      <div id={posDivId} className="aspect-w-16 aspect-h-9 flex-grow bg-black">
-        <div className="flex">
-          <span className={classNames("m-auto", !primary && "hidden")}>
-            Watching
-          </span>
-        </div>
+      <div id={posDivId} className="flex-grow flex bg-black">
+        <span className={classNames("m-auto", !primary && "hidden")}>
+          Watching
+        </span>
       </div>
       <div id={divId} style={style} className="transition-all" />
     </>

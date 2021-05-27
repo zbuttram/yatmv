@@ -366,7 +366,7 @@ function StreamContainer({
         primary={isPrimary}
         primaryContainerRect={primaryContainerRect}
       />
-      <div className="py-2">
+      <div className="pt-2">
         {hasTwitchData && (
           <div className="text-xs truncate" title={title}>
             {title}

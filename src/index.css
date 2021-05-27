@@ -8,11 +8,11 @@ body {
 }
 
 .primary-container {
-  height: 80vh;
+  height: calc(80vh - (theme('spacing.3') * 2));
 }
 
 .stream-container {
-  max-height: 20vh;
+  height: calc(20vh + (theme('spacing.3') * 2));
 }
 
 .btn {
