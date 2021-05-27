@@ -280,12 +280,12 @@ export default function App() {
         </div>
         <div className="flex justify-center bg-gray-900">
           <div className="flex justify-center flex-wrap px-4 gap-4">
-            <div className="w-56 flex flex-col p-3">
+            <div className="flex flex-col p-3">
               <AddStream addNewStream={addNewStream} className="my-auto" />
             </div>
             {streams.map((stream, i) => (
               <StreamContainer
-                className="h-full w-56 flex flex-col justify-center p-3 bg-black stream-container"
+                className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
                 key={stream.displayName}
                 stream={stream}
                 isPrimary={
@@ -308,9 +308,13 @@ export default function App() {
           )}
           <div className="explainer max-w-prose mx-auto">
             <p>
-              <a href={TWITCH_AUTH_URL} className="underline">
-                Connect to Twitch
-              </a>{" "}
+              {hasTwitchAuth ? (
+                "Connect to Twitch"
+              ) : (
+                <a href={TWITCH_AUTH_URL} className="underline">
+                  Connect to Twitch
+                </a>
+              )}{" "}
               to enable additional features like live channel searching and
               stream titles! Your open channels will be saved.
             </p>
@@ -369,7 +373,7 @@ function StreamContainer({
         primary={isPrimary}
         primaryContainerRect={primaryContainerRect}
       />
-      <div className="pt-2">
+      <div className="pt-2 pb-1">
         {hasTwitchData && (
           <div className="text-xs truncate" title={title}>
             {title}
