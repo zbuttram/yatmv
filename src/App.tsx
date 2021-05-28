@@ -76,14 +76,14 @@ export default function App() {
     reloadFromAuthPrimary || urlPrimary || streams[0]?.displayName.toLowerCase()
   );
   const setPrimaryStreamName = useCallback(
-    function setPrimaryStreamName(streamName: string) {
-      _setPrimaryStreamName(streamName.toLowerCase());
+    function setPrimaryStreamName(streamName?: string) {
+      _setPrimaryStreamName(streamName?.toLowerCase());
     },
     [_setPrimaryStreamName]
   );
   const setPrimaryStream = useCallback(
-    function setPrimaryStream(stream: Stream) {
-      setPrimaryStreamName(stream.displayName);
+    function setPrimaryStream(stream?: Stream) {
+      setPrimaryStreamName(stream?.displayName);
     },
     [setPrimaryStreamName]
   );
@@ -115,14 +115,15 @@ export default function App() {
           (s) => s.displayName.toLowerCase() === primaryStreamName
         ) === index
       ) {
-        setPrimaryStream(streams[index + (index === 0 ? 1 : -1)]);
+        const newPrimary = streams[index + (index === 0 ? 1 : -1)];
+        setPrimaryStream(newPrimary ? newPrimary : undefined);
       }
       setStreams(
         produce((draft) => {
           draft.splice(index, 1);
         })
       );
-      requestAnimationFrame(() => events.emit(GLOBAL_RECALC_BOUNDING));
+      setTimeout(() => events.emit(GLOBAL_RECALC_BOUNDING));
     },
     [primaryStreamName, setPrimaryStream, streams]
   );
@@ -241,7 +242,13 @@ export default function App() {
     evictOldChats();
     const interval = setInterval(evictOldChats, 10000);
     return () => clearInterval(interval);
-  }, [primaryStreamName, loadedChats, setLoadedChats, streams]);
+  }, [
+    primaryStreamName,
+    loadedChats,
+    setLoadedChats,
+    streams,
+    prevPrimaryStream,
+  ]);
 
   const [fetchingStreamData, setFetchingStreamData] =
     useState<string | null>(null);
