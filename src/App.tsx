@@ -182,8 +182,6 @@ export default function App() {
         }
       );
 
-      console.log({ hasLoadedPrimary });
-
       if (!hasLoadedPrimary) {
         setLoadedChats((state) => [
           ...state,
