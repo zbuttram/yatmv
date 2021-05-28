@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,6 +11,7 @@ import {
   faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
+import { usePrevious } from "react-use";
 
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
@@ -86,6 +87,7 @@ export default function App() {
     },
     [setPrimaryStreamName]
   );
+  const prevPrimaryStream = usePrevious(primaryStreamName);
 
   const addNewStream = useCallback(
     function addNewStream(stream: Stream) {
@@ -165,30 +167,48 @@ export default function App() {
 
   // lazy loading chats
   useEffect(() => {
-    let primaryChatIndex, primaryChatLastOpened;
-    const hasLoadedPrimary = loadedChats.some(({ channel, lastOpened }, i) => {
-      const isPrimary = channel === primaryStreamName;
-      if (isPrimary) {
-        primaryChatIndex = i;
-        primaryChatLastOpened = lastOpened;
-        return true;
-      }
-    });
+    if (primaryStreamName) {
+      let primaryChatIndex, primaryChatLastOpened;
+      const hasLoadedPrimary = loadedChats.some(
+        ({ channel, lastOpened }, i) => {
+          const isPrimary = channel === primaryStreamName;
+          if (isPrimary) {
+            primaryChatIndex = i;
+            primaryChatLastOpened = lastOpened;
+            return true;
+          } else {
+            return false;
+          }
+        }
+      );
 
-    if (primaryStreamName && !hasLoadedPrimary) {
-      setLoadedChats((state) => [
-        ...state,
-        { channel: primaryStreamName, lastOpened: epoch() },
-      ]);
-    } else {
-      const now = epoch();
-      if (primaryChatLastOpened <= now - 1) {
-        setLoadedChats(
-          produce((state) => {
-            state[primaryChatIndex].lastOpened = epoch();
-          })
-        );
+      console.log({ hasLoadedPrimary });
+
+      if (!hasLoadedPrimary) {
+        setLoadedChats((state) => [
+          ...state,
+          { channel: primaryStreamName, lastOpened: epoch() },
+        ]);
+      } else {
+        const now = epoch();
+        if (primaryChatLastOpened <= now - 1) {
+          setLoadedChats(
+            produce((state) => {
+              state[primaryChatIndex].lastOpened = epoch();
+            })
+          );
+        }
       }
+    }
+
+    if (prevPrimaryStream) {
+      setLoadedChats(
+        produce((state) => {
+          state[
+            state.findIndex(({ channel }) => channel === prevPrimaryStream)
+          ].lastOpened = epoch();
+        })
+      );
     }
 
     const channelsToRemove: string[] = [];
@@ -211,7 +231,11 @@ export default function App() {
         )
       ) {
         setLoadedChats((state) =>
-          state.filter(({ lastOpened }) => lastOpened < epoch(-CHAT_EVICT_SEC))
+          state.filter(
+            ({ lastOpened, channel }) =>
+              channel === primaryStreamName ||
+              lastOpened > epoch(-CHAT_EVICT_SEC)
+          )
         );
       }
     }
