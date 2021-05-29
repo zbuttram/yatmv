@@ -321,25 +321,21 @@ export default function App() {
             />
           ))}
         </div>
-        <div className="flex justify-center bg-gray-900">
-          <div className="flex justify-center flex-wrap px-4 gap-4">
-            <div className="flex flex-col p-3">
-              <AddStream addNewStream={addNewStream} className="my-auto" />
-            </div>
-            {streams.map((stream, i) => (
-              <StreamContainer
-                className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
-                key={stream.displayName}
-                stream={stream}
-                isPrimary={
-                  stream.displayName.toLowerCase() === primaryStreamName
-                }
-                primaryContainerRect={primaryContainerRect}
-                setPrimaryStream={setPrimaryStream}
-                remove={() => removeStream(i)}
-              />
-            ))}
+        <div className="flex justify-center flex-wrap px-4 gap-4 bg-gray-900">
+          <div className="w-64 flex flex-col p-3">
+            <AddStream addNewStream={addNewStream} className="my-auto" />
           </div>
+          {streams.map((stream, i) => (
+            <StreamContainer
+              className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
+              key={stream.displayName}
+              stream={stream}
+              isPrimary={stream.displayName.toLowerCase() === primaryStreamName}
+              primaryContainerRect={primaryContainerRect}
+              setPrimaryStream={setPrimaryStream}
+              remove={() => removeStream(i)}
+            />
+          ))}
         </div>
         <div className="mx-auto p-8 mt-16 mb-8 bg-gray-900 rounded-md text-center">
           <h1 className="text-6xl mb-2">YATMV</h1>
@@ -428,7 +424,7 @@ function StreamContainer({
               {title}
             </div>
           )}
-          <div className="text-sm">{displayName}</div>
+          <div className="font-bold">{displayName}</div>
         </div>
         <div className="flex">
           {!isPrimary && (
