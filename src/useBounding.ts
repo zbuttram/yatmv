@@ -12,13 +12,21 @@ export default function useBounding(
     const element = document.getElementById(id);
     if (!element) return;
     const { top, left, width, height } = element.getBoundingClientRect();
-    _setRect({
+    const newRect = {
       top: top + window.scrollY,
       left: left + window.scrollX,
       width,
       height,
-    });
-  }, [id, _setRect]);
+    };
+    if (
+      rect.top !== newRect.top ||
+      rect.left !== newRect.left ||
+      rect.width !== newRect.width ||
+      rect.height !== newRect.height
+    ) {
+      _setRect(newRect);
+    }
+  }, [id, rect, _setRect]);
 
   useEffect(() => {
     const ro = new ResizeObserver(() => {

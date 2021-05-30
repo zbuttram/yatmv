@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
 
 import useBounding from "./useBounding";
+import Log from "./log";
 
 type TwitchPlayer = {
   new (
@@ -16,7 +17,11 @@ type TwitchPlayer = {
   ): TwitchPlayer;
   setChannel(channel: string): void;
   setMuted(muted: boolean): void;
+  setQuality(name: string): void;
+  getQualities(): any[];
   _iframe: HTMLIFrameElement;
+  addEventListener(event: string, callback: () => void): any;
+  PLAYING: "playing";
   // there are some other properties and methods in here, not all of them documented
 };
 
@@ -72,6 +77,13 @@ export default function TwitchStream({
         width: "100%",
         height: "100%",
       });
+
+      player?.current?.setQuality(primary ? "chunked" : "auto");
+
+      player.current.addEventListener(Twitch.Player.PLAYING, () => {
+        const qualities = player.current?.getQualities();
+        Log({ channel, qualities });
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -82,6 +94,7 @@ export default function TwitchStream({
 
   useEffect(() => {
     player?.current?.setMuted(!primary);
+    player?.current?.setQuality(primary ? "chunked" : "auto");
   }, [primary]);
 
   return (
