@@ -1,11 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useLayoutEffect } from "react";
 
-import events, { GLOBAL_RECALC_BOUNDING } from "./events";
-
-export default function useBounding(
-  id: string,
-  { recalcInterval }: { recalcInterval?: number } = {}
-): Partial<DOMRect> {
+export default function useBounding(id: string): Partial<DOMRect> {
   const [rect, _setRect] = useState<Partial<DOMRect>>({});
 
   const setRect = useCallback(() => {
@@ -28,31 +23,18 @@ export default function useBounding(
     }
   }, [id, rect, _setRect]);
 
-  useEffect(() => {
-    const ro = new ResizeObserver(() => {
+  useLayoutEffect(() => {
+    let loop = true;
+    const af = requestAnimationFrame(function doLoop() {
       setRect();
+      if (loop) requestAnimationFrame(doLoop);
     });
 
-    const el = document.getElementById(id);
-    el && ro.observe(el);
-
-    function delayedSetRect() {
-      setTimeout(setRect);
-    }
-
-    events.on(GLOBAL_RECALC_BOUNDING, delayedSetRect);
-
-    let interval;
-    if (recalcInterval) {
-      interval = setInterval(setRect, recalcInterval);
-    }
-
     return () => {
-      if (interval) clearInterval(interval);
-      events.off(GLOBAL_RECALC_BOUNDING, delayedSetRect);
-      ro.disconnect();
+      cancelAnimationFrame(af);
+      loop = false;
     };
-  }, [id, setRect, recalcInterval]);
+  }, [id, setRect]);
 
   return rect;
 }

@@ -16,7 +16,6 @@ import { usePrevious } from "react-use";
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
-import events, { GLOBAL_RECALC_BOUNDING } from "./events";
 import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
 import AddStream from "./AddStream";
 import { checkTwitchAuth, searchChannels, Stream } from "./twitch";
@@ -102,7 +101,6 @@ export default function App() {
           setPrimaryStream(stream);
         }
         setStreams((s) => [stream, ...s]);
-        setTimeout(() => events.emit(GLOBAL_RECALC_BOUNDING));
       }
     },
     [setPrimaryStream, streams]
@@ -123,7 +121,6 @@ export default function App() {
           draft.splice(index, 1);
         })
       );
-      setTimeout(() => events.emit(GLOBAL_RECALC_BOUNDING));
     },
     [primaryStreamName, setPrimaryStream, streams]
   );

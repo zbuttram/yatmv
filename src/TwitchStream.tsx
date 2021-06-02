@@ -39,7 +39,7 @@ export default function TwitchStream({
   const divId = `twitch-stream-embed-${channel}`;
 
   const posDivId = divId + "-pos";
-  const channelRect = useBounding(posDivId, { recalcInterval: 250 });
+  const channelRect = useBounding(posDivId);
 
   const style = useMemo(():
     | {
