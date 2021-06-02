@@ -55,16 +55,19 @@ async function callTwitch<T>(url, init): Promise<T> {
 export async function searchChannels(
   query: string,
   { first, signal }: Partial<{ first: number; signal: AbortSignal }> = {}
-) {
+): Promise<{ data: StreamWithTwitchData[] }> {
   const queryString = new URLSearchParams({
     query,
     live_only: "true",
     ...(first ? { first: first.toString() } : {}),
   });
-  const result = await callTwitch<{ data: StreamWithTwitchData[] }>(
+  const { data, ...rest } = await callTwitch<{ data: Required<Stream>[] }>(
     "https://api.twitch.tv/helix/search/channels?" + queryString,
     { signal }
   );
-  result.data = result.data.map((res) => ({ ...res, hasTwitchData: true }));
-  return result;
+
+  return {
+    data: data.map((res) => ({ ...res, hasTwitchData: true })),
+    ...rest,
+  };
 }
