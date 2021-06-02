@@ -1,4 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  SetStateAction,
+  Dispatch,
+} from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -9,6 +16,8 @@ import {
   faExpand,
   faTrash,
   faArrowLeft,
+  faRocket,
+  faSlash,
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { usePrevious } from "react-use";
@@ -19,6 +28,7 @@ import useBounding from "./useBounding";
 import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
 import AddStream from "./AddStream";
 import { checkTwitchAuth, searchChannels, Stream } from "./twitch";
+import useSettings, { Settings, SettingsProvider } from "./useSettings";
 
 const PROJECT_URL = "https://github.com/zbuttram/yatmv";
 const TWITCH_SCOPES = [];
@@ -64,7 +74,7 @@ if (document.location.hash) {
 const hasTwitchAuth = checkTwitchAuth();
 
 export default function App() {
-  const [showChat, setShowChat] = useState(true);
+  const [settings, setSettings] = useSettings();
   const [streams, setStreams] = useState<Stream[]>(
     reloadFromAuthStreams || parsedUrlStreams
   );
@@ -291,9 +301,11 @@ export default function App() {
     })(streamToFetch);
   }, [streams, setStreams, fetchingStreamData, setFetchingStreamData]);
 
+  const { showChat } = settings;
+
   //region AppReturn
   return (
-    <>
+    <SettingsProvider value={settings}>
       <main className="flex flex-col ring-white ring-opacity-60">
         <div
           className={classNames(
@@ -303,8 +315,8 @@ export default function App() {
         >
           <Sidebar
             className="flex flex-col bg-blue-800"
-            showingChat={showChat}
-            setShowChat={setShowChat}
+            settings={settings}
+            setSettings={setSettings}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
           {loadedChats.map(({ channel }) => (
@@ -369,7 +381,7 @@ export default function App() {
           </div>
         </div>
       </main>
-    </>
+    </SettingsProvider>
   );
 }
 
@@ -444,7 +456,16 @@ function StreamContainer({
   );
 }
 
-function Sidebar({ setShowChat, showingChat, className }) {
+function Sidebar({
+  className,
+  settings,
+  setSettings,
+}: {
+  className?: string;
+  settings: Settings;
+  setSettings: Dispatch<SetStateAction<Settings>>;
+}) {
+  const { boostMode, showChat } = settings;
   const [open, setOpen] = useState(false);
 
   return (
@@ -490,14 +511,40 @@ function Sidebar({ setShowChat, showingChat, className }) {
         <label>
           <button
             className="btn-sidebar bg-black"
-            onClick={() => setShowChat((state) => !state)}
+            onClick={() =>
+              setSettings(({ showChat, ...state }) => ({
+                ...state,
+                showChat: !showChat,
+              }))
+            }
           >
             <FontAwesomeIcon
-              icon={showingChat ? faCommentSlash : faComment}
+              icon={showChat ? faCommentSlash : faComment}
               fixedWidth
             />
           </button>
-          <span className="btn-txt">Toggle Chat</span>
+          <span className="btn-txt">{showChat ? "Hide" : "Show"} Chat</span>
+        </label>
+      </div>
+      <div>
+        <label>
+          <button
+            className="btn-sidebar bg-black"
+            onClick={() =>
+              setSettings(({ boostMode, ...state }) => ({
+                ...state,
+                boostMode: !boostMode,
+              }))
+            }
+          >
+            <div className="fa-layers fa-fw">
+              <FontAwesomeIcon icon={faRocket} />
+              {!boostMode && <FontAwesomeIcon icon={faSlash} />}
+            </div>
+          </button>
+          <span className="btn-txt">
+            {boostMode ? "Disable" : "Enable"} Boost Mode
+          </span>
         </label>
       </div>
       <div className="flex-grow" />

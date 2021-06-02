@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useContext } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
 
+import { SettingsContext } from "./useSettings";
 import useBounding from "./useBounding";
 import Log from "./log";
+import { usePrevious } from "react-use";
 
 type TwitchPlayer = {
   new (
@@ -40,6 +42,9 @@ export default function TwitchStream({
 
   const posDivId = divId + "-pos";
   const channelRect = useBounding(posDivId);
+
+  const { boostMode } = useContext(SettingsContext);
+  const prevBoostMode = usePrevious(boostMode);
 
   const style = useMemo(():
     | {
@@ -78,7 +83,9 @@ export default function TwitchStream({
         height: "100%",
       });
 
-      player?.current?.setQuality(primary ? "chunked" : "auto");
+      if (boostMode) {
+        player?.current?.setQuality(primary ? "chunked" : "auto");
+      }
 
       player.current.addEventListener(Twitch.Player.PLAYING, () => {
         const qualities = player.current?.getQualities();
@@ -94,8 +101,13 @@ export default function TwitchStream({
 
   useEffect(() => {
     player?.current?.setMuted(!primary);
-    player?.current?.setQuality(primary ? "chunked" : "auto");
-  }, [primary]);
+    if (boostMode) {
+      player?.current?.setQuality(primary ? "chunked" : "auto");
+    }
+    if (prevBoostMode && !boostMode) {
+      player?.current?.setQuality("auto");
+    }
+  }, [boostMode, prevBoostMode, primary]);
 
   return (
     <>
