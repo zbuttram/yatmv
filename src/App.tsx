@@ -269,7 +269,7 @@ export default function App() {
     }
     let streamToFetch;
     streams.some((stream) => {
-      if (!stream.hasTwitchData) {
+      if (!stream.hasChannelData) {
         streamToFetch = stream;
         return true;
       } else {
@@ -407,7 +407,7 @@ function StreamContainer({
   setPrimaryStream: (stream: Stream) => void;
   className?: string;
 }) {
-  const { broadcasterLogin, displayName, hasTwitchData, title } = stream;
+  const { broadcasterLogin, displayName, hasChannelData, title } = stream;
   const [isRemoving, setIsRemoving] = useState(false);
   const timeout = useRef<ReturnType<typeof setTimeout> | undefined>();
 
@@ -435,7 +435,7 @@ function StreamContainer({
       />
       <div className="w-full flex flex-col self-end">
         <div className="pt-2 pb-1">
-          {hasTwitchData && (
+          {hasChannelData && (
             <div className="text-xs truncate" title={title}>
               {title}
             </div>

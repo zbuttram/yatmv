@@ -4,12 +4,12 @@ import { debounce, DebouncedFunc } from "lodash";
 import {
   checkTwitchAuth,
   searchChannels,
-  StreamWithTwitchData,
+  StreamWithChannelData,
 } from "./twitch";
 
 export default function AddStream({ addNewStream, className = "" }) {
   const [newStream, setNewStream] = useState("");
-  const [searchResults, setSearchResults] = useState<StreamWithTwitchData[]>(
+  const [searchResults, setSearchResults] = useState<StreamWithChannelData[]>(
     []
   );
   const [searching, setSearching] = useState(false);
