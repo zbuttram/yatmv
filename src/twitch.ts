@@ -1,24 +1,8 @@
 import Cookies from "js-cookie";
-import { camelCase } from "lodash";
+import { camelCase, snakeCase } from "lodash";
 import mapKeysDeep from "map-keys-deep-lodash";
 
 import { TWITCH_ACCESS_TOKEN_COOKIE, TWITCH_CLIENT_ID } from "./const";
-
-export type Stream = {
-  displayName: string;
-  broadcasterLogin?: string;
-  gameId?: string;
-  gameName?: string;
-  id?: string;
-  isLive?: boolean;
-  tagsIds?: string[];
-  thumbnailUrl?: string;
-  title?: string;
-  startedAt?: string;
-  hasChannelData?: boolean;
-};
-
-export type StreamWithChannelData = Required<Stream> & { hasChannelData: true };
 
 let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
 
@@ -36,24 +20,27 @@ export function checkTwitchAuth() {
   }
 }
 
-type Params = Record<string, number | string | boolean | undefined>;
+type ParamValue = number | string | string[] | boolean | undefined;
+type Params = Record<string, ParamValue>;
 
-function paramsToString(params?: Params) {
+type PaginatedResponse<T> = { data: T; pagination: { cursor?: string } };
+
+function paramsToString(params?: Params): string {
   if (!params) {
     return "";
   } else {
-    return new URLSearchParams(
-      Object.entries(params).reduce(
-        (acc: string[][], [key, val]): string[][] => {
-          if (val) {
-            return [...acc, [key, val.toString()]];
-          } else {
-            return acc;
-          }
-        },
-        []
-      )
-    ).toString();
+    const search = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (!v) {
+        return;
+      }
+      if (Array.isArray(v)) {
+        v.forEach((e) => search.append(snakeCase(k), e));
+      } else {
+        search.append(snakeCase(k), v.toString());
+      }
+    });
+    return search.toString();
   }
 }
 
@@ -89,21 +76,63 @@ async function callTwitch<T>(
   return mapKeysDeep(parsed, (_, key) => camelCase(key));
 }
 
-export async function searchChannels(
+export type ChannelData = {
+  displayName: string;
+  broadcasterLogin: string;
+  gameId: string;
+  gameName: string;
+  id: string;
+  isLive: boolean;
+  tagsIds: string[];
+  thumbnailUrl: string;
+  title: string;
+  startedAt: string;
+};
+
+export function searchChannels(
   query: string,
   {
     first,
     signal,
   }: Partial<{ first: number | string; signal: AbortSignal }> = {}
-): Promise<{ data: StreamWithChannelData[] }> {
-  const { data, ...rest } = await callTwitch<{ data: Required<Stream>[] }>(
-    "/search/channels",
-    { signal, params: { first, live_only: true } }
-  );
-
-  return {
-    data: data.map((res) => ({ ...res, hasChannelData: true })),
-    ...rest,
-  };
+) {
+  return callTwitch<PaginatedResponse<ChannelData[]>>("/search/channels", {
+    signal,
+    params: { query, first, live_only: true },
+  });
 }
 
+export type StreamData = {
+  userId: string;
+  userLogin: string;
+  userName: string;
+  gameId: string;
+  gameName: string;
+  type: "live" | "";
+  id: string;
+  viewerCount: number;
+  language: string;
+  thumbnailUrl: string;
+  isMature: boolean;
+  tagsIds: string[];
+  title: string;
+  startedAt: string;
+};
+
+export function getStreams({
+  first,
+  gameId,
+  userId,
+  userLogin,
+}: Partial<{
+  first: number;
+  gameId: ParamValue;
+  userId: ParamValue;
+  userLogin: ParamValue;
+}>) {
+  return callTwitch<PaginatedResponse<StreamData[]>>("/streams", {
+    params: { first, gameId, userId, userLogin: userLogin },
+  });
+}
+
+// export async function getFollowedStreams() {}

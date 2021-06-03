@@ -1,17 +1,11 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import classNames from "classnames";
 import { debounce, DebouncedFunc } from "lodash";
-import {
-  checkTwitchAuth,
-  searchChannels,
-  StreamWithChannelData,
-} from "./twitch";
+import { checkTwitchAuth, searchChannels, ChannelData } from "./twitch";
 
 export default function AddStream({ addNewStream, className = "" }) {
   const [newStream, setNewStream] = useState("");
-  const [searchResults, setSearchResults] = useState<StreamWithChannelData[]>(
-    []
-  );
+  const [searchResults, setSearchResults] = useState<ChannelData[]>([]);
   const [searching, setSearching] = useState(false);
   const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
 
@@ -22,9 +16,9 @@ export default function AddStream({ addNewStream, className = "" }) {
         (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
       );
       if (found) {
-        addNewStream(found);
+        addNewStream(found.displayName);
       } else {
-        addNewStream({ displayName: newStream });
+        addNewStream(newStream);
       }
       setNewStream("");
       setSearchResults([]);
@@ -108,7 +102,7 @@ export default function AddStream({ addNewStream, className = "" }) {
                     newStream.toLowerCase() && "bg-gray-400"
                 )}
                 onClick={() => {
-                  addNewStream(result);
+                  addNewStream(result.displayName);
                   setNewStream("");
                 }}
               >

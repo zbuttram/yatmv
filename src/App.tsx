@@ -29,8 +29,9 @@ import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
 import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
 import AddStream from "./AddStream";
-import { checkTwitchAuth, searchChannels, Stream } from "./twitch";
+import { checkTwitchAuth, StreamData } from "./twitch";
 import useSettings, { Settings, SettingsProvider } from "./useSettings";
+import useTwitchData from "./useTwitchData";
 
 const PROJECT_URL = "https://github.com/zbuttram/yatmv";
 const TWITCH_SCOPES = [];
@@ -40,24 +41,20 @@ const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbc
 const STREAM_STATE_COOKIE = "yatmv-state";
 const CHAT_EVICT_SEC = 60 * 15;
 
-function streamNameToObject(streamName) {
-  return { displayName: streamName };
-}
-
 function epoch(diff: number = 0) {
   return Math.floor(Date.now() / 1000) + diff;
 }
 
 const pageURL = new URL(window.location.href);
-let parsedUrlStreams: Stream[] = [];
+let parsedUrlStreams: string[] = [];
 const urlStreams = pageURL.searchParams.get("streams");
 if (urlStreams) {
-  parsedUrlStreams = urlStreams.split(",").map(streamNameToObject);
+  parsedUrlStreams = urlStreams.split(",");
 }
 
 const urlPrimary = pageURL.searchParams.get("primary");
 
-let reloadFromAuthStreams: Stream[], reloadFromAuthPrimary: string;
+let reloadFromAuthStreams: string[], reloadFromAuthPrimary: string;
 if (document.location.hash) {
   const hashParams = new URLSearchParams(document.location.hash.slice(1));
   const accessTokenParam = hashParams.get("access_token");
@@ -68,7 +65,7 @@ if (document.location.hash) {
     if (rawStreamState) {
       const parsedStreamState: { streams: string[]; primary: string } =
         JSON.parse(rawStreamState);
-      reloadFromAuthStreams = parsedStreamState.streams.map(streamNameToObject);
+      reloadFromAuthStreams = parsedStreamState.streams;
       reloadFromAuthPrimary = parsedStreamState.primary;
     }
   }
@@ -77,36 +74,24 @@ const hasTwitchAuth = checkTwitchAuth();
 
 export default function App() {
   const [settings, setSettings] = useSettings();
-  const [streams, setStreams] = useState<Stream[]>(
+  const [streams, setStreams] = useState<string[]>(
     reloadFromAuthStreams || parsedUrlStreams
   );
 
-  const [primaryStreamName, _setPrimaryStreamName] = useState<
-    string | undefined
-  >(
-    reloadFromAuthPrimary || urlPrimary || streams[0]?.displayName.toLowerCase()
-  );
-  const setPrimaryStreamName = useCallback(
-    function setPrimaryStreamName(streamName?: string) {
-      _setPrimaryStreamName(streamName?.toLowerCase());
-    },
-    [_setPrimaryStreamName]
+  const [primaryStreamName, _setPrimaryStream] = useState<string | undefined>(
+    reloadFromAuthPrimary || urlPrimary || streams[0]?.toLowerCase()
   );
   const setPrimaryStream = useCallback(
-    function setPrimaryStream(stream?: Stream) {
-      setPrimaryStreamName(stream?.displayName);
+    function setPrimaryStreamName(streamName?: string) {
+      _setPrimaryStream(streamName?.toLowerCase());
     },
-    [setPrimaryStreamName]
+    [_setPrimaryStream]
   );
   const prevPrimaryStream = usePrevious(primaryStreamName);
 
   const addNewStream = useCallback(
-    function addNewStream(stream: Stream) {
-      if (
-        streams
-          .map((s) => s.displayName.toLowerCase())
-          .includes(stream.displayName.toLowerCase())
-      ) {
+    function addNewStream(stream: string) {
+      if (streams.map((s) => s.toLowerCase()).includes(stream.toLowerCase())) {
         setPrimaryStream(stream);
       } else {
         if (streams.length < 1) {
@@ -121,9 +106,8 @@ export default function App() {
   const removeStream = useCallback(
     function removeStream(index: number) {
       if (
-        streams.findIndex(
-          (s) => s.displayName.toLowerCase() === primaryStreamName
-        ) === index
+        streams.findIndex((s) => s.toLowerCase() === primaryStreamName) ===
+        index
       ) {
         const newPrimary = streams[index + (index === 0 ? 1 : -1)];
         setPrimaryStream(newPrimary ? newPrimary : undefined);
@@ -143,7 +127,7 @@ export default function App() {
     const params = new URLSearchParams(url.search);
 
     streams
-      ? params.set("streams", streams.map((s) => s.displayName).toString())
+      ? params.set("streams", streams.toString())
       : params.delete("streams");
     primaryStreamName
       ? params.set("primary", primaryStreamName)
@@ -155,7 +139,7 @@ export default function App() {
       Cookies.set(
         STREAM_STATE_COOKIE,
         JSON.stringify({
-          streams: streams.map((s) => s.displayName),
+          streams: streams,
           primaryStream: primaryStreamName,
         })
       );
@@ -221,7 +205,7 @@ export default function App() {
 
     const channelsToRemove: string[] = [];
     loadedChats.forEach(({ channel }) => {
-      if (!streams.map((s) => s.displayName.toLowerCase()).includes(channel)) {
+      if (!streams.map((s) => s.toLowerCase()).includes(channel)) {
         channelsToRemove.push(channel);
       }
     });
@@ -259,49 +243,7 @@ export default function App() {
     prevPrimaryStream,
   ]);
 
-  const [fetchingStreamData, setFetchingStreamData] =
-    useState<string | null>(null);
-
-  // fetch channel data from Twitch
-  useEffect(() => {
-    if (!hasTwitchAuth || fetchingStreamData) {
-      return;
-    }
-    let streamToFetch;
-    streams.some((stream) => {
-      if (!stream.hasChannelData) {
-        streamToFetch = stream;
-        return true;
-      } else {
-        return false;
-      }
-    });
-    if (!streamToFetch) {
-      return;
-    }
-    setFetchingStreamData(streamToFetch.displayName);
-    (async function getStreamData(streamToFetch) {
-      const results = await searchChannels(streamToFetch.displayName, {
-        first: 5,
-      });
-      const found = results.data.find(
-        (res) =>
-          res.displayName.toLowerCase() ===
-          streamToFetch.displayName.toLowerCase()
-      );
-      if (found) {
-        setStreams(
-          produce((streams) => {
-            const idxToUpdate = streams.findIndex(
-              (s) => s.displayName === streamToFetch.displayName
-            );
-            streams[idxToUpdate] = { ...streams[idxToUpdate], ...found };
-          })
-        );
-      }
-      setFetchingStreamData(null);
-    })(streamToFetch);
-  }, [streams, setStreams, fetchingStreamData, setFetchingStreamData]);
+  const streamData = useTwitchData({ streams, hasTwitchAuth });
 
   const { showChat, fullHeightPlayer } = settings;
 
@@ -344,9 +286,10 @@ export default function App() {
           {streams.map((stream, i) => (
             <StreamContainer
               className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
-              key={stream.displayName}
+              key={stream}
               stream={stream}
-              isPrimary={stream.displayName.toLowerCase() === primaryStreamName}
+              streamData={streamData[stream.toLowerCase()]}
+              isPrimary={stream.toLowerCase() === primaryStreamName}
               primaryContainerRect={primaryContainerRect}
               setPrimaryStream={setPrimaryStream}
               remove={() => removeStream(i)}
@@ -394,20 +337,22 @@ export default function App() {
 
 function StreamContainer({
   stream,
+  streamData,
   isPrimary,
   primaryContainerRect,
   remove,
   setPrimaryStream,
   className,
 }: {
-  stream: Stream;
+  stream: string;
+  streamData?: StreamData;
   isPrimary: boolean;
   primaryContainerRect: Partial<DOMRect>;
   remove: () => void;
-  setPrimaryStream: (stream: Stream) => void;
+  setPrimaryStream: (stream: string) => void;
   className?: string;
 }) {
-  const { broadcasterLogin, displayName, hasChannelData, title } = stream;
+  const { title, userName } = streamData ?? {};
   const [isRemoving, setIsRemoving] = useState(false);
   const timeout = useRef<ReturnType<typeof setTimeout> | undefined>();
 
@@ -429,18 +374,18 @@ function StreamContainer({
   return (
     <div className={className}>
       <TwitchStream
-        channel={broadcasterLogin || displayName.toLowerCase()}
+        channel={stream.toLowerCase()}
         primary={isPrimary}
         primaryContainerRect={primaryContainerRect}
       />
       <div className="w-full flex flex-col self-end">
         <div className="pt-2 pb-1">
-          {hasChannelData && (
+          {streamData && (
             <div className="text-xs truncate" title={title}>
               {title}
             </div>
           )}
-          <div className="font-bold">{displayName}</div>
+          <div className="font-bold">{userName ?? stream}</div>
         </div>
         <div className="flex">
           {!isPrimary && (
