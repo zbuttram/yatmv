@@ -9,5 +9,3 @@
 * followed streams picker
     * favorites?
 * reload stream data
-* automatic stream quality updating
-  * auto quality on twitch doesn't always play nice with resizing, though it eventually gets it right most of the time
