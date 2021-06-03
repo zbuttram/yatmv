@@ -18,6 +18,8 @@ import {
   faArrowLeft,
   faRocket,
   faSlash,
+  faCompressArrowsAlt,
+  faExpandArrowsAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { usePrevious } from "react-use";
@@ -301,12 +303,17 @@ export default function App() {
     })(streamToFetch);
   }, [streams, setStreams, fetchingStreamData, setFetchingStreamData]);
 
-  const { showChat } = settings;
+  const { showChat, fullHeightPlayer } = settings;
 
   //region AppReturn
   return (
     <SettingsProvider value={settings}>
-      <main className="flex flex-col ring-white ring-opacity-60">
+      <main
+        className={classNames(
+          "flex flex-col ring-white ring-opacity-60",
+          fullHeightPlayer && "fullheight-player"
+        )}
+      >
         <div
           className={classNames(
             "flex primary-container",
@@ -465,7 +472,7 @@ function Sidebar({
   settings: Settings;
   setSettings: Dispatch<SetStateAction<Settings>>;
 }) {
-  const { boostMode, showChat } = settings;
+  const { boostMode, showChat, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
 
   return (
@@ -544,6 +551,28 @@ function Sidebar({
           </button>
           <span className="btn-txt">
             {boostMode ? "Disable" : "Enable"} Boost Mode
+          </span>
+        </label>
+      </div>
+      <div>
+        <label>
+          <button
+            className="btn-sidebar bg-black"
+            onClick={() =>
+              setSettings(({ fullHeightPlayer, ...state }) => ({
+                ...state,
+                fullHeightPlayer: !fullHeightPlayer,
+              }))
+            }
+          >
+            {fullHeightPlayer ? (
+              <FontAwesomeIcon icon={faCompressArrowsAlt} fixedWidth />
+            ) : (
+              <FontAwesomeIcon icon={faExpandArrowsAlt} fixedWidth />
+            )}
+          </button>
+          <span className="btn-txt">
+            {fullHeightPlayer ? "Disable" : "Enable"} Full Height
           </span>
         </label>
       </div>

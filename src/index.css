@@ -11,6 +11,10 @@ body {
   height: calc(80vh - (theme('spacing.3') * 2));
 }
 
+.fullheight-player .primary-container {
+  height: 100vh;
+}
+
 .stream-container {
   height: calc(20vh + (theme('spacing.3') * 2));
 }
