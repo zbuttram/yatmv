@@ -84,13 +84,12 @@ export default function TwitchStream({
         height: "100%",
       });
 
-      if (boostMode) {
-        player?.current?.setQuality(primary ? "chunked" : "auto");
-      }
-
       player.current.addEventListener(Twitch.Player.PLAYING, () => {
-        const qualities = player.current?.getQualities();
-        Log({ channel, qualities });
+        // const qualities = player.current?.getQualities();
+        // Log({ channel, qualities });
+        if (boostMode) {
+          player?.current?.setQuality(primary ? "chunked" : "auto");
+        }
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

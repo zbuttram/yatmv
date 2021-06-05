@@ -11,8 +11,8 @@ import {
   TWITCH_AUTH_URL,
 } from "./const";
 
-let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
 let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
+let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
 if (accessToken && savedScopes !== TWITCH_SCOPES.toString()) {
   Cookies.remove(TWITCH_ACCESS_TOKEN_COOKIE);
   Cookies.remove(TWITCH_SCOPE_COOKIE);
@@ -33,7 +33,7 @@ export function handleTwitchAuthCallback() {
         expires: 59,
       };
       Cookies.set(TWITCH_ACCESS_TOKEN_COOKIE, accessTokenParam, cookieOptions);
-      Cookies.set(TWITCH_SCOPE_COOKIE, TWITCH_SCOPES, cookieOptions);
+      Cookies.set(TWITCH_SCOPE_COOKIE, TWITCH_SCOPES.toString(), cookieOptions);
       hasTwitchAuth = true;
       document.location.hash = "";
       const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);

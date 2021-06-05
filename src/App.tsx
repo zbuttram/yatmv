@@ -437,19 +437,6 @@ function Sidebar({
           </button>
         </label>
       </div>
-      {!hasTwitchAuth && (
-        <div>
-          <label>
-            <a
-              className="btn-sidebar bg-black bg-purple-700"
-              href={TWITCH_AUTH_URL}
-            >
-              <FontAwesomeIcon icon={faTwitch} fixedWidth />
-            </a>
-            <span className="btn-txt">Connect to Twitch</span>
-          </label>
-        </div>
-      )}
       <div>
         <label>
           <button
@@ -512,10 +499,23 @@ function Sidebar({
           </span>
         </label>
       </div>
+      {!hasTwitchAuth && (
+        <div>
+          <label>
+            <button
+              className="btn-sidebar bg-black bg-purple-700"
+              onClick={() => (window.location.href = TWITCH_AUTH_URL)}
+            >
+              <FontAwesomeIcon icon={faTwitch} fixedWidth />
+            </button>
+            <span className="btn-txt">Connect to Twitch</span>
+          </label>
+        </div>
+      )}
       {followedStreams.length ? (
         <>
           <hr className="mt-2" />
-          <div className="overflow-y-auto py-2">
+          <div className="overflow-y-auto py-2 bg-gray-900">
             {followedStreams.map(({ stream, user }) => (
               <div>
                 <label className="flex">
