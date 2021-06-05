@@ -1,25 +1,25 @@
 import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  SetStateAction,
   Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTwitch, faGithub } from "@fortawesome/free-brands-svg-icons";
+import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
 import {
+  faArrowLeft,
   faComment,
   faCommentSlash,
+  faCompressArrowsAlt,
   faExpand,
-  faTrash,
-  faArrowLeft,
+  faExpandArrowsAlt,
   faRocket,
   faSlash,
-  faCompressArrowsAlt,
-  faExpandArrowsAlt,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { usePrevious } from "react-use";
@@ -27,18 +27,17 @@ import { usePrevious } from "react-use";
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
-import { TWITCH_ACCESS_TOKEN_COOKIE } from "./const";
+import { TWITCH_AUTH_URL, STREAM_STATE_COOKIE } from "./const";
 import AddStream from "./AddStream";
-import { checkTwitchAuth, StreamData } from "./twitch";
+import {
+  checkTwitchAuth,
+  handleTwitchAuthCallback,
+  StreamData,
+} from "./twitch";
 import useSettings, { Settings, SettingsProvider } from "./useSettings";
 import useTwitchData from "./useTwitchData";
 
 const PROJECT_URL = "https://github.com/zbuttram/yatmv";
-const TWITCH_SCOPES = [];
-const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=1sphvbcdy1eg1p9n122ptcloxvg7wm&redirect_uri=${encodeURIComponent(
-  window.location.origin
-)}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
-const STREAM_STATE_COOKIE = "yatmv-state";
 const CHAT_EVICT_SEC = 60 * 15;
 
 function epoch(diff: number = 0) {
@@ -54,23 +53,8 @@ if (urlStreams) {
 
 const urlPrimary = pageURL.searchParams.get("primary");
 
-let reloadFromAuthStreams: string[], reloadFromAuthPrimary: string;
-if (document.location.hash) {
-  const hashParams = new URLSearchParams(document.location.hash.slice(1));
-  const accessTokenParam = hashParams.get("access_token");
-  if (accessTokenParam) {
-    Cookies.set(TWITCH_ACCESS_TOKEN_COOKIE, accessTokenParam, { expires: 59 });
-    document.location.hash = "";
-    const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
-    if (rawStreamState) {
-      const parsedStreamState: { streams: string[]; primary: string } =
-        JSON.parse(rawStreamState);
-      reloadFromAuthStreams = parsedStreamState.streams;
-      reloadFromAuthPrimary = parsedStreamState.primary;
-    }
-  }
-}
-const hasTwitchAuth = checkTwitchAuth();
+let { reloadFromAuthStreams, reloadFromAuthPrimary, hasTwitchAuth } =
+  handleTwitchAuthCallback();
 
 export default function App() {
   const [settings, setSettings] = useSettings();

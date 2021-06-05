@@ -2,9 +2,49 @@ import Cookies from "js-cookie";
 import { camelCase, snakeCase } from "lodash";
 import mapKeysDeep from "map-keys-deep-lodash";
 
-import { TWITCH_ACCESS_TOKEN_COOKIE, TWITCH_CLIENT_ID } from "./const";
+import {
+  TWITCH_ACCESS_TOKEN_COOKIE,
+  TWITCH_CLIENT_ID,
+  TWITCH_SCOPE_COOKIE,
+  STREAM_STATE_COOKIE,
+  TWITCH_SCOPES,
+} from "./const";
 
+let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
+if (savedScopes !== TWITCH_SCOPES.toString()) {
+  Cookies.remove(TWITCH_ACCESS_TOKEN_COOKIE);
+  Cookies.remove(TWITCH_SCOPE_COOKIE);
+}
 let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
+
+export function handleTwitchAuthCallback() {
+  let reloadFromAuthStreams: string[] | undefined,
+    reloadFromAuthPrimary: string | undefined,
+    hasTwitchAuth: boolean = !!accessToken;
+
+  if (document.location.hash) {
+    const hashParams = new URLSearchParams(document.location.hash.slice(1));
+    const accessTokenParam = hashParams.get("access_token");
+    if (accessTokenParam) {
+      accessToken = accessTokenParam;
+      const cookieOptions = {
+        expires: 59,
+      };
+      Cookies.set(TWITCH_ACCESS_TOKEN_COOKIE, accessTokenParam, cookieOptions);
+      Cookies.set(TWITCH_SCOPE_COOKIE, TWITCH_SCOPES, cookieOptions);
+      hasTwitchAuth = true;
+      document.location.hash = "";
+      const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
+      if (rawStreamState) {
+        const parsedStreamState: { streams: string[]; primary: string } =
+          JSON.parse(rawStreamState);
+        reloadFromAuthStreams = parsedStreamState.streams;
+        reloadFromAuthPrimary = parsedStreamState.primary;
+      }
+    }
+  }
+  return { reloadFromAuthStreams, reloadFromAuthPrimary, hasTwitchAuth };
+}
 
 export function checkTwitchAuth() {
   if (accessToken) {
@@ -135,4 +175,4 @@ export function getStreams({
   });
 }
 
-// export async function getFollowedStreams() {}
+export async function getFollowedStreams() {}
