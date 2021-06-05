@@ -1,10 +1,4 @@
-import {
-  createContext,
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const INITIAL_SETTINGS = {
   boostMode: false,
@@ -15,8 +9,6 @@ const INITIAL_SETTINGS = {
 export type Settings = typeof INITIAL_SETTINGS;
 
 const key = "yatmv-settings";
-export const SettingsContext = createContext(INITIAL_SETTINGS);
-export const SettingsProvider = SettingsContext.Provider;
 
 function getSettings() {
   const result = localStorage.getItem(key);

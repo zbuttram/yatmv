@@ -1,27 +1,43 @@
 import { useEffect, useState } from "react";
-import { getStreams, StreamData } from "./twitch";
+import {
+  getStreams,
+  StreamData,
+  checkTwitchAuth,
+  getAuthedUser,
+  TwitchUser,
+} from "./twitch";
 
-export default function useTwitchData({
-  streams,
-  hasTwitchAuth,
-}: {
-  streams: string[];
+export default function useTwitchData({ streams }: { streams: string[] }): {
+  streamData: Record<string, StreamData>;
   hasTwitchAuth: boolean;
-}): Record<string, StreamData> {
-  const [fetching, setFetching] = useState(false);
-  const [hasFetched, setHasFetched] = useState<string[]>([]);
-
-  const [data, setData] = useState<Record<string, StreamData>>({});
-
+  twitchUser?: TwitchUser;
+} {
+  const [hasTwitchAuth, setHasTwitchAuth] = useState(false);
+  const [twitchUser, setTwitchUser] = useState<TwitchUser>();
   useEffect(() => {
-    if (!hasTwitchAuth || fetching) {
+    if (checkTwitchAuth()) {
+      (async () => {
+        const user = await getAuthedUser();
+        setTwitchUser(user);
+        setHasTwitchAuth(true);
+      })();
+    }
+  }, []);
+
+  const [fetchingStreams, setFetchingStreams] = useState(false);
+  const [fetchedStreams, setFetchedStreams] = useState<string[]>([]);
+  const [streamData, setStreamData] = useState<Record<string, StreamData>>({});
+
+  // fetch stream data
+  useEffect(() => {
+    if (!hasTwitchAuth || fetchingStreams) {
       return;
     }
     let streamsToFetch = streams.filter(
-      (stream) => !hasFetched.includes(stream)
+      (stream) => !fetchedStreams.includes(stream)
     );
     if (streamsToFetch.length) {
-      setFetching(true);
+      setFetchingStreams(true);
       (async () => {
         const { data } = await getStreams({ userLogin: streamsToFetch });
         const byLogin = data.reduce(
@@ -31,13 +47,13 @@ export default function useTwitchData({
           }),
           {}
         );
-        setData((state) => ({ ...state, ...byLogin }));
-        setHasFetched((state) => [...state, ...streamsToFetch]);
-        setFetching(false);
+        setStreamData((state) => ({ ...state, ...byLogin }));
+        setFetchedStreams((state) => [...state, ...streamsToFetch]);
+        setFetchingStreams(false);
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streams, hasTwitchAuth, data, fetching]);
+  }, [streams, hasTwitchAuth, streamData, fetchingStreams]);
 
-  return data;
+  return { streamData, hasTwitchAuth, twitchUser };
 }

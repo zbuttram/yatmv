@@ -12,12 +12,12 @@ import {
 } from "./const";
 
 let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
-if (savedScopes !== TWITCH_SCOPES.toString()) {
+let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
+if (accessToken && savedScopes !== TWITCH_SCOPES.toString()) {
   Cookies.remove(TWITCH_ACCESS_TOKEN_COOKIE);
   Cookies.remove(TWITCH_SCOPE_COOKIE);
   window.location.href = TWITCH_AUTH_URL;
 }
-let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
 
 export function handleTwitchAuthCallback() {
   let reloadFromAuthStreams: string[] | undefined,
@@ -86,7 +86,7 @@ function paramsToString(params?: Params): string {
   }
 }
 
-async function callTwitch<T>(
+async function callTwitch<T = any>(
   path,
   {
     params,
@@ -94,7 +94,7 @@ async function callTwitch<T>(
   }: {
     params?: Params;
     signal?: AbortSignal;
-  }
+  } = {}
 ): Promise<T> {
   if (!checkTwitchAuth()) {
     throw new Error("Missing Twitch Access Token");
@@ -177,4 +177,19 @@ export function getStreams({
   });
 }
 
-export async function getFollowedStreams() {}
+export type TwitchUser = {
+  id: number;
+  // todo: add the rest of this
+};
+
+export async function getUsers({ ids }: { ids?: string[] } = {}) {
+  return callTwitch("/users", { params: { id: ids } });
+}
+
+export async function getAuthedUser(): Promise<TwitchUser> {
+  return (await getUsers()).data[0];
+}
+
+export async function getFollowedStreams({ userId }) {
+  return callTwitch("/streams/followed", { params: { userId } });
+}

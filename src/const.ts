@@ -1,3 +1,4 @@
+export const PROJECT_URL = "https://github.com/zbuttram/yatmv";
 export const STREAM_STATE_COOKIE = "yatmv-state";
 
 // TWITCH

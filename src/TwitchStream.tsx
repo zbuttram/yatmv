@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useContext } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
 
-import { SettingsContext } from "./useSettings";
 import useBounding from "./useBounding";
 import Log from "./log";
 import { usePrevious } from "react-use";
+import { AppContext } from "./appContext";
 
 type TwitchPlayer = {
   new (
@@ -43,7 +43,8 @@ export default function TwitchStream({
   const posDivId = divId + "-pos";
   const channelRect = useBounding(posDivId);
 
-  const { boostMode } = useContext(SettingsContext);
+  const { settings } = useContext(AppContext);
+  const { boostMode } = settings ?? {};
   const prevBoostMode = usePrevious(boostMode);
 
   const style = useMemo(():

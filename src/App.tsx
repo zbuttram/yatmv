@@ -27,17 +27,13 @@ import { usePrevious } from "react-use";
 import TwitchChat from "./TwitchChat";
 import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
-import { TWITCH_AUTH_URL, STREAM_STATE_COOKIE } from "./const";
+import { PROJECT_URL, STREAM_STATE_COOKIE, TWITCH_AUTH_URL } from "./const";
 import AddStream from "./AddStream";
-import {
-  checkTwitchAuth,
-  handleTwitchAuthCallback,
-  StreamData,
-} from "./twitch";
-import useSettings, { Settings, SettingsProvider } from "./useSettings";
+import { handleTwitchAuthCallback, StreamData } from "./twitch";
+import useSettings, { Settings } from "./useSettings";
 import useTwitchData from "./useTwitchData";
+import { AppProvider } from "./appContext";
 
-const PROJECT_URL = "https://github.com/zbuttram/yatmv";
 const CHAT_EVICT_SEC = 60 * 15;
 
 function epoch(diff: number = 0) {
@@ -50,10 +46,9 @@ const urlStreams = pageURL.searchParams.get("streams");
 if (urlStreams) {
   parsedUrlStreams = urlStreams.split(",");
 }
-
 const urlPrimary = pageURL.searchParams.get("primary");
 
-let { reloadFromAuthStreams, reloadFromAuthPrimary, hasTwitchAuth } =
+let { reloadFromAuthStreams, reloadFromAuthPrimary } =
   handleTwitchAuthCallback();
 
 export default function App() {
@@ -227,13 +222,13 @@ export default function App() {
     prevPrimaryStream,
   ]);
 
-  const streamData = useTwitchData({ streams, hasTwitchAuth });
+  const { streamData, hasTwitchAuth } = useTwitchData({ streams });
 
   const { showChat, fullHeightPlayer } = settings;
 
   //region AppReturn
   return (
-    <SettingsProvider value={settings}>
+    <AppProvider value={{ settings, hasTwitchAuth }}>
       <main
         className={classNames(
           "flex flex-col ring-white ring-opacity-60",
@@ -250,6 +245,7 @@ export default function App() {
             className="flex flex-col bg-blue-800"
             settings={settings}
             setSettings={setSettings}
+            hasTwitchAuth={hasTwitchAuth}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
           {loadedChats.map(({ channel }) => (
@@ -315,7 +311,7 @@ export default function App() {
           </div>
         </div>
       </main>
-    </SettingsProvider>
+    </AppProvider>
   );
 }
 
@@ -396,10 +392,12 @@ function Sidebar({
   className,
   settings,
   setSettings,
+  hasTwitchAuth,
 }: {
   className?: string;
   settings: Settings;
   setSettings: Dispatch<SetStateAction<Settings>>;
+  hasTwitchAuth: boolean;
 }) {
   const { boostMode, showChat, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
