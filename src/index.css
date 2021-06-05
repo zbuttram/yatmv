@@ -24,7 +24,11 @@ body {
 }
 
 .btn-sidebar {
-  @apply btn px-2 py-1 m-3;
+  @apply btn px-2 py-1 mx-3 my-1;
+}
+
+.btn-sidebar-followed {
+  @apply mx-4 my-1;
 }
 
 .btn-txt {

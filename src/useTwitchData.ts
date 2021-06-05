@@ -5,12 +5,19 @@ import {
   checkTwitchAuth,
   getAuthedUser,
   TwitchUser,
+  getFollowedStreams,
+  getUsers,
 } from "./twitch";
+
+const FETCH_FOLLOWED_INTERVAL_MINS = 1;
+
+export type FollowedStreamData = { stream: StreamData; user?: TwitchUser };
 
 export default function useTwitchData({ streams }: { streams: string[] }): {
   streamData: Record<string, StreamData>;
   hasTwitchAuth: boolean;
   twitchUser?: TwitchUser;
+  followedStreams: FollowedStreamData[];
 } {
   const [hasTwitchAuth, setHasTwitchAuth] = useState(false);
   const [twitchUser, setTwitchUser] = useState<TwitchUser>();
@@ -55,5 +62,36 @@ export default function useTwitchData({ streams }: { streams: string[] }): {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streams, hasTwitchAuth, streamData, fetchingStreams]);
 
-  return { streamData, hasTwitchAuth, twitchUser };
+  const [followedStreams, setFollowedStreams] = useState<FollowedStreamData[]>(
+    []
+  );
+  useEffect(() => {
+    if (hasTwitchAuth && twitchUser) {
+      async function fetchFollowedStreams() {
+        const followedResult = await getFollowedStreams({
+          userId: twitchUser!.id,
+        });
+        const usersResult = await getUsers({
+          ids: followedResult.data.map((stream) => stream.userId),
+        });
+        const result: FollowedStreamData[] = followedResult.data.map(
+          (stream) => ({
+            stream,
+            user: usersResult.data.find((u) => u.id === stream.userId),
+          })
+        );
+        setFollowedStreams(result);
+      }
+      fetchFollowedStreams();
+      const interval = setInterval(
+        fetchFollowedStreams,
+        FETCH_FOLLOWED_INTERVAL_MINS * 60 * 1000
+      );
+      return () => clearInterval(interval);
+    } else {
+      setFollowedStreams([]);
+    }
+  }, [hasTwitchAuth, twitchUser]);
+
+  return { streamData, hasTwitchAuth, twitchUser, followedStreams };
 }

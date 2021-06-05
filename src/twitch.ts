@@ -65,7 +65,7 @@ export function checkTwitchAuth() {
 type ParamValue = number | string | string[] | boolean | undefined;
 type Params = Record<string, ParamValue>;
 
-type PaginatedResponse<T> = { data: T; pagination: { cursor?: string } };
+type PaginatedResponse<T> = { data: T[]; pagination: { cursor?: string } };
 
 function paramsToString(params?: Params): string {
   if (!params) {
@@ -138,7 +138,7 @@ export function searchChannels(
     signal,
   }: Partial<{ first: number | string; signal: AbortSignal }> = {}
 ) {
-  return callTwitch<PaginatedResponse<ChannelData[]>>("/search/channels", {
+  return callTwitch<PaginatedResponse<ChannelData>>("/search/channels", {
     signal,
     params: { query, first, live_only: true },
   });
@@ -172,24 +172,44 @@ export function getStreams({
   userId: ParamValue;
   userLogin: ParamValue;
 }>) {
-  return callTwitch<PaginatedResponse<StreamData[]>>("/streams", {
+  return callTwitch<PaginatedResponse<StreamData>>("/streams", {
     params: { first, gameId, userId, userLogin: userLogin },
   });
 }
 
 export type TwitchUser = {
-  id: number;
-  // todo: add the rest of this
+  id: string;
+  displayName: string;
+  description: string;
+  login: string;
+  offlineImageUrl: string;
+  profileImageUrl: string;
+  broadcasterType: "partner" | "affiliate" | "";
+  type: "staff" | "admin" | "global_mod" | "";
+  viewCount: number;
+  createdAt: string;
 };
 
 export async function getUsers({ ids }: { ids?: string[] } = {}) {
-  return callTwitch("/users", { params: { id: ids } });
+  return callTwitch<PaginatedResponse<TwitchUser>>("/users", {
+    params: { id: ids },
+  });
 }
 
 export async function getAuthedUser(): Promise<TwitchUser> {
   return (await getUsers()).data[0];
 }
 
-export async function getFollowedStreams({ userId }) {
-  return callTwitch("/streams/followed", { params: { userId } });
+export async function getFollowedStreams({
+  userId,
+  first,
+  after,
+}: {
+  userId: ParamValue;
+  first?: ParamValue;
+  after?: ParamValue;
+}) {
+  return callTwitch<PaginatedResponse<StreamData>>("/streams/followed", {
+    params: { userId, first, after },
+  });
 }

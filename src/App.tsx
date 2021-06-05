@@ -31,8 +31,9 @@ import { PROJECT_URL, STREAM_STATE_COOKIE, TWITCH_AUTH_URL } from "./const";
 import AddStream from "./AddStream";
 import { handleTwitchAuthCallback, StreamData } from "./twitch";
 import useSettings, { Settings } from "./useSettings";
-import useTwitchData from "./useTwitchData";
+import useTwitchData, { FollowedStreamData } from "./useTwitchData";
 import { AppProvider } from "./appContext";
+import FollowedStream from "./FollowedStream";
 
 const CHAT_EVICT_SEC = 60 * 15;
 
@@ -222,7 +223,9 @@ export default function App() {
     prevPrimaryStream,
   ]);
 
-  const { streamData, hasTwitchAuth } = useTwitchData({ streams });
+  const { streamData, hasTwitchAuth, followedStreams } = useTwitchData({
+    streams,
+  });
 
   const { showChat, fullHeightPlayer } = settings;
 
@@ -246,6 +249,8 @@ export default function App() {
             settings={settings}
             setSettings={setSettings}
             hasTwitchAuth={hasTwitchAuth}
+            followedStreams={followedStreams}
+            addStream={addNewStream}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
           {loadedChats.map(({ channel }) => (
@@ -260,7 +265,7 @@ export default function App() {
           ))}
         </div>
         <div className="flex justify-center flex-wrap px-4 gap-4 bg-gray-900">
-          <div className="w-64 flex flex-col p-3">
+          <div className="w-64 flex flex-col p-3 stream-container">
             <AddStream addNewStream={addNewStream} className="my-auto" />
           </div>
           {streams.map((stream, i) => (
@@ -393,11 +398,15 @@ function Sidebar({
   settings,
   setSettings,
   hasTwitchAuth,
+  followedStreams,
+  addStream,
 }: {
   className?: string;
   settings: Settings;
   setSettings: Dispatch<SetStateAction<Settings>>;
   hasTwitchAuth: boolean;
+  followedStreams: FollowedStreamData[];
+  addStream: (streamName: string) => void;
 }) {
   const { boostMode, showChat, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
@@ -503,8 +512,36 @@ function Sidebar({
           </span>
         </label>
       </div>
+      {followedStreams.length ? (
+        <>
+          <hr className="mt-2" />
+          <div className="overflow-y-auto py-2">
+            {followedStreams.map(({ stream, user }) => (
+              <div>
+                <label className="flex">
+                  <button
+                    className="btn-sidebar-followed w-12"
+                    onClick={() => addStream(stream.userName)}
+                  >
+                    <img
+                      className="rounded-full"
+                      src={user!.profileImageUrl}
+                      alt={user!.displayName}
+                    />
+                  </button>
+                  <div className="btn-txt w-full flex flex-col">
+                    <div className="text-sm font-bold">{stream.userName}</div>
+                    <div className="text-xs">{stream.viewerCount}</div>
+                  </div>
+                </label>
+              </div>
+            ))}
+          </div>
+          <hr />
+        </>
+      ) : null}
       <div className="flex-grow" />
-      <div className="mb-3">
+      <div className="my-3">
         <label>
           <a href={PROJECT_URL} target="_blank" rel="noreferrer">
             <span className="btn-sidebar bg-black">
