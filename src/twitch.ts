@@ -8,12 +8,14 @@ import {
   TWITCH_SCOPE_COOKIE,
   STREAM_STATE_COOKIE,
   TWITCH_SCOPES,
+  TWITCH_AUTH_URL,
 } from "./const";
 
 let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
 if (savedScopes !== TWITCH_SCOPES.toString()) {
   Cookies.remove(TWITCH_ACCESS_TOKEN_COOKIE);
   Cookies.remove(TWITCH_SCOPE_COOKIE);
+  window.location.href = TWITCH_AUTH_URL;
 }
 let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
 
