@@ -20,6 +20,7 @@ type TwitchPlayer = {
   setChannel(channel: string): void;
   setMuted(muted: boolean): void;
   setQuality(name: string): void;
+  getQuality(): string;
   getQualities(): any[];
   _iframe: HTMLIFrameElement;
   addEventListener(event: string, callback: () => void): any;
@@ -85,10 +86,12 @@ export default function TwitchStream({
       });
 
       player.current.addEventListener(Twitch.Player.PLAYING, () => {
-        // const qualities = player.current?.getQualities();
-        // Log({ channel, qualities });
         if (boostMode) {
-          player?.current?.setQuality(primary ? "chunked" : "auto");
+          const currentQuality = player?.current?.getQuality();
+          const desiredQuality = primary ? "chunked" : "auto";
+          if (currentQuality !== desiredQuality) {
+            player?.current?.setQuality(desiredQuality);
+          }
         }
       });
     }
