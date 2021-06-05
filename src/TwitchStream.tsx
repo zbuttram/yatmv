@@ -85,13 +85,18 @@ export default function TwitchStream({
         height: "100%",
       });
 
+      let hasSetInitialQuality = false;
+
       player.current.addEventListener(Twitch.Player.PLAYING, () => {
-        if (boostMode) {
+        Log("player-started", channel, { boostMode, primary });
+        if (boostMode && !hasSetInitialQuality) {
           const currentQuality = player?.current?.getQuality();
           const desiredQuality = primary ? "chunked" : "auto";
           if (currentQuality !== desiredQuality) {
             player?.current?.setQuality(desiredQuality);
+            console.log("player-set-startup-quality", channel, desiredQuality);
           }
+          hasSetInitialQuality = true;
         }
       });
     }
@@ -104,8 +109,11 @@ export default function TwitchStream({
 
   useEffect(() => {
     player?.current?.setMuted(!primary);
+    Log("player-primary-updated", channel, { boostMode, primary });
     if (boostMode) {
-      player?.current?.setQuality(primary ? "chunked" : "auto");
+      const desiredQuality = primary ? "chunked" : "auto";
+      player?.current?.setQuality(desiredQuality);
+      Log("player-quality-update", channel, desiredQuality);
     }
     if (prevBoostMode && !boostMode) {
       player?.current?.setQuality("auto");
