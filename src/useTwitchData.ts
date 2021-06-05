@@ -9,7 +9,7 @@ import {
   getUsers,
 } from "./twitch";
 
-const FETCH_FOLLOWED_INTERVAL_MINS = 1;
+const FETCH_FOLLOWED_INTERVAL_MINS = 5;
 
 export type FollowedStreamData = { stream: StreamData; user?: TwitchUser };
 
