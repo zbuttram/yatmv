@@ -531,14 +531,19 @@ function Sidebar({
                   </button>
                   <div className="btn-txt flex-grow flex flex-col">
                     <div className="flex justify-between">
-                      <div className="sidebar-stream-name">
+                      <div
+                        className="sidebar-stream-name"
+                        title={stream.userName}
+                      >
                         {stream.userName}
                       </div>
                       <div className="text-xs ml-auto mr-2">
                         {stream.viewerCount}
                       </div>
                     </div>
-                    <div className="sidebar-stream-title">{stream.title}</div>
+                    <div className="sidebar-stream-title" title={stream.title}>
+                      {stream.title}
+                    </div>
                   </div>
                 </label>
               </div>
