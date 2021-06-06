@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
+import { checkTwitchAuth } from "./twitch";
 
 export function Sidebar({
   className,
@@ -68,7 +69,7 @@ export function Sidebar({
           </button>
         </label>
       </div>
-      {!hasTwitchAuth && (
+      {(!checkTwitchAuth() || !hasTwitchAuth) && (
         <div>
           <label>
             <button

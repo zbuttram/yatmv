@@ -20,6 +20,7 @@ export default function useTwitchData({ streams }: { streams: string[] }): {
 } {
   const [hasTwitchAuth, setHasTwitchAuth] = useState(false);
   const [twitchUser, setTwitchUser] = useState<TwitchUser>();
+
   useEffect(() => {
     if (checkTwitchAuth()) {
       (async () => {
