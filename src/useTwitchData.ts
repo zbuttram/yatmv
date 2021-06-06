@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import {
-  getStreams,
-  StreamData,
   checkTwitchAuth,
   getAuthedUser,
-  TwitchUser,
   getFollowedStreams,
+  getStreams,
   getUsers,
+  StreamData,
+  TwitchUser,
 } from "./twitch";
-
-const FETCH_FOLLOWED_INTERVAL_MINS = 5;
+import { FETCH_FOLLOWED_INTERVAL_MINS } from "./const";
 
 export type FollowedStreamData = { stream: StreamData; user?: TwitchUser };
 
