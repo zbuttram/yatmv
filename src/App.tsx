@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
 import {
   faArrowLeft,
+  faCircle,
   faComment,
   faCommentSlash,
   faCompressArrowsAlt,
@@ -33,7 +34,6 @@ import { handleTwitchAuthCallback, StreamData } from "./twitch";
 import useSettings, { Settings } from "./useSettings";
 import useTwitchData, { FollowedStreamData } from "./useTwitchData";
 import { AppProvider } from "./appContext";
-import FollowedStream from "./FollowedStream";
 
 const CHAT_EVICT_SEC = 60 * 15;
 
@@ -250,6 +250,7 @@ export default function App() {
             setSettings={setSettings}
             hasTwitchAuth={hasTwitchAuth}
             followedStreams={followedStreams}
+            streams={streams}
             addStream={addNewStream}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
@@ -398,6 +399,7 @@ function Sidebar({
   settings,
   setSettings,
   hasTwitchAuth,
+  streams,
   followedStreams,
   addStream,
 }: {
@@ -406,6 +408,7 @@ function Sidebar({
   setSettings: Dispatch<SetStateAction<Settings>>;
   hasTwitchAuth: boolean;
   followedStreams: FollowedStreamData[];
+  streams: string[];
   addStream: (streamName: string) => void;
 }) {
   const { boostMode, showChat, fullHeightPlayer } = settings;
@@ -517,16 +520,24 @@ function Sidebar({
           <hr className="mt-2" />
           <div className="overflow-y-auto overflow-x-hidden py-2 bg-gray-900">
             {followedStreams.map(({ stream, user }) => (
-              <div>
+              <div
+                className={
+                  streams
+                    .map((s) => s.toLowerCase())
+                    .includes(stream.userName.toLowerCase())
+                    ? "bg-blue-800 bg-opacity-50"
+                    : ""
+                }
+              >
                 <label className="flex">
                   <button
                     className="btn-sidebar-followed w-8 flex-shrink-0"
                     onClick={() => addStream(stream.userName)}
                   >
                     <img
-                      className="rounded-full"
+                      className={classNames("rounded-full")}
                       src={user!.profileImageUrl}
-                      alt={user!.displayName}
+                      alt={stream.userName}
                     />
                   </button>
                   <div className="btn-txt flex-grow flex flex-col">
@@ -537,7 +548,7 @@ function Sidebar({
                       >
                         {stream.userName}
                       </div>
-                      <div className="text-xs ml-auto mr-2">
+                      <div className="text-xs ml-auto mr-2 text-red-400">
                         {stream.viewerCount}
                       </div>
                     </div>
