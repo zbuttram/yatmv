@@ -35,6 +35,16 @@ body {
   cursor: pointer;
 }
 
+.sidebar-stream-name {
+  @apply mr-2 text-sm font-bold overflow-ellipsis overflow-hidden;
+  max-width: theme('spacing.28');
+}
+
+.sidebar-stream-title {
+  @apply text-xs overflow-ellipsis overflow-hidden whitespace-nowrap;
+  max-width: theme('spacing.36');
+}
+
 .sidebar .btn-txt {
   display: none;
 }

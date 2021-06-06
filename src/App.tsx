@@ -515,12 +515,12 @@ function Sidebar({
       {followedStreams.length ? (
         <>
           <hr className="mt-2" />
-          <div className="overflow-y-auto py-2 bg-gray-900">
+          <div className="overflow-y-auto overflow-x-hidden py-2 bg-gray-900">
             {followedStreams.map(({ stream, user }) => (
               <div>
                 <label className="flex">
                   <button
-                    className="btn-sidebar-followed w-12"
+                    className="btn-sidebar-followed w-8 flex-shrink-0"
                     onClick={() => addStream(stream.userName)}
                   >
                     <img
@@ -529,9 +529,16 @@ function Sidebar({
                       alt={user!.displayName}
                     />
                   </button>
-                  <div className="btn-txt w-full flex flex-col">
-                    <div className="text-sm font-bold">{stream.userName}</div>
-                    <div className="text-xs">{stream.viewerCount}</div>
+                  <div className="btn-txt flex-grow flex flex-col">
+                    <div className="flex justify-between">
+                      <div className="sidebar-stream-name">
+                        {stream.userName}
+                      </div>
+                      <div className="text-xs ml-auto mr-2">
+                        {stream.viewerCount}
+                      </div>
+                    </div>
+                    <div className="sidebar-stream-title">{stream.title}</div>
                   </div>
                 </label>
               </div>
