@@ -57,6 +57,11 @@ body {
   transform: scaleX(-1);
 }
 
+.scrollbar-width-thin {
+  /* https://caniuse.com/css-scrollbar */
+  scrollbar-width: thin;
+}
+
 .explainer p {
   @apply mb-4;
 }
