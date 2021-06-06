@@ -28,7 +28,7 @@ body {
 }
 
 .btn-sidebar-followed {
-  @apply mx-4 my-1;
+  @apply mx-4 my-2;
 }
 
 .btn-txt {
