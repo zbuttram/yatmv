@@ -59,7 +59,17 @@ body {
 
 .scrollbar-width-thin {
   /* https://caniuse.com/css-scrollbar */
+  /* firefox only */
   scrollbar-width: thin;
+}
+
+.scrollbar-width-thin::-webkit-scrollbar {
+  width: 0.5rem;
+  background-color: theme('colors.gray.900')
+}
+
+.scrollbar-width-thin::-webkit-scrollbar-thumb {
+  background-color: theme('colors.gray.600')
 }
 
 .explainer p {
