@@ -55,6 +55,7 @@ export function Sidebar({
         <label>
           <span className="btn-txt">Collapse</span>
           <button
+            title={open ? "Collapse" : "Expand"}
             className="btn-sidebar"
             onClick={() => setOpen((state) => !state)}
           >
@@ -73,6 +74,7 @@ export function Sidebar({
         <div>
           <label>
             <button
+              title="Connect to Twitch"
               className="btn-sidebar bg-black bg-purple-700"
               onClick={() => (window.location.href = TWITCH_AUTH_URL)}
             >
@@ -104,6 +106,7 @@ export function Sidebar({
       <div>
         <label>
           <button
+            title={(showChat ? "Hide" : "Show") + " Chat"}
             className="btn-sidebar bg-black"
             onClick={() =>
               setSettings(({ showChat, ...state }) => ({
@@ -123,6 +126,7 @@ export function Sidebar({
       <div>
         <label>
           <button
+            title={(boostMode ? "Disable" : "Enable") + " Boost Mode"}
             className="btn-sidebar bg-black"
             onClick={() =>
               setSettings(({ boostMode, ...state }) => ({
@@ -144,6 +148,9 @@ export function Sidebar({
       <div>
         <label>
           <button
+            title={
+              (fullHeightPlayer ? "Disable" : "Enable") + " Full Height Player"
+            }
             className="btn-sidebar bg-black"
             onClick={() =>
               setSettings(({ fullHeightPlayer, ...state }) => ({
@@ -167,6 +174,7 @@ export function Sidebar({
       <div className="mb-3 mt-2">
         <label>
           <a
+            title="GitHub"
             href={PROJECT_URL}
             target="_blank"
             className="btn-sidebar bg-black"
@@ -192,6 +200,7 @@ function FollowedStream({ isPrimary, isOpen, stream, user, addStream }) {
     >
       <label className="flex">
         <button
+          title={[stream.userName, stream.gameName, stream.title].join(" - ")}
           className="btn-sidebar-followed w-8 flex-shrink-0"
           onClick={() => addStream(stream.userName)}
         >
