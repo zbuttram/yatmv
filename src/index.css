@@ -77,7 +77,7 @@ body {
 }
 
 .followed-stream-tooltip {
-  @apply fixed bg-gray-900 drop-shadow rounded py-1 px-3 text-sm align-middle;
+  @apply fixed bg-gray-900 drop-shadow-md filter rounded py-1 px-3 text-sm align-middle;
 }
 
 .max-w-40 {
