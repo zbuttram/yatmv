@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExpand, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowDown,
+  faExpand,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { usePrevious } from "react-use";
 
@@ -211,6 +215,8 @@ export default function App() {
 
   const { showChat, fullHeightPlayer } = settings;
 
+  const [forceShowMainPane, setForceShowMainPane] = useState(false);
+
   //region AppReturn
   return (
     <AppProvider value={{ settings, hasTwitchAuth }}>
@@ -220,10 +226,18 @@ export default function App() {
           fullHeightPlayer && "fullheight-player"
         )}
       >
+        {!primaryStreamName && !forceShowMainPane && (
+          <button
+            className="fixed top-4 left-4 rounded px-4 py-3 bg-gray-500"
+            onClick={() => setForceShowMainPane(true)}
+          >
+            <FontAwesomeIcon icon={faArrowDown} />
+          </button>
+        )}
         <div
           className={classNames(
             "flex primary-container",
-            !primaryStreamName && "hidden"
+            !primaryStreamName && !forceShowMainPane && "hidden"
           )}
         >
           <Sidebar

@@ -255,7 +255,7 @@ function FollowedStream({
           !hovered && "invisible"
         )}
         style={{
-          left: (rect.right ?? 0) + 10,
+          left: rect.right && `calc(${rect.right}px + 0.5rem)`,
           top: rect.top,
           zIndex: 99,
         }}
@@ -263,9 +263,10 @@ function FollowedStream({
         {sidebarExpanded ? (
           streamTitle
         ) : (
-          <div className="flex flex-col text-sm">
+          <div className="flex flex-col text-sm min-w-32">
             <div className="text-purple-500">
-              {stream.userName} &#183; {stream.gameName}
+              {stream.userName}
+              {stream.gameName && <> &#183; {stream.gameName}</>}
             </div>
             <div className="flex">{streamTitle}</div>
             <div className="ml-auto text-red-400">
