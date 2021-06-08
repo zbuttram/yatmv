@@ -6,16 +6,21 @@ export default function useBounding(id: string): Partial<DOMRect> {
   const setRect = useCallback(() => {
     const element = document.getElementById(id);
     if (!element) return;
-    const { top, left, width, height } = element.getBoundingClientRect();
+    const { top, left, right, bottom, width, height } =
+      element.getBoundingClientRect();
     const newRect = {
       top: top + window.scrollY,
       left: left + window.scrollX,
+      right,
+      bottom,
       width,
       height,
     };
     if (
       rect.top !== newRect.top ||
       rect.left !== newRect.left ||
+      rect.right !== newRect.right ||
+      rect.bottom !== newRect.bottom ||
       rect.width !== newRect.width ||
       rect.height !== newRect.height
     ) {

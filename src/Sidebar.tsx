@@ -15,6 +15,8 @@ import {
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { checkTwitchAuth } from "./twitch";
+import { Tooltip } from "@reach/tooltip";
+import useBounding from "./useBounding";
 
 export function Sidebar({
   className,
@@ -90,6 +92,7 @@ export function Sidebar({
           <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden py-2 bg-gray-900">
             {followedStreams.map(({ stream, user }) => (
               <FollowedStream
+                key={stream.userId}
                 isOpen={streamsLowercase.includes(
                   stream.userName.toLowerCase()
                 )}
@@ -190,40 +193,57 @@ export function Sidebar({
 }
 
 function FollowedStream({ isPrimary, isOpen, stream, user, addStream }) {
+  const [hovered, setHovered] = useState(false);
+  const id = "followed-stream-" + stream.userId;
+  const rect = useBounding(id);
+
   return (
-    <div
-      className={classNames(
-        "bg-opacity-50",
-        isPrimary && "bg-red-600",
-        isOpen && !isPrimary && "bg-blue-800"
-      )}
-    >
-      <label className="flex">
-        <button
-          title={[stream.userName, stream.gameName, stream.title].join(" - ")}
-          className="btn-sidebar-followed w-8 flex-shrink-0"
-          onClick={() => addStream(stream.userName)}
+    <>
+      <div
+        id={id}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={classNames(
+          "bg-opacity-50",
+          isPrimary && "bg-red-600",
+          isOpen && !isPrimary && "bg-blue-800"
+        )}
+      >
+        <label className="flex">
+          <button
+            className="btn-sidebar-followed w-8 flex-shrink-0"
+            onClick={() => addStream(stream.userName)}
+          >
+            <img
+              className={classNames("rounded-full")}
+              src={user!.profileImageUrl}
+              alt={stream.userName}
+            />
+          </button>
+          <div className="btn-txt flex-grow flex flex-col">
+            <div className="flex justify-between mt-1">
+              <div className="sidebar-stream-name">{stream.userName}</div>
+              <div className="text-xs ml-auto mr-2 text-red-400">
+                {stream.viewerCount}
+              </div>
+            </div>
+            <div className="sidebar-stream-game mt-1">{stream.gameName}</div>
+          </div>
+        </label>
+        <div
+          className={classNames(
+            "followed-stream-tooltip",
+            !hovered && "hidden"
+          )}
+          style={{
+            left: (rect.right ?? 0) + 10,
+            top: rect.top,
+            zIndex: 99,
+          }}
         >
-          <img
-            className={classNames("rounded-full")}
-            src={user!.profileImageUrl}
-            alt={stream.userName}
-          />
-        </button>
-        <div className="btn-txt flex-grow flex flex-col">
-          <div className="flex justify-between">
-            <div className="sidebar-stream-name" title={stream.userName}>
-              {stream.userName}
-            </div>
-            <div className="text-xs ml-auto mr-2 text-red-400">
-              {stream.viewerCount}
-            </div>
-          </div>
-          <div className="sidebar-stream-title" title={stream.title}>
-            {stream.title}
-          </div>
+          {stream.title}
         </div>
-      </label>
-    </div>
+      </div>
+    </>
   );
 }
