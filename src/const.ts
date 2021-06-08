@@ -5,8 +5,6 @@ export const FETCH_FOLLOWED_INTERVAL_MINS = process.env
   ? Number(process.env.REACT_APP_FETCH_FOLLOWED_INTERVAL_MINS)
   : 5;
 
-console.log(process.env, FETCH_FOLLOWED_INTERVAL_MINS);
-
 // TWITCH
 export const TWITCH_ACCESS_TOKEN_COOKIE = "twitch_access_token";
 export const TWITCH_SCOPE_COOKIE = "twitch_scope";

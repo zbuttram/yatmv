@@ -23,7 +23,8 @@ type TwitchPlayer = {
   getQuality(): string;
   getQualities(): any[];
   _iframe: HTMLIFrameElement;
-  addEventListener(event: string, callback: () => void): any;
+  addEventListener(event: string, callback: () => void): void;
+  removeEventListener(event: string, callback: () => void): void;
   PLAYING: "playing";
   // there are some other properties and methods in here, not all of them documented
 };
@@ -84,41 +85,51 @@ export default function TwitchStream({
         width: "100%",
         height: "100%",
       });
-
-      let hasSetInitialQuality = false;
-
-      player.current.addEventListener(Twitch.Player.PLAYING, () => {
-        Log("player-started", channel, { boostMode, primary });
-        if (boostMode && !hasSetInitialQuality) {
-          const currentQuality = player?.current?.getQuality();
-          const desiredQuality = primary ? "chunked" : "auto";
-          if (currentQuality !== desiredQuality) {
-            player?.current?.setQuality(desiredQuality);
-            console.log("player-set-startup-quality", channel, desiredQuality);
-          }
-          hasSetInitialQuality = true;
-        }
-      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    // this shouldn't ever really happen, but its here anyway /shrug
     player?.current?.setChannel(channel);
   }, [channel]);
 
   useEffect(() => {
-    player?.current?.setMuted(!primary);
+    if (!player.current) {
+      return;
+    }
+
+    player.current.setMuted(!primary);
     Log("player-primary-updated", channel, { boostMode, primary });
+    const desiredQuality = primary ? "chunked" : "auto";
     if (boostMode) {
-      const desiredQuality = primary ? "chunked" : "auto";
-      player?.current?.setQuality(desiredQuality);
+      player.current.setQuality(desiredQuality);
       Log("player-quality-update", channel, desiredQuality);
     }
     if (prevBoostMode && !boostMode) {
-      player?.current?.setQuality("auto");
+      player.current.setQuality("auto");
     }
-  }, [boostMode, prevBoostMode, primary]);
+
+    function onPlay() {
+      if (!player.current) {
+        return;
+      }
+      if (boostMode) {
+        const currentQuality = player.current.getQuality();
+        if (currentQuality !== desiredQuality) {
+          player.current.setQuality(desiredQuality);
+          Log("player-set-onplay-quality", channel, desiredQuality);
+        }
+      }
+      player.current.setMuted(!primary);
+    }
+
+    player.current.addEventListener(Twitch.Player.PLAYING, onPlay);
+
+    return () =>
+      player.current &&
+      player.current.removeEventListener(Twitch.Player.PLAYING, onPlay);
+  }, [channel, boostMode, prevBoostMode, primary]);
 
   return (
     <>
