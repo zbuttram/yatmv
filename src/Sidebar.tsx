@@ -12,10 +12,12 @@ import {
   faRocket,
   faSlash,
 } from "@fortawesome/free-solid-svg-icons";
-import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
+import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
+import { round } from "lodash";
+
+import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
 import { checkTwitchAuth } from "./twitch";
-import { Tooltip } from "@reach/tooltip";
 import useBounding from "./useBounding";
 
 export function Sidebar({
@@ -72,7 +74,7 @@ export function Sidebar({
           </button>
         </label>
       </div>
-      {(!checkTwitchAuth() || !hasTwitchAuth) && (
+      {!checkTwitchAuth() && (
         <div>
           <label>
             <button
@@ -100,6 +102,7 @@ export function Sidebar({
                 stream={stream}
                 user={user}
                 addStream={addStream}
+                sidebarExpanded={open}
               />
             ))}
           </div>
@@ -192,10 +195,23 @@ export function Sidebar({
   );
 }
 
-function FollowedStream({ isPrimary, isOpen, stream, user, addStream }) {
+function FollowedStream({
+  isPrimary,
+  isOpen,
+  stream,
+  user,
+  addStream,
+  sidebarExpanded,
+}) {
   const [hovered, setHovered] = useState(false);
   const id = "followed-stream-" + stream.userId;
   const rect = useBounding(id);
+
+  const streamTitle = (
+    <div className={classNames(sidebarExpanded ? "max-w-40" : "w-0 flex-grow")}>
+      <LinesEllipsis maxLine={2} text={stream.title} />
+    </div>
+  );
 
   return (
     <>
@@ -221,29 +237,51 @@ function FollowedStream({ isPrimary, isOpen, stream, user, addStream }) {
             />
           </button>
           <div className="btn-txt flex-grow flex flex-col">
-            <div className="flex justify-between mt-1">
-              <div className="sidebar-stream-name">{stream.userName}</div>
-              <div className="text-xs ml-auto mr-2 text-red-400">
-                {stream.viewerCount}
+            <div className="flex mt-1">
+              <div className="sidebar-stream-name" title={stream.userName}>
+                {stream.userName}
+              </div>
+              <div className="text-xs mr-2 text-red-400 followed-viewer-count">
+                &#9679; {simplifyViewerCount(stream.viewerCount)}
               </div>
             </div>
             <div className="sidebar-stream-game mt-1">{stream.gameName}</div>
           </div>
         </label>
-        <div
-          className={classNames(
-            "followed-stream-tooltip",
-            !hovered && "hidden"
-          )}
-          style={{
-            left: (rect.right ?? 0) + 10,
-            top: rect.top,
-            zIndex: 99,
-          }}
-        >
-          {stream.title}
-        </div>
+      </div>
+      <div
+        className={classNames(
+          "followed-stream-tooltip",
+          !hovered && "invisible"
+        )}
+        style={{
+          left: (rect.right ?? 0) + 10,
+          top: rect.top,
+          zIndex: 99,
+        }}
+      >
+        {sidebarExpanded ? (
+          streamTitle
+        ) : (
+          <div className="flex flex-col text-sm">
+            <div className="text-purple-500">
+              {stream.userName} &#183; {stream.gameName}
+            </div>
+            <div className="flex">{streamTitle}</div>
+            <div className="ml-auto text-red-400">
+              &#9679; {simplifyViewerCount(stream.viewerCount)}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
+}
+
+function simplifyViewerCount(viewerCount) {
+  if (viewerCount < 1000) {
+    return viewerCount;
+  } else {
+    return round(viewerCount / 1000, viewerCount < 100000 ? 1 : 0) + "k";
+  }
 }
