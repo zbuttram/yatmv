@@ -255,7 +255,7 @@ function FollowedStream({
           !hovered && "invisible"
         )}
         style={{
-          left: rect.right && `calc(${rect.right}px + 0.5rem)`,
+          left: rect.right && `calc(${rect.right}px + 0.75rem)`,
           top: rect.top,
           zIndex: 99,
         }}
