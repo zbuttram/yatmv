@@ -11,6 +11,13 @@ import {
   TWITCH_AUTH_URL,
 } from "./const";
 
+if (!TWITCH_CLIENT_ID) {
+  console.error(
+    "YATMV MISSING TWITCH CLIENT ID!",
+    "Twitch features will not work, register a dev app at https://dev.twitch.tv"
+  );
+}
+
 let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
 let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
 if (accessToken && savedScopes !== TWITCH_SCOPES.toString()) {
