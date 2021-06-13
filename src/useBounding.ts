@@ -1,37 +1,43 @@
-import { useState, useCallback, useLayoutEffect } from "react";
+import { useState, useLayoutEffect } from "react";
+import Log from "./log";
+
+function setRect(
+  id: string,
+  rect: Partial<DOMRect>,
+  _setRect: (value: Partial<DOMRect>) => void
+) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  const { top, left, right, bottom, width, height } =
+    element.getBoundingClientRect();
+  const newRect = {
+    top: top + window.scrollY,
+    left: left + window.scrollX,
+    right,
+    bottom,
+    width,
+    height,
+  };
+  if (
+    rect.top !== newRect.top ||
+    rect.left !== newRect.left ||
+    rect.right !== newRect.right ||
+    rect.bottom !== newRect.bottom ||
+    rect.width !== newRect.width ||
+    rect.height !== newRect.height
+  ) {
+    _setRect(newRect);
+    Log("set-rect", id, newRect);
+  }
+}
 
 export default function useBounding(id: string): Partial<DOMRect> {
   const [rect, _setRect] = useState<Partial<DOMRect>>({});
 
-  const setRect = useCallback(() => {
-    const element = document.getElementById(id);
-    if (!element) return;
-    const { top, left, right, bottom, width, height } =
-      element.getBoundingClientRect();
-    const newRect = {
-      top: top + window.scrollY,
-      left: left + window.scrollX,
-      right,
-      bottom,
-      width,
-      height,
-    };
-    if (
-      rect.top !== newRect.top ||
-      rect.left !== newRect.left ||
-      rect.right !== newRect.right ||
-      rect.bottom !== newRect.bottom ||
-      rect.width !== newRect.width ||
-      rect.height !== newRect.height
-    ) {
-      _setRect(newRect);
-    }
-  }, [id, rect, _setRect]);
-
   useLayoutEffect(() => {
     let loop = true;
     const af = requestAnimationFrame(function doLoop() {
-      setRect();
+      setRect(id, rect, _setRect);
       if (loop) requestAnimationFrame(doLoop);
     });
 
@@ -39,7 +45,7 @@ export default function useBounding(id: string): Partial<DOMRect> {
       cancelAnimationFrame(af);
       loop = false;
     };
-  }, [id, setRect]);
+  }, [id, rect]);
 
   return rect;
 }
