@@ -91,7 +91,7 @@ export function Sidebar({
       {followedStreams.length ? (
         <>
           <hr />
-          <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden py-2 bg-gray-900">
+          <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden bg-gray-900">
             {followedStreams.map(({ stream, user }) => (
               <FollowedStream
                 key={stream.userId}
