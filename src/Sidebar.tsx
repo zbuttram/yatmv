@@ -4,8 +4,6 @@ import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
-  faComment,
-  faCommentSlash,
   faCompressArrowsAlt,
   faExpandArrowsAlt,
   faRocket,
@@ -16,9 +14,8 @@ import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { round } from "lodash";
 
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
-import { checkTwitchAuth, getUser, StreamData, useTwitchUser } from "./twitch";
+import { checkTwitchAuth, StreamData, useTwitchUser } from "./twitch";
 import useBounding from "./useBounding";
-import { useQuery } from "react-query";
 
 export function Sidebar({
   className,
@@ -37,7 +34,7 @@ export function Sidebar({
   primaryStream?: string;
   addStream: (streamName: string) => void;
 }) {
-  const { boostMode, showChat, fullHeightPlayer } = settings;
+  const { boostMode, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
 
   const streamsLowercase = useMemo(
