@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowDown,
+  faCaretSquareLeft,
+  faCaretSquareRight,
+} from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { usePrevious } from "react-use";
 
@@ -265,16 +269,41 @@ export default function App() {
             addStream={addNewStream}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
-          {loadedChats.map(({ channel }) => (
-            <TwitchChat
-              key={channel}
-              channel={channel}
+          <div
+            id="chats-container"
+            className={classNames(
+              "flex relative transition-all",
+              showChat ? "w-1/5" : "w-0"
+            )}
+          >
+            <div
               className={classNames(
-                showChat && channel === primaryStreamName ? "w-1/5" : "w-0",
-                "transition-all"
+                "cursor-pointer opacity-40 hover:opacity-75 absolute top-2 z-10 transition-all",
+                showChat ? "left-2" : "-left-10"
               )}
-            />
-          ))}
+              onClick={() =>
+                setSettings(({ showChat, ...state }) => ({
+                  ...state,
+                  showChat: !showChat,
+                }))
+              }
+            >
+              <FontAwesomeIcon
+                icon={showChat ? faCaretSquareRight : faCaretSquareLeft}
+                size="2x"
+              />
+            </div>
+            {loadedChats.map(({ channel }) => (
+              <TwitchChat
+                key={channel}
+                channel={channel}
+                className={classNames(
+                  channel === primaryStreamName ? "w-full" : "w-0",
+                  "transition-all"
+                )}
+              />
+            ))}
+          </div>
         </div>
         <div className="flex justify-center flex-wrap px-4 gap-4 bg-gray-900">
           <div className="w-64 flex flex-col p-3 stream-container">

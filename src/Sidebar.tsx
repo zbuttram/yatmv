@@ -111,26 +111,6 @@ export function Sidebar({
       <div>
         <label>
           <button
-            title={(showChat ? "Hide" : "Show") + " Chat"}
-            className="btn-sidebar bg-black"
-            onClick={() =>
-              setSettings(({ showChat, ...state }) => ({
-                ...state,
-                showChat: !showChat,
-              }))
-            }
-          >
-            <FontAwesomeIcon
-              icon={showChat ? faCommentSlash : faComment}
-              fixedWidth
-            />
-          </button>
-          <span className="btn-txt">{showChat ? "Hide" : "Show"} Chat</span>
-        </label>
-      </div>
-      <div>
-        <label>
-          <button
             title={(boostMode ? "Disable" : "Enable") + " Boost Mode"}
             className="btn-sidebar bg-black"
             onClick={() =>
