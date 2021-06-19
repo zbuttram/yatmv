@@ -287,6 +287,7 @@ export default function App() {
                   showChat: !showChat,
                 }))
               }
+              title={(showChat ? "Hide" : "Show") + " Chat"}
             >
               <FontAwesomeIcon
                 icon={showChat ? faCaretSquareRight : faCaretSquareLeft}
