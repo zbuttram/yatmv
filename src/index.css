@@ -28,7 +28,7 @@ body {
 }
 
 .btn-sidebar-followed {
-  @apply mx-4 my-2;
+  @apply ml-4 my-2;
 }
 
 .btn-txt {
@@ -37,7 +37,7 @@ body {
 
 .sidebar-stream-name {
   @apply mr-2 text-sm overflow-ellipsis overflow-hidden;
-  width: 6rem;
+  width: 5.75rem;
 }
 
 .sidebar-stream-game {

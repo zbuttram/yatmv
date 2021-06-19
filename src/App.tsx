@@ -1,25 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowDown,
-  faExpand,
-  faTrash,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { usePrevious } from "react-use";
 
 import TwitchChat from "./TwitchChat";
-import TwitchStream from "./TwitchStream";
 import useBounding from "./useBounding";
-import { PROJECT_URL, STREAM_STATE_COOKIE, TWITCH_AUTH_URL } from "./const";
+import {
+  FETCH_FOLLOWED_INTERVAL_MINS,
+  PROJECT_URL,
+  STREAM_STATE_COOKIE,
+  TWITCH_AUTH_URL,
+} from "./const";
 import AddStream from "./AddStream";
-import { handleTwitchAuthCallback, StreamData } from "./twitch";
+import {
+  checkTwitchAuth,
+  getAuthedUser,
+  getFollowedStreams,
+  handleTwitchAuthCallback,
+} from "./twitch";
 import useSettings from "./useSettings";
-import useTwitchData from "./useTwitchData";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
+import { StreamContainer } from "./StreamContainer";
+import { useQuery } from "react-query";
 
 const CHAT_EVICT_SEC = 60 * 15;
 
@@ -209,9 +215,20 @@ export default function App() {
     prevPrimaryStream,
   ]);
 
-  const { streamData, hasTwitchAuth, followedStreams } = useTwitchData({
-    streams,
+  const { data: twitchUser } = useQuery("authedTwitchUser", getAuthedUser, {
+    enabled: checkTwitchAuth(),
   });
+
+  const hasTwitchAuth = !!twitchUser;
+
+  const { data: followedStreams } = useQuery(
+    "followedStreams",
+    () => getFollowedStreams({ userId: twitchUser?.id }),
+    {
+      enabled: hasTwitchAuth,
+      refetchInterval: FETCH_FOLLOWED_INTERVAL_MINS * 60 * 1000,
+    }
+  );
 
   const { showChat, fullHeightPlayer } = settings;
 
@@ -244,7 +261,6 @@ export default function App() {
             className="flex flex-col bg-blue-800"
             settings={settings}
             setSettings={setSettings}
-            hasTwitchAuth={hasTwitchAuth}
             followedStreams={followedStreams}
             streams={streams}
             primaryStream={primaryStreamName}
@@ -271,7 +287,6 @@ export default function App() {
               className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
               key={stream}
               stream={stream}
-              streamData={streamData[stream.toLowerCase()]}
               isPrimary={stream.toLowerCase() === primaryStreamName}
               primaryContainerRect={primaryContainerRect}
               setPrimaryStream={setPrimaryStream}
@@ -315,78 +330,5 @@ export default function App() {
         </div>
       </main>
     </AppProvider>
-  );
-}
-
-function StreamContainer({
-  stream,
-  streamData,
-  isPrimary,
-  primaryContainerRect,
-  remove,
-  setPrimaryStream,
-  className,
-}: {
-  stream: string;
-  streamData?: StreamData;
-  isPrimary: boolean;
-  primaryContainerRect: Partial<DOMRect>;
-  remove: () => void;
-  setPrimaryStream: (stream: string) => void;
-  className?: string;
-}) {
-  const { title, userName } = streamData ?? {};
-  const [isRemoving, setIsRemoving] = useState(false);
-  const timeout = useRef<ReturnType<typeof setTimeout> | undefined>();
-
-  const onClickRemove = useCallback(
-    function onClickRemove() {
-      if (!isRemoving) {
-        setIsRemoving(true);
-        timeout.current = setTimeout(() => {
-          setIsRemoving(false);
-        }, 1500);
-      } else {
-        timeout.current && clearTimeout(timeout.current);
-        remove();
-      }
-    },
-    [remove, isRemoving, setIsRemoving]
-  );
-
-  return (
-    <div className={className}>
-      <TwitchStream
-        channel={stream.toLowerCase()}
-        primary={isPrimary}
-        primaryContainerRect={primaryContainerRect}
-      />
-      <div className="w-full flex flex-col self-end">
-        <div className="pt-2 pb-1">
-          {streamData && (
-            <div className="text-xs truncate" title={title}>
-              {title}
-            </div>
-          )}
-          <div className="font-bold">{userName ?? stream}</div>
-        </div>
-        <div className="flex">
-          {!isPrimary && (
-            <button
-              className="btn mr-2 w-full text-black bg-green-400"
-              onClick={() => setPrimaryStream(stream)}
-            >
-              <FontAwesomeIcon icon={faExpand} />
-            </button>
-          )}
-          <button
-            className={classNames("btn w-full", isRemoving && "bg-red-500")}
-            onClick={onClickRemove}
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

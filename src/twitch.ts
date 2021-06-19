@@ -121,6 +121,9 @@ async function callTwitch<T = any>(
     },
     signal,
   });
+  if (!response.ok) {
+    throw new Error("Twitch API response not OK");
+  }
   const parsed = await response.json();
   return mapKeysDeep(parsed, (_, key) => camelCase(key));
 }
@@ -168,20 +171,38 @@ export type StreamData = {
   startedAt: string;
 };
 
+type StreamQueryParams = {
+  gameId: ParamValue;
+  userId: ParamValue;
+  userLogin: ParamValue;
+};
+
 export function getStreams({
   first,
   gameId,
   userId,
   userLogin,
-}: Partial<{
-  first: number;
-  gameId: ParamValue;
-  userId: ParamValue;
-  userLogin: ParamValue;
-}>) {
+}: Partial<
+  {
+    first: number;
+  } & StreamQueryParams
+>) {
   return callTwitch<PaginatedResponse<StreamData>>("/streams", {
-    params: { first, gameId, userId, userLogin: userLogin },
+    params: { first, gameId, userId, userLogin },
   });
+}
+
+export async function getStream({
+  gameId,
+  userId,
+  userLogin,
+}: Partial<StreamQueryParams>): Promise<StreamData> {
+  const response = await getStreams({ gameId, userId, userLogin });
+  if (response?.data[0]) {
+    return response.data[0];
+  } else {
+    throw new Error("Could not fetch stream data from Twitch");
+  }
 }
 
 export type TwitchUser = {
@@ -197,10 +218,19 @@ export type TwitchUser = {
   createdAt: string;
 };
 
-export async function getUsers({ ids }: { ids?: string[] } = {}) {
+export function getUsers({ ids }: { ids?: string[] } = {}) {
   return callTwitch<PaginatedResponse<TwitchUser>>("/users", {
     params: { id: ids },
   });
+}
+
+export async function getUser(id) {
+  const response = await getUsers({ ids: [id] });
+  if (response?.data[0]) {
+    return response.data[0];
+  } else {
+    throw new Error("Could not fetch user data from Twitch");
+  }
 }
 
 export async function getAuthedUser(): Promise<TwitchUser> {
@@ -216,7 +246,11 @@ export async function getFollowedStreams({
   first?: ParamValue;
   after?: ParamValue;
 }) {
-  return callTwitch<PaginatedResponse<StreamData>>("/streams/followed", {
-    params: { userId, first, after },
-  });
+  const response = await callTwitch<PaginatedResponse<StreamData>>(
+    "/streams/followed",
+    {
+      params: { userId, first, after },
+    }
+  );
+  return response.data;
 }

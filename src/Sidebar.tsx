@@ -1,6 +1,5 @@
 import { Settings } from "./useSettings";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
-import { FollowedStreamData } from "./useTwitchData";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -17,14 +16,14 @@ import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { round } from "lodash";
 
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
-import { checkTwitchAuth } from "./twitch";
+import { checkTwitchAuth, getUser, StreamData } from "./twitch";
 import useBounding from "./useBounding";
+import { useQuery } from "react-query";
 
 export function Sidebar({
   className,
   settings,
   setSettings,
-  hasTwitchAuth,
   streams,
   primaryStream,
   followedStreams,
@@ -33,8 +32,7 @@ export function Sidebar({
   className?: string;
   settings: Settings;
   setSettings: Dispatch<SetStateAction<Settings>>;
-  hasTwitchAuth: boolean;
-  followedStreams: FollowedStreamData[];
+  followedStreams?: StreamData[];
   streams: string[];
   primaryStream?: string;
   addStream: (streamName: string) => void;
@@ -88,23 +86,24 @@ export function Sidebar({
           </label>
         </div>
       )}
-      {followedStreams.length ? (
+      {followedStreams?.length ? (
         <>
           <hr />
           <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden bg-gray-900">
-            {followedStreams.map(({ stream, user }) => (
-              <FollowedStream
-                key={stream.userId}
-                isOpen={streamsLowercase.includes(
-                  stream.userName.toLowerCase()
-                )}
-                isPrimary={stream.userName.toLowerCase() === primaryStream}
-                stream={stream}
-                user={user}
-                addStream={addStream}
-                sidebarExpanded={open}
-              />
-            ))}
+            {followedStreams
+              .map((stream) => (
+                <FollowedStream
+                  key={stream.userId}
+                  isOpen={streamsLowercase.includes(
+                    stream.userName.toLowerCase()
+                  )}
+                  isPrimary={stream.userName.toLowerCase() === primaryStream}
+                  stream={stream}
+                  addStream={addStream}
+                  sidebarExpanded={open}
+                />
+              ))
+              .filter(Boolean)}
           </div>
           <hr className="mb-2" />
         </>
@@ -199,13 +198,21 @@ function FollowedStream({
   isPrimary,
   isOpen,
   stream,
-  user,
   addStream,
   sidebarExpanded,
 }) {
   const [hovered, setHovered] = useState(false);
   const id = "followed-stream-" + stream.userId;
   const rect = useBounding(id);
+
+  const { data: user } = useQuery(
+    ["twitchUser", stream.userId],
+    ({ queryKey: [_key, id] }) => getUser(id)
+  );
+
+  if (!user) {
+    return null;
+  }
 
   const streamTitle = (
     <div className={classNames(sidebarExpanded ? "max-w-40" : "w-0 flex-grow")}>
@@ -227,12 +234,15 @@ function FollowedStream({
       >
         <label className="flex">
           <button
-            className="btn-sidebar-followed w-8 flex-shrink-0"
+            className={classNames(
+              "btn-sidebar-followed w-8 flex-shrink-0",
+              sidebarExpanded ? "mr-2" : "mr-4"
+            )}
             onClick={() => addStream(stream.userName)}
           >
             <img
               className={classNames("rounded-full")}
-              src={user!.profileImageUrl}
+              src={user.profileImageUrl}
               alt={stream.userName}
             />
           </button>
