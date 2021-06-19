@@ -7,7 +7,7 @@ import {
   faCompressArrowsAlt,
   faExpandArrowsAlt,
   faRocket,
-  faSlash,
+  faTachometerAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
@@ -50,18 +50,18 @@ export function Sidebar({
         className
       )}
     >
-      <div className="self-end mb-2">
+      <div className="self-end">
         <label>
           <span className="btn-txt">Collapse</span>
           <button
             title={open ? "Collapse" : "Expand"}
-            className="btn-sidebar"
+            className="px-2 py-1 mx-3 my-1"
             onClick={() => setOpen((state) => !state)}
           >
             <FontAwesomeIcon
               icon={faArrowLeft}
               className={classNames(
-                "transition-transform",
+                "transition-transform text-lg",
                 !open && "flip-horizontal"
               )}
               fixedWidth
@@ -69,6 +69,26 @@ export function Sidebar({
           </button>
         </label>
       </div>
+      {followedStreams?.length ? (
+        <>
+          <hr />
+          <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden bg-gray-900">
+            {followedStreams.map((stream) => (
+              <FollowedStream
+                key={stream.userId}
+                isOpen={streamsLowercase.includes(
+                  stream.userName.toLowerCase()
+                )}
+                isPrimary={stream.userName.toLowerCase() === primaryStream}
+                stream={stream}
+                addStream={addStream}
+                sidebarExpanded={open}
+              />
+            ))}
+          </div>
+          <hr className="mb-2" />
+        </>
+      ) : null}
       {!checkTwitchAuth() && (
         <div>
           <label>
@@ -83,28 +103,6 @@ export function Sidebar({
           </label>
         </div>
       )}
-      {followedStreams?.length ? (
-        <>
-          <hr />
-          <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden bg-gray-900">
-            {followedStreams
-              .map((stream) => (
-                <FollowedStream
-                  key={stream.userId}
-                  isOpen={streamsLowercase.includes(
-                    stream.userName.toLowerCase()
-                  )}
-                  isPrimary={stream.userName.toLowerCase() === primaryStream}
-                  stream={stream}
-                  addStream={addStream}
-                  sidebarExpanded={open}
-                />
-              ))
-              .filter(Boolean)}
-          </div>
-          <hr className="mb-2" />
-        </>
-      ) : null}
       <div>
         <label>
           <button
@@ -118,8 +116,7 @@ export function Sidebar({
             }
           >
             <div className="fa-layers fa-fw">
-              <FontAwesomeIcon icon={faRocket} />
-              {!boostMode && <FontAwesomeIcon icon={faSlash} />}
+              <FontAwesomeIcon icon={boostMode ? faTachometerAlt : faRocket} />
             </div>
           </button>
           <span className="btn-txt">

@@ -279,7 +279,7 @@ export default function App() {
             <div
               className={classNames(
                 "cursor-pointer opacity-40 hover:opacity-75 absolute top-2 z-10 transition-all",
-                showChat ? "left-2" : "-left-10"
+                showChat ? "left-2" : "-left-12"
               )}
               onClick={() =>
                 setSettings(({ showChat, ...state }) => ({
@@ -288,6 +288,7 @@ export default function App() {
                 }))
               }
               title={(showChat ? "Hide" : "Show") + " Chat"}
+              role="button"
             >
               <FontAwesomeIcon
                 icon={showChat ? faCaretSquareRight : faCaretSquareLeft}

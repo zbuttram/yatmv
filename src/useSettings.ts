@@ -28,8 +28,8 @@ export default function useSettings(): [
   const [settings, setSettings] = useState(getSettings() ?? INITIAL_SETTINGS);
 
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(settings));
-  }, [settings, setSettings]);
+    setTimeout(() => localStorage.setItem(key, JSON.stringify(settings)));
+  }, [settings]);
 
   return [settings, setSettings];
 }
