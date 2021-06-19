@@ -16,7 +16,7 @@ import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { round } from "lodash";
 
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
-import { checkTwitchAuth, getUser, StreamData } from "./twitch";
+import { checkTwitchAuth, getUser, StreamData, useTwitchUser } from "./twitch";
 import useBounding from "./useBounding";
 import { useQuery } from "react-query";
 
@@ -205,10 +205,7 @@ function FollowedStream({
   const id = "followed-stream-" + stream.userId;
   const rect = useBounding(id);
 
-  const { data: user } = useQuery(
-    ["twitchUser", stream.userId],
-    ({ queryKey: [_key, id] }) => getUser(id)
-  );
+  const { data: user } = useTwitchUser(stream.userId);
 
   if (!user) {
     return null;

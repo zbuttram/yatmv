@@ -10,6 +10,7 @@ import {
   TWITCH_SCOPES,
   TWITCH_AUTH_URL,
 } from "./const";
+import { useQuery } from "react-query";
 
 if (!TWITCH_CLIENT_ID) {
   console.error(
@@ -235,6 +236,12 @@ export async function getUser(id) {
 
 export async function getAuthedUser(): Promise<TwitchUser> {
   return (await getUsers()).data[0];
+}
+
+export function useTwitchUser(id) {
+  return useQuery(["twitchUser", id], ({ queryKey: [_key, id] }) =>
+    getUser(id)
+  );
 }
 
 export async function getFollowedStreams({

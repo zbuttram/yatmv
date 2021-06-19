@@ -1,10 +1,12 @@
-import { checkTwitchAuth, getStream } from "./twitch";
 import { useCallback, useRef, useState } from "react";
-import TwitchStream from "./TwitchStream";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExpand, faTrash } from "@fortawesome/free-solid-svg-icons";
 import classNames from "classnames";
 import { useQuery } from "react-query";
+
+import { FETCH_OPEN_STREAMS_INTERVAL_MINS } from "./const";
+import { checkTwitchAuth, getStream } from "./twitch";
+import TwitchStream from "./TwitchStream";
 
 export function StreamContainer({
   stream,
@@ -24,7 +26,10 @@ export function StreamContainer({
   const { data: streamData } = useQuery(
     ["stream", stream.toLowerCase()],
     ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
-    { enabled: checkTwitchAuth(), refetchInterval: 2 * 60 * 1000 }
+    {
+      enabled: checkTwitchAuth(),
+      refetchInterval: FETCH_OPEN_STREAMS_INTERVAL_MINS * 60 * 1000,
+    }
   );
   const { title, userName } = streamData ?? {};
 

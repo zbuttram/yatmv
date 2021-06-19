@@ -219,13 +219,11 @@ export default function App() {
     enabled: checkTwitchAuth(),
   });
 
-  const hasTwitchAuth = !!twitchUser;
-
   const { data: followedStreams } = useQuery(
     "followedStreams",
     () => getFollowedStreams({ userId: twitchUser?.id }),
     {
-      enabled: hasTwitchAuth,
+      enabled: !!twitchUser,
       refetchInterval: FETCH_FOLLOWED_INTERVAL_MINS * 60 * 1000,
     }
   );
@@ -236,7 +234,7 @@ export default function App() {
 
   //region AppReturn
   return (
-    <AppProvider value={{ settings, hasTwitchAuth }}>
+    <AppProvider value={{ settings }}>
       <main
         className={classNames(
           "flex flex-col ring-white ring-opacity-60",
@@ -304,7 +302,7 @@ export default function App() {
           )}
           <div className="explainer max-w-prose mx-auto">
             <p>
-              {hasTwitchAuth ? (
+              {checkTwitchAuth() ? (
                 "Connect to Twitch"
               ) : (
                 <a href={TWITCH_AUTH_URL} className="underline">
