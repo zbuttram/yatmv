@@ -254,7 +254,7 @@ export function useTwitchUser(login) {
   return useQuery(
     ["twitchUser", login],
     ({ queryKey: [_key, login] }) => getUser({ login }),
-    { enabled: !!login }
+    { enabled: checkTwitchAuth() && !!login }
   );
 }
 
