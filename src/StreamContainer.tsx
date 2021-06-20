@@ -66,7 +66,7 @@ export function StreamContainer({
         <div className="pt-2 pb-1">
           <div className="flex">
             <div className="font-bold">{userName ?? stream}</div>
-            {!streamLoading && (
+            {checkTwitchAuth() && !streamLoading && (
               <div className="ml-auto">
                 <FontAwesomeIcon
                   className={classNames(
