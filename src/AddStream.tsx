@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import classNames from "classnames";
 import { checkTwitchAuth, searchChannels } from "./twitch";
-import { useThrottle } from "react-use";
 import { useQuery } from "react-query";
 
 export default function AddStream({ addNewStream, className = "" }) {
   const [newStream, setNewStream] = useState("");
-  const searchQuery = useThrottle(newStream, 1000);
+  const searchQuery = useDebounce(newStream, 1000);
   const {
     data: searchResultData,
     remove: removeQuery,
@@ -60,7 +59,7 @@ export default function AddStream({ addNewStream, className = "" }) {
           onChange={(e) => setNewStream(e.target.value)}
         />
         {newStream &&
-          (isFetching ? (
+          (isFetching || newStream !== searchQuery ? (
             <div>Searching...</div>
           ) : (
             <div className="overflow-y-auto">
@@ -90,4 +89,29 @@ export default function AddStream({ addNewStream, className = "" }) {
       />
     </form>
   );
+}
+
+// https://usehooks.com/useDebounce/
+function useDebounce(value, delay) {
+  // State and setters for debounced value
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(
+    () => {
+      // Update debounced value after delay
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+
+      // Cancel the timeout if value changes (also on delay change or unmount)
+      // This is how we prevent debounced value from updating if value is changed ...
+      // .. within the delay period. Timeout gets cleared and restarted.
+      return () => {
+        clearTimeout(handler);
+      };
+    },
+    [value, delay] // Only re-call effect if value or delay changes
+  );
+
+  return debouncedValue;
 }
