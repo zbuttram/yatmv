@@ -309,7 +309,7 @@ export default function App() {
         </div>
         <div className="flex justify-center flex-wrap px-4 gap-4 bg-gray-900">
           <div className="w-64 flex flex-col p-3 stream-container">
-            <AddStream addNewStream={addNewStream} className="my-auto" />
+            <AddStream addNewStream={addNewStream} className="" />
           </div>
           {streams.map((stream, i) => (
             <StreamContainer

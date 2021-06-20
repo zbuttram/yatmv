@@ -202,7 +202,9 @@ export async function getStream({
   if (response?.data[0]) {
     return response.data[0];
   } else {
-    throw new Error("Could not fetch stream data from Twitch");
+    throw new Error(
+      "Could not fetch stream data from Twitch (stream is likely offline)"
+    );
   }
 }
 

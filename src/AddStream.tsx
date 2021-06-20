@@ -1,13 +1,25 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState } from "react";
 import classNames from "classnames";
-import { debounce, DebouncedFunc } from "lodash";
-import { checkTwitchAuth, searchChannels, ChannelData } from "./twitch";
+import { checkTwitchAuth, searchChannels } from "./twitch";
+import { useThrottle } from "react-use";
+import { useQuery } from "react-query";
 
 export default function AddStream({ addNewStream, className = "" }) {
   const [newStream, setNewStream] = useState("");
-  const [searchResults, setSearchResults] = useState<ChannelData[]>([]);
-  const [searching, setSearching] = useState(false);
-  const hasTwitchAuth = useMemo(() => checkTwitchAuth(), []);
+  const searchQuery = useThrottle(newStream, 1000);
+  const {
+    data: searchResultData,
+    remove: removeQuery,
+    isFetching,
+  } = useQuery(
+    ["searchChannels", searchQuery],
+    ({ queryKey: [_key, query] }) => searchChannels(query),
+    {
+      enabled: checkTwitchAuth() && !!newStream && !!searchQuery,
+      staleTime: 5000,
+    }
+  );
+  const searchResults = searchResultData?.data ?? [];
 
   function submitNewStream(e) {
     e.preventDefault();
@@ -21,60 +33,18 @@ export default function AddStream({ addNewStream, className = "" }) {
         addNewStream(newStream);
       }
       setNewStream("");
-      setSearchResults([]);
+      removeQuery();
     }
     return false;
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loadSuggestions = useCallback<
-    DebouncedFunc<(newStream: string, signal: AbortSignal) => Promise<void>>
-  >(
-    debounce(async function _loadSuggestions(
-      newStream: string,
-      signal: AbortSignal
-    ) {
-      try {
-        const result = await searchChannels(newStream, {
-          first: 6,
-          signal,
-        });
-        setSearchResults(result.data.map((res) => res));
-      } catch (e) {
-        if (e.name !== "AbortError") {
-          throw e;
-        }
-      } finally {
-        setSearching(false);
-      }
-    },
-    500),
-    [setSearchResults]
-  );
-
-  useEffect(() => {
-    if (!hasTwitchAuth) {
-      return;
-    }
-    if (!newStream) {
-      setSearchResults([]);
-      return;
-    }
-    setSearching(true);
-    const abortController = new AbortController();
-    loadSuggestions(newStream, abortController.signal);
-    return () => {
-      abortController.abort();
-    };
-  }, [newStream, loadSuggestions, hasTwitchAuth]);
-
   return (
-    <form onSubmit={submitNewStream} className={"flex " + className}>
-      <div className="flex flex-col w-4/5 overflow-y-auto">
+    <form onSubmit={submitNewStream} className={"flex h-full" + className}>
+      <div className="flex flex-col w-4/5 h-full">
         <input
           type="text"
           placeholder="Channel"
-          className="flex-grow bg-black border border-gray-400 focus:outline-none focus:border-white"
+          className="bg-black border border-gray-400 focus:outline-none focus:border-white"
           onKeyDown={(e) => {
             if (e.key === "Tab" && newStream) {
               e.preventDefault();
@@ -90,25 +60,27 @@ export default function AddStream({ addNewStream, className = "" }) {
           onChange={(e) => setNewStream(e.target.value)}
         />
         {newStream &&
-          (searching ? (
+          (isFetching ? (
             <div>Searching...</div>
           ) : (
-            searchResults.map((result) => (
-              <div
-                key={result.displayName}
-                className={classNames(
-                  "cursor-pointer hover:bg-gray-400",
-                  result.displayName.toLowerCase() ===
-                    newStream.toLowerCase() && "bg-gray-400"
-                )}
-                onClick={() => {
-                  addNewStream(result.displayName);
-                  setNewStream("");
-                }}
-              >
-                {result.displayName}
-              </div>
-            ))
+            <div className="overflow-y-auto">
+              {searchResults.map((result) => (
+                <div
+                  key={result.displayName}
+                  className={classNames(
+                    "cursor-pointer hover:bg-gray-400",
+                    result.displayName.toLowerCase() ===
+                      newStream.toLowerCase() && "bg-gray-400"
+                  )}
+                  onClick={() => {
+                    addNewStream(result.displayName);
+                    setNewStream("");
+                  }}
+                >
+                  {result.displayName}
+                </div>
+              ))}
+            </div>
           ))}
       </div>
       <input
