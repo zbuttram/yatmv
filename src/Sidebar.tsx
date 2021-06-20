@@ -1,4 +1,3 @@
-import { Settings } from "./useSettings";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,6 +13,7 @@ import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { round } from "lodash";
 
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
+import { Settings } from "./useSettings";
 import { checkTwitchAuth, StreamData, useTwitchUser } from "./twitch";
 import useBounding from "./useBounding";
 
@@ -179,7 +179,7 @@ function FollowedStream({
   const id = "followed-stream-" + stream.userId;
   const rect = useBounding(id);
 
-  const { data: user } = useTwitchUser(stream.userId);
+  const { data: user } = useTwitchUser(stream.userLogin.toLowerCase());
 
   if (!user) {
     return null;

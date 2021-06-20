@@ -219,14 +219,26 @@ export type TwitchUser = {
   createdAt: string;
 };
 
-export function getUsers({ ids }: { ids?: string[] } = {}) {
+type GetUsersParams = { ids?: string[]; logins?: string[] };
+
+export function getUsers({ ids, logins }: GetUsersParams = {}) {
   return callTwitch<PaginatedResponse<TwitchUser>>("/users", {
-    params: { id: ids },
+    params: { id: ids, login: logins },
   });
 }
 
-export async function getUser(id) {
-  const response = await getUsers({ ids: [id] });
+export async function getUser({
+  id,
+  login,
+}: Partial<{ id: string; login: string }>) {
+  const params: GetUsersParams = {};
+  if (id) {
+    params.ids = [id];
+  }
+  if (login) {
+    params.logins = [login];
+  }
+  const response = await getUsers(params);
   if (response?.data[0]) {
     return response.data[0];
   } else {
@@ -238,9 +250,11 @@ export async function getAuthedUser(): Promise<TwitchUser> {
   return (await getUsers()).data[0];
 }
 
-export function useTwitchUser(id) {
-  return useQuery(["twitchUser", id], ({ queryKey: [_key, id] }) =>
-    getUser(id)
+export function useTwitchUser(login) {
+  return useQuery(
+    ["twitchUser", login],
+    ({ queryKey: [_key, login] }) => getUser({ login }),
+    { enabled: !!login }
   );
 }
 

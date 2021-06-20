@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExpand, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faCircle, faExpand, faTrash } from "@fortawesome/free-solid-svg-icons";
 import classNames from "classnames";
 import { useQuery } from "react-query";
 
@@ -23,7 +23,11 @@ export function StreamContainer({
   setPrimaryStream: (stream: string) => void;
   className?: string;
 }) {
-  const { data: streamData } = useQuery(
+  const {
+    data: streamData,
+    isError: streamError,
+    isLoading: streamLoading,
+  } = useQuery(
     ["stream", stream.toLowerCase()],
     ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
     {
@@ -60,12 +64,25 @@ export function StreamContainer({
       />
       <div className="w-full flex flex-col self-end">
         <div className="pt-2 pb-1">
+          <div className="flex">
+            <div className="font-bold">{userName ?? stream}</div>
+            {!streamLoading && (
+              <div className="ml-auto">
+                <FontAwesomeIcon
+                  className={classNames(
+                    "text-sm my-auto",
+                    streamError ? "text-gray-700" : "text-red-500"
+                  )}
+                  icon={faCircle}
+                />
+              </div>
+            )}
+          </div>
           {streamData && (
             <div className="text-xs truncate" title={title}>
               {title}
             </div>
           )}
-          <div className="font-bold">{userName ?? stream}</div>
         </div>
         <div className="flex">
           {!isPrimary && (
