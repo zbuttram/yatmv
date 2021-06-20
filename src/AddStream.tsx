@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { checkTwitchAuth, searchChannels } from "./twitch";
 import { useQuery } from "react-query";
+import { usePrevious } from "react-use";
+import scrollIntoView from "scroll-into-view-if-needed";
 
 export default function AddStream({ addNewStream, className = "" }) {
   const [newStream, setNewStream] = useState("");
@@ -18,7 +20,24 @@ export default function AddStream({ addNewStream, className = "" }) {
       staleTime: 5000,
     }
   );
-  const searchResults = searchResultData?.data ?? [];
+  const searchResults = useMemo(
+    () => searchResultData?.data ?? [],
+    [searchResultData]
+  );
+  const prevSearchResults = usePrevious(searchResults);
+
+  const [_selectedSearchResult, setSelectedSearchResult] =
+    useState<number | null>(null);
+  const selectedSearchResult =
+    _selectedSearchResult !== null
+      ? searchResults[_selectedSearchResult]
+      : null;
+
+  useEffect(() => {
+    if (searchResults.length && searchResults !== prevSearchResults) {
+      setSelectedSearchResult(0);
+    }
+  }, [prevSearchResults, searchResults]);
 
   function submitNewStream(e) {
     e.preventDefault();
@@ -45,14 +64,30 @@ export default function AddStream({ addNewStream, className = "" }) {
           placeholder="Channel"
           className="bg-black border border-gray-400 focus:outline-none focus:border-white"
           onKeyDown={(e) => {
-            if (e.key === "Tab" && newStream) {
+            if (
+              e.key === "ArrowUp" ||
+              e.key === "ArrowDown" ||
+              (e.key === "Tab" && newStream)
+            ) {
               e.preventDefault();
             }
           }}
           onKeyUp={(e) => {
-            if (e.key === "Tab" && searchResults[0]) {
+            if (e.key === "Tab" && (selectedSearchResult || searchResults[0])) {
               e.preventDefault();
-              setNewStream(searchResults[0].displayName);
+              setNewStream(
+                (selectedSearchResult ?? searchResults[0]).displayName
+              );
+            }
+            if (e.key === "ArrowUp") {
+              setSelectedSearchResult((sel) =>
+                Math.max(0, sel === null ? 0 : sel - 1)
+              );
+            }
+            if (e.key === "ArrowDown") {
+              setSelectedSearchResult((sel) =>
+                Math.min(searchResults.length - 1, sel === null ? 0 : sel + 1)
+              );
             }
           }}
           value={newStream}
@@ -64,20 +99,15 @@ export default function AddStream({ addNewStream, className = "" }) {
           ) : (
             <div className="overflow-y-auto">
               {searchResults.map((result) => (
-                <div
+                <SearchResult
                   key={result.displayName}
-                  className={classNames(
-                    "cursor-pointer hover:bg-gray-400",
-                    result.displayName.toLowerCase() ===
-                      newStream.toLowerCase() && "bg-gray-400"
-                  )}
+                  result={result}
+                  isSelected={result === selectedSearchResult}
                   onClick={() => {
                     addNewStream(result.displayName);
                     setNewStream("");
                   }}
-                >
-                  {result.displayName}
-                </div>
+                />
               ))}
             </div>
           ))}
@@ -88,6 +118,32 @@ export default function AddStream({ addNewStream, className = "" }) {
         className="w-1/5 ml-1 mb-auto px-1 bg-black border"
       />
     </form>
+  );
+}
+
+function SearchResult({ result, isSelected, onClick }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isSelected && ref.current) {
+      scrollIntoView(ref.current, {
+        scrollMode: "if-needed",
+        block: "nearest",
+      });
+    }
+  }, [isSelected]);
+
+  return (
+    <div
+      ref={ref}
+      className={classNames(
+        "cursor-pointer hover:bg-gray-400",
+        isSelected && "bg-gray-400"
+      )}
+      onClick={onClick}
+    >
+      {result.displayName}
+    </div>
   );
 }
 
