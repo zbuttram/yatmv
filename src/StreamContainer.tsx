@@ -38,17 +38,18 @@ export function StreamContainer({
   const { title, userName } = streamData ?? {};
 
   const [isRemoving, setIsRemoving] = useState(false);
-  const timeout = useRef<ReturnType<typeof setTimeout> | undefined>();
-
+  const removeConfirmTimeout =
+    useRef<ReturnType<typeof setTimeout> | undefined>();
   const onClickRemove = useCallback(
     function onClickRemove() {
       if (!isRemoving) {
         setIsRemoving(true);
-        timeout.current = setTimeout(() => {
+        removeConfirmTimeout.current = setTimeout(() => {
           setIsRemoving(false);
         }, 1500);
       } else {
-        timeout.current && clearTimeout(timeout.current);
+        removeConfirmTimeout.current &&
+          clearTimeout(removeConfirmTimeout.current);
         remove();
       }
     },
