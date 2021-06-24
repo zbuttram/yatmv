@@ -30,16 +30,18 @@ export function StreamContainer({
 }) {
   const {
     data: streamData,
-    isError: streamError,
     isLoading: streamLoading,
+    failureCount: streamFetchFailCount,
   } = useQuery(
     ["stream", stream.toLowerCase()],
     ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
     {
       enabled: checkTwitchAuth(),
       refetchInterval: FETCH_OPEN_STREAMS_INTERVAL_MINS * 60 * 1000,
+      retry: true,
     }
   );
+  const streamOffline = streamFetchFailCount > 1;
   const { title, userName } = streamData ?? {};
 
   const [isRemoving, setIsRemoving] = useState(false);
@@ -84,7 +86,7 @@ export function StreamContainer({
             >
               {checkTwitchAuth() && !streamLoading ? (
                 <FontAwesomeIcon
-                  className={streamError ? "text-gray-700" : "text-red-500"}
+                  className={streamOffline ? "text-gray-700" : "text-red-500"}
                   icon={hovering ? faRedoAlt : faCircle}
                 />
               ) : (
