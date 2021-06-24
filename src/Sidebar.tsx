@@ -7,6 +7,7 @@ import {
   faExpandArrowsAlt,
   faRocket,
   faTachometerAlt,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
@@ -222,8 +223,9 @@ function FollowedStream({
               <div className="sidebar-stream-name" title={stream.userName}>
                 {stream.userName}
               </div>
-              <div className="text-xs mr-2 text-red-400 followed-viewer-count">
-                &#9679; {simplifyViewerCount(stream.viewerCount)}
+              <div className="text-xs text-right ml-auto mr-2 text-red-400 whitespace-nowrap">
+                {simplifyViewerCount(stream.viewerCount)}{" "}
+                <FontAwesomeIcon icon={faUsers} />
               </div>
             </div>
             <div className="sidebar-stream-game mt-1">{stream.gameName}</div>
@@ -251,7 +253,8 @@ function FollowedStream({
             </div>
             <div className="flex">{streamTitle}</div>
             <div className="ml-auto text-red-400">
-              &#9679; {simplifyViewerCount(stream.viewerCount)}
+              {simplifyViewerCount(stream.viewerCount)}{" "}
+              <FontAwesomeIcon icon={faUsers} />
             </div>
           </div>
         )}

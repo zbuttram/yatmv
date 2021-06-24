@@ -36,8 +36,8 @@ body {
 }
 
 .sidebar-stream-name {
-  @apply mr-2 text-sm overflow-ellipsis overflow-hidden;
-  width: 5.75rem;
+  @apply mr-2 text-sm overflow-ellipsis overflow-hidden flex-shrink;
+  max-width: 6.5rem;
 }
 
 .sidebar-stream-game {

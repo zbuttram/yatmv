@@ -35,10 +35,12 @@ export default function TwitchStream({
   channel,
   primary = false,
   primaryContainerRect,
+  reloadCounter,
 }: {
   channel: string;
   primary: boolean;
   primaryContainerRect: Partial<DOMRect>;
+  reloadCounter: number;
 }) {
   const divId = `twitch-stream-embed-${channel}`;
 
@@ -130,6 +132,18 @@ export default function TwitchStream({
       player.current &&
       player.current.removeEventListener(Twitch.Player.PLAYING, onPlay);
   }, [channel, boostMode, prevBoostMode, primary]);
+
+  const prevReloadCounter = usePrevious(reloadCounter);
+  useEffect(() => {
+    if (
+      reloadCounter > 0 &&
+      reloadCounter !== prevReloadCounter &&
+      player.current &&
+      player.current._iframe
+    ) {
+      player.current._iframe.src = player.current._iframe.src;
+    }
+  }, [reloadCounter]);
 
   return (
     <>

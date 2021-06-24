@@ -1,6 +1,11 @@
 import { useCallback, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircle, faExpand, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCircle,
+  faExpand,
+  faRedoAlt,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import classNames from "classnames";
 import { useQuery } from "react-query";
 
@@ -56,28 +61,36 @@ export function StreamContainer({
     [remove, isRemoving, setIsRemoving]
   );
 
+  const [reloadCounter, setReloadCounter] = useState(0);
+  const [hovering, setHovering] = useState(false);
+
   return (
     <div className={className}>
       <TwitchStream
         channel={stream.toLowerCase()}
         primary={isPrimary}
         primaryContainerRect={primaryContainerRect}
+        reloadCounter={reloadCounter}
       />
       <div className="w-full flex flex-col self-end">
         <div className="pt-2 pb-1">
           <div className="flex">
             <div className="font-bold">{userName ?? stream}</div>
-            {checkTwitchAuth() && !streamLoading && (
-              <div className="ml-auto">
+            <div
+              className="ml-auto text-sm my-auto cursor-pointer"
+              onClick={() => setReloadCounter((count) => count + 1)}
+              onMouseEnter={() => setHovering(true)}
+              onMouseLeave={() => setHovering(false)}
+            >
+              {checkTwitchAuth() && !streamLoading ? (
                 <FontAwesomeIcon
-                  className={classNames(
-                    "text-sm my-auto",
-                    streamError ? "text-gray-700" : "text-red-500"
-                  )}
-                  icon={faCircle}
+                  className={streamError ? "text-gray-700" : "text-red-500"}
+                  icon={hovering ? faRedoAlt : faCircle}
                 />
-              </div>
-            )}
+              ) : (
+                <FontAwesomeIcon icon={faRedoAlt} />
+              )}
+            </div>
           </div>
           {streamData && (
             <div className="text-xs truncate" title={title}>
