@@ -21,7 +21,10 @@ export default function AddStream({ addNewStream, className = "" }) {
     }
   );
   const searchResults = useMemo(
-    () => searchResultData?.data ?? [],
+    () =>
+      searchResultData?.data.sort(({ displayName }) =>
+        displayName.toLowerCase() === searchQuery.toLowerCase() ? -1 : 1
+      ) ?? [],
     [searchResultData]
   );
   const prevSearchResults = usePrevious(searchResults);
@@ -65,6 +68,7 @@ export default function AddStream({ addNewStream, className = "" }) {
           className="bg-black border border-gray-400 focus:outline-none focus:border-white"
           onKeyDown={(e) => {
             if (
+              e.key === "Escape" ||
               e.key === "ArrowUp" ||
               e.key === "ArrowDown" ||
               (e.key === "Tab" && newStream)
@@ -73,6 +77,9 @@ export default function AddStream({ addNewStream, className = "" }) {
             }
           }}
           onKeyUp={(e) => {
+            if (e.key === "Escape" && newStream.length > 0) {
+              setNewStream("");
+            }
             if (e.key === "Tab" && (selectedSearchResult || searchResults[0])) {
               e.preventDefault();
               setNewStream(
@@ -138,7 +145,7 @@ function SearchResult({ result, isSelected, onClick }) {
       ref={ref}
       className={classNames(
         "cursor-pointer hover:bg-gray-400",
-        isSelected && "bg-gray-400"
+        isSelected && "bg-gray-600"
       )}
       onClick={onClick}
     >
