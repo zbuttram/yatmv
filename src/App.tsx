@@ -276,25 +276,27 @@ export default function App() {
               showChat ? "w-1/5" : "w-0"
             )}
           >
-            <div
-              className={classNames(
-                "cursor-pointer opacity-40 hover:opacity-75 absolute top-2 z-10 transition-all",
-                showChat ? "left-2" : "-left-12"
-              )}
-              onClick={() =>
-                setSettings(({ showChat, ...state }) => ({
-                  ...state,
-                  showChat: !showChat,
-                }))
-              }
-              title={(showChat ? "Hide" : "Show") + " Chat"}
-              role="button"
-            >
-              <FontAwesomeIcon
-                icon={showChat ? faCaretSquareRight : faCaretSquareLeft}
-                size="2x"
-              />
-            </div>
+            {loadedChats.length > 0 && (
+              <div
+                className={classNames(
+                  "cursor-pointer opacity-40 hover:opacity-75 absolute top-2 z-10 transition-all",
+                  showChat ? "left-2" : "-left-12"
+                )}
+                onClick={() =>
+                  setSettings(({ showChat, ...state }) => ({
+                    ...state,
+                    showChat: !showChat,
+                  }))
+                }
+                title={(showChat ? "Hide" : "Show") + " Chat"}
+                role="button"
+              >
+                <FontAwesomeIcon
+                  icon={showChat ? faCaretSquareRight : faCaretSquareLeft}
+                  size="2x"
+                />
+              </div>
+            )}
             {loadedChats.map(({ channel }) => (
               <TwitchChat
                 key={channel}
