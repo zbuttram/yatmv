@@ -29,8 +29,7 @@ export default function AddStream({ addNewStream, className = "" }) {
   );
   const prevSearchResults = usePrevious(searchResults);
 
-  const [_selectedSearchResult, setSelectedSearchResult] =
-    useState<number | null>(null);
+  const [_selectedSearchResult, setSelectedSearchResult] = useState<number>(-1);
   const selectedSearchResult =
     _selectedSearchResult !== null
       ? searchResults[_selectedSearchResult]
@@ -38,7 +37,7 @@ export default function AddStream({ addNewStream, className = "" }) {
 
   useEffect(() => {
     if (searchResults.length && searchResults !== prevSearchResults) {
-      setSelectedSearchResult(0);
+      setSelectedSearchResult(-1);
     }
   }, [prevSearchResults, searchResults]);
 
@@ -80,24 +79,17 @@ export default function AddStream({ addNewStream, className = "" }) {
             if (e.key === "Escape" && newStream.length > 0) {
               setNewStream("");
             }
-            if (e.key === "Tab" && (selectedSearchResult || searchResults[0])) {
-              e.preventDefault();
-              setNewStream(
-                (selectedSearchResult ?? searchResults[0]).displayName
-              );
-            }
             if (e.key === "ArrowUp") {
+              setSelectedSearchResult((sel) => Math.max(-1, sel - 1));
+            } else if (e.key === "ArrowDown") {
               setSelectedSearchResult((sel) =>
-                Math.max(0, sel === null ? 0 : sel - 1)
+                Math.min(searchResults.length - 1, sel + 1)
               );
-            }
-            if (e.key === "ArrowDown") {
-              setSelectedSearchResult((sel) =>
-                Math.min(searchResults.length - 1, sel === null ? 0 : sel + 1)
-              );
+            } else {
+              setSelectedSearchResult(-1);
             }
           }}
-          value={newStream}
+          value={selectedSearchResult?.displayName ?? newStream}
           onChange={(e) => setNewStream(e.target.value)}
         />
         {newStream &&
