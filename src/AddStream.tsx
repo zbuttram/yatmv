@@ -37,21 +37,30 @@ export default function AddStream({ addNewStream, className = "" }) {
 
   useEffect(() => {
     if (searchResults.length && searchResults !== prevSearchResults) {
-      setSelectedSearchResult(-1);
+      setSelectedSearchResult(
+        // findIndex returns -1 if not found
+        searchResults.findIndex(
+          (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
+        )
+      );
     }
-  }, [prevSearchResults, searchResults]);
+  }, [newStream, prevSearchResults, searchResults]);
 
   function submitNewStream(e) {
     e.preventDefault();
-    if (newStream && newStream !== "") {
+
+    let streamToSubmit;
+    if (selectedSearchResult) {
+      streamToSubmit = selectedSearchResult.displayName;
+    } else if (newStream && newStream !== "") {
       const found = searchResults.find(
         (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
       );
-      if (found) {
-        addNewStream(found.displayName);
-      } else {
-        addNewStream(newStream);
-      }
+      streamToSubmit = found ?? newStream;
+    }
+
+    if (streamToSubmit) {
+      addNewStream(streamToSubmit);
       setNewStream("");
       removeQuery();
     }
