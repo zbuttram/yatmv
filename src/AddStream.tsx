@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
 import { useQuery, useQueryClient } from "react-query";
@@ -45,14 +45,21 @@ export default function AddStream({ addNewStream, className = "" }) {
     }
   }, [newStream, prevSearchResults, searchResults]);
 
-  useEffect(() => {
-    if (selectedSearchResult) {
+  const prefetchStreamData = useCallback(
+    function prefetchStreamData(name) {
       queryClient.prefetchQuery(
-        ["stream", selectedSearchResult.broadcasterLogin.toLowerCase()],
+        ["stream", name.toLowerCase()],
         ({ queryKey: [_key, userLogin] }) => getStream({ userLogin })
       );
+    },
+    [queryClient]
+  );
+
+  useEffect(() => {
+    if (selectedSearchResult) {
+      prefetchStreamData(selectedSearchResult.broadcasterLogin);
     }
-  }, [queryClient, selectedSearchResult]);
+  }, [prefetchStreamData, selectedSearchResult]);
 
   function submitNewStream(e) {
     e.preventDefault();
@@ -123,6 +130,7 @@ export default function AddStream({ addNewStream, className = "" }) {
                     addNewStream(result.displayName);
                     setNewStream("");
                   }}
+                  prefetchStreamData={prefetchStreamData}
                 />
               ))}
             </div>
@@ -137,7 +145,7 @@ export default function AddStream({ addNewStream, className = "" }) {
   );
 }
 
-function SearchResult({ result, isSelected, onClick }) {
+function SearchResult({ result, isSelected, onClick, prefetchStreamData }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -157,6 +165,7 @@ function SearchResult({ result, isSelected, onClick }) {
         isSelected && "bg-gray-600"
       )}
       onClick={onClick}
+      onMouseEnter={prefetchStreamData}
     >
       {result.displayName}
     </div>
