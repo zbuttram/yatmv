@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
-import { checkTwitchAuth, searchChannels } from "./twitch";
-import { useQuery } from "react-query";
+import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
+import { useQuery, useQueryClient } from "react-query";
 import { usePrevious } from "react-use";
 import scrollIntoView from "scroll-into-view-if-needed";
 
 export default function AddStream({ addNewStream, className = "" }) {
+  const queryClient = useQueryClient();
   const [newStream, setNewStream] = useState("");
   const searchQuery = useDebounce(newStream, 1000);
   const {
@@ -31,9 +32,7 @@ export default function AddStream({ addNewStream, className = "" }) {
 
   const [_selectedSearchResult, setSelectedSearchResult] = useState<number>(-1);
   const selectedSearchResult =
-    _selectedSearchResult !== null
-      ? searchResults[_selectedSearchResult]
-      : null;
+    _selectedSearchResult > -1 ? searchResults[_selectedSearchResult] : null;
 
   useEffect(() => {
     if (searchResults.length && searchResults !== prevSearchResults) {
@@ -45,6 +44,15 @@ export default function AddStream({ addNewStream, className = "" }) {
       );
     }
   }, [newStream, prevSearchResults, searchResults]);
+
+  useEffect(() => {
+    if (selectedSearchResult) {
+      queryClient.prefetchQuery(
+        ["stream", selectedSearchResult.broadcasterLogin.toLowerCase()],
+        ({ queryKey: [_key, userLogin] }) => getStream({ userLogin })
+      );
+    }
+  }, [selectedSearchResult]);
 
   function submitNewStream(e) {
     e.preventDefault();

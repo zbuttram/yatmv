@@ -30,7 +30,7 @@ import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { epoch } from "./utils";
 
 const pageURL = new URL(window.location.href);
@@ -214,6 +214,7 @@ export default function App() {
     streams,
     prevPrimaryStream,
   ]);
+  const queryClient = useQueryClient();
 
   const { data: twitchUser } = useQuery("authedTwitchUser", getAuthedUser, {
     enabled: checkTwitchAuth(),
@@ -225,6 +226,15 @@ export default function App() {
     {
       enabled: !!twitchUser,
       refetchInterval: FETCH_FOLLOWED_INTERVAL_MINS * 60 * 1000,
+      onSuccess: (data) => {
+        // pre-populate stream query data since these endpoints return the same datatype
+        data.forEach((stream) =>
+          queryClient.setQueryData(
+            ["stream", stream.userLogin.toLowerCase()],
+            stream
+          )
+        );
+      },
     }
   );
 
