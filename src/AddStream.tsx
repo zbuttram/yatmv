@@ -52,7 +52,7 @@ export default function AddStream({ addNewStream, className = "" }) {
         ({ queryKey: [_key, userLogin] }) => getStream({ userLogin })
       );
     }
-  }, [selectedSearchResult]);
+  }, [queryClient, selectedSearchResult]);
 
   function submitNewStream(e) {
     e.preventDefault();
