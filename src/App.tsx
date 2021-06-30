@@ -13,6 +13,7 @@ import { usePrevious } from "react-use";
 import TwitchChat from "./TwitchChat";
 import useBounding from "./useBounding";
 import {
+  CHAT_EVICT_SEC,
   FETCH_FOLLOWED_INTERVAL_MINS,
   PROJECT_URL,
   STREAM_STATE_COOKIE,
@@ -30,12 +31,7 @@ import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
 import { useQuery } from "react-query";
-
-const CHAT_EVICT_SEC = 60 * 15;
-
-function epoch(diff: number = 0) {
-  return Math.floor(Date.now() / 1000) + diff;
-}
+import { epoch } from "./utils";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];

@@ -5,3 +5,7 @@ function makeDefaultConverter<T>(converter: (x: any) => T) {
 }
 
 export const numDefault = makeDefaultConverter(Number);
+
+export function epoch(diff: number = 0) {
+  return Math.floor(Date.now() / 1000) + diff;
+}

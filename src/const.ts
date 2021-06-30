@@ -10,6 +10,7 @@ export const FETCH_OPEN_STREAMS_INTERVAL_MINS = numDefault(
   process.env.REACT_APP_FETCH_FOLLOWED_INTERVAL_MINS,
   2
 );
+export const CHAT_EVICT_SEC = 60 * 15;
 
 // @ts-ignore
 export const DEPLOY_CONTEXT: string | undefined = window.__DEPLOY_CONTEXT;
