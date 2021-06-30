@@ -30,8 +30,8 @@ export function StreamContainer({
 }) {
   const {
     data: streamData,
-    isLoading: streamLoading,
     failureCount: streamFetchFailCount,
+    refetch: refetchStreamData,
   } = useQuery(
     ["stream", stream.toLowerCase()],
     ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
@@ -66,6 +66,14 @@ export function StreamContainer({
   const [reloadCounter, setReloadCounter] = useState(0);
   const [hovering, setHovering] = useState(false);
 
+  const reload = useCallback(
+    function reload() {
+      setReloadCounter((count) => count + 1);
+      refetchStreamData();
+    },
+    [refetchStreamData]
+  );
+
   return (
     <div className={className}>
       <TwitchStream
@@ -80,11 +88,11 @@ export function StreamContainer({
             <div className="font-bold">{userName ?? stream}</div>
             <div
               className="ml-auto text-sm my-auto cursor-pointer"
-              onClick={() => setReloadCounter((count) => count + 1)}
+              onClick={reload}
               onMouseEnter={() => setHovering(true)}
               onMouseLeave={() => setHovering(false)}
             >
-              {checkTwitchAuth() && !streamLoading ? (
+              {checkTwitchAuth() ? (
                 <FontAwesomeIcon
                   className={streamOffline ? "text-gray-700" : "text-red-500"}
                   icon={hovering ? faRedoAlt : faCircle}
