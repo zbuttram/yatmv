@@ -46,10 +46,11 @@ export default function AddStream({ addNewStream, className = "" }) {
   }, [newStream, prevSearchResults, searchResults]);
 
   const prefetchStreamData = useCallback(
-    function prefetchStreamData(name) {
+    function prefetchStreamData(name: string) {
       queryClient.prefetchQuery(
         ["stream", name.toLowerCase()],
-        ({ queryKey: [_key, userLogin] }) => getStream({ userLogin })
+        ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
+        { staleTime: 5000 }
       );
     },
     [queryClient]
@@ -130,7 +131,9 @@ export default function AddStream({ addNewStream, className = "" }) {
                     addNewStream(result.displayName);
                     setNewStream("");
                   }}
-                  prefetchStreamData={prefetchStreamData}
+                  prefetchStreamData={() =>
+                    prefetchStreamData(result.broadcasterLogin)
+                  }
                 />
               ))}
             </div>

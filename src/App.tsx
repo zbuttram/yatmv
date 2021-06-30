@@ -222,7 +222,7 @@ export default function App() {
 
   const { data: followedStreams } = useQuery(
     "followedStreams",
-    () => getFollowedStreams({ userId: twitchUser?.id }),
+    () => getFollowedStreams({ userId: twitchUser!.id }),
     {
       enabled: !!twitchUser,
       refetchInterval: FETCH_FOLLOWED_INTERVAL_MINS * 60 * 1000,
