@@ -98,8 +98,8 @@ export default function App() {
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
 
-    streams
-      ? params.set("streams", streams.toString())
+    streams && streams.length
+      ? params.set("streams", streams.filter(Boolean).toString())
       : params.delete("streams");
     primaryStreamName
       ? params.set("primary", primaryStreamName)
@@ -317,7 +317,7 @@ export default function App() {
         </div>
         <div className="flex justify-center flex-wrap px-4 gap-4 bg-gray-900">
           <div className="w-64 flex flex-col p-3 stream-container">
-            <AddStream addNewStream={addNewStream} className="" />
+            <AddStream addNewStream={addNewStream} />
           </div>
           {streams.map((stream, i) => (
             <StreamContainer

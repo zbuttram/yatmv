@@ -70,7 +70,7 @@ export function Sidebar({
           </button>
         </label>
       </div>
-      {followedStreams?.length ? (
+      {followedStreams?.length && followedStreams.length > 0 ? (
         <>
           <hr />
           <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden bg-gray-900">
@@ -175,6 +175,12 @@ function FollowedStream({
   stream,
   addStream,
   sidebarExpanded,
+}: {
+  isPrimary: boolean;
+  isOpen: boolean;
+  stream: StreamData;
+  addStream: (name: string) => void;
+  sidebarExpanded: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const id = "followed-stream-" + stream.userId;
