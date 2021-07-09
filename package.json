@@ -37,7 +37,8 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test",
+    "test": "craco test --env=puppeteer",
+    "e2e": "cd e2e && jest",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -68,8 +69,10 @@
   },
   "devDependencies": {
     "autoprefixer": "9",
+    "jest-puppeteer": "^5.0.4",
     "postcss": "7",
     "prettier": "^2.3.0",
+    "puppeteer": "^10.1.0",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat"
   }
 }
