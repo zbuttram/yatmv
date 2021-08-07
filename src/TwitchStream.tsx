@@ -9,6 +9,7 @@ import { AppContext } from "./appContext";
 import { TWITCH_PLAYER_URL } from "./const";
 
 let scriptElement: HTMLScriptElement | null = null;
+let scriptLoaded = false;
 function loadWithScript(callback) {
   if (!scriptElement) {
     scriptElement = document.createElement("script");
@@ -16,7 +17,14 @@ function loadWithScript(callback) {
     scriptElement.setAttribute("src", TWITCH_PLAYER_URL);
     document.body.appendChild(scriptElement);
   }
-  scriptElement.addEventListener("load", callback);
+  if (scriptLoaded) {
+    callback();
+  } else {
+    scriptElement.addEventListener("load", () => {
+      scriptLoaded = true;
+      callback();
+    });
+  }
 }
 
 function getChannelVolumeKey(channel) {
