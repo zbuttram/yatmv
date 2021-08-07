@@ -16,6 +16,7 @@ export const CHAT_EVICT_SEC = 60 * 15;
 export const DEPLOY_CONTEXT: string | undefined = window.__DEPLOY_CONTEXT;
 
 // TWITCH
+export const TWITCH_PLAYER_URL = "https://player.twitch.tv/js/embed/v1.js";
 export const TWITCH_ACCESS_TOKEN_COOKIE = "twitch_access_token";
 export const TWITCH_SCOPE_COOKIE = "twitch_scope";
 export const TWITCH_CLIENT_ID = process.env.REACT_APP_TWITCH_CLIENT_ID ?? "";
