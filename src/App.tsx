@@ -308,7 +308,7 @@ export default function App() {
                 key={channel}
                 channel={channel}
                 className={classNames(
-                  channel === primaryStreamName ? "w-full" : "w-0",
+                  channel === primaryStreamName ? "chat-standard-width" : "w-0",
                   "transition-all"
                 )}
               />
