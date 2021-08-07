@@ -279,7 +279,7 @@ export default function App() {
             id="chats-container"
             className={classNames(
               "flex relative transition-all",
-              showChat ? "w-1/5" : "w-0"
+              showChat ? "" : "w-0"
             )}
           >
             {loadedChats.length > 0 && (

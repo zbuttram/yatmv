@@ -7,6 +7,10 @@ body {
   color: white;
 }
 
+.chat-standard-width {
+  width: 21.25rem; /* 340px; same as twitch */
+}
+
 .primary-container {
   height: calc(80vh - (theme('spacing.3') * 2));
 }

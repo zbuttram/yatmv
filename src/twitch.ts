@@ -13,9 +13,10 @@ import {
 import { useQuery } from "react-query";
 
 if (!TWITCH_CLIENT_ID) {
-  console.error(
-    "YATMV MISSING TWITCH CLIENT ID!",
-    "Twitch features will not work, register a dev app at https://dev.twitch.tv"
+  throw new Error(
+    "YATMV MISSING TWITCH CLIENT ID!\n" +
+    "Twitch features will not work, register a dev app at https://dev.twitch.tv\n" +
+    "Set `REACT_APP_TWITCH_CLIENT_ID` in your .env"
   );
 }
 
