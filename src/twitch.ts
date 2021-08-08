@@ -15,8 +15,8 @@ import { useQuery } from "react-query";
 if (!TWITCH_CLIENT_ID) {
   throw new Error(
     "YATMV MISSING TWITCH CLIENT ID!\n" +
-    "Twitch features will not work, register a dev app at https://dev.twitch.tv\n" +
-    "Set `REACT_APP_TWITCH_CLIENT_ID` in your .env"
+      "Twitch features will not work, register a dev app at https://dev.twitch.tv\n" +
+      "Set `REACT_APP_TWITCH_CLIENT_ID` in your .env"
   );
 }
 
@@ -30,7 +30,7 @@ if (accessToken && savedScopes !== TWITCH_SCOPES.toString()) {
 
 export function handleTwitchAuthCallback() {
   let reloadFromAuthStreams: string[] | undefined,
-    reloadFromAuthPrimary: string | undefined,
+    reloadFromAuthPrimary: string[] | undefined,
     hasTwitchAuth: boolean = !!accessToken;
 
   if (document.location.hash) {
@@ -47,7 +47,7 @@ export function handleTwitchAuthCallback() {
       document.location.hash = "";
       const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
       if (rawStreamState) {
-        const parsedStreamState: { streams: string[]; primary: string } =
+        const parsedStreamState: { streams: string[]; primary: string[] } =
           JSON.parse(rawStreamState);
         reloadFromAuthStreams = parsedStreamState.streams;
         reloadFromAuthPrimary = parsedStreamState.primary;

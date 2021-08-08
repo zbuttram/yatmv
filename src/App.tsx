@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -32,6 +32,7 @@ import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
 import { useQuery, useQueryClient } from "react-query";
 import { epoch } from "./utils";
+import useStreams, { Layouts } from "./useStreams";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -39,59 +40,53 @@ const urlStreams = pageURL.searchParams.get("streams");
 if (urlStreams) {
   parsedUrlStreams = urlStreams.split(",");
 }
+let parsedUrlPrimary: string[] = [];
 const urlPrimary = pageURL.searchParams.get("primary");
+if (urlPrimary) {
+  parsedUrlPrimary = urlPrimary.split(",");
+}
 
 let { reloadFromAuthStreams, reloadFromAuthPrimary } =
   handleTwitchAuthCallback();
 
+const initialStreams = reloadFromAuthStreams || parsedUrlStreams || [];
+const initialPrimary = reloadFromAuthPrimary || parsedUrlPrimary || [];
+
 export default function App() {
   const [settings, setSettings] = useSettings();
-  const [streams, setStreams] = useState<string[]>(
-    reloadFromAuthStreams || parsedUrlStreams
-  );
+  const [streams, { addStream: addNewStream }] = useStreams({
+    streams: initialStreams,
+    primaryStreams: initialPrimary,
+    layout: Layouts.OneUp,
+  });
 
-  const [primaryStreamName, _setPrimaryStream] = useState<string | undefined>(
-    reloadFromAuthPrimary || urlPrimary || streams[0]?.toLowerCase()
-  );
-  const setPrimaryStream = useCallback(
-    function setPrimaryStreamName(streamName?: string) {
-      _setPrimaryStream(streamName?.toLowerCase());
-    },
-    [_setPrimaryStream]
-  );
-  const prevPrimaryStream = usePrevious(primaryStreamName);
+  // const [primaryStreamNames, _setPrimaryStreams] =
+  //   useState<string[]>(initialPrimary);
+  // const setPrimaryStream = useCallback(
+  //   function setPrimaryStreamName(streamName?: string) {
+  //     _setPrimaryStreams(streamName?.toLowerCase());
+  //   },
+  //   [_setPrimaryStreams]
+  // );
+  // const prevPrimaryStream = usePrevious(primaryStreamNames);
 
-  const addNewStream = useCallback(
-    function addNewStream(stream: string) {
-      if (streams.map((s) => s.toLowerCase()).includes(stream.toLowerCase())) {
-        setPrimaryStream(stream);
-      } else {
-        if (streams.length < 1) {
-          setPrimaryStream(stream);
-        }
-        setStreams((s) => [stream, ...s]);
-      }
-    },
-    [setPrimaryStream, streams]
-  );
-
-  const removeStream = useCallback(
-    function removeStream(index: number) {
-      if (
-        streams.findIndex((s) => s.toLowerCase() === primaryStreamName) ===
-        index
-      ) {
-        const newPrimary = streams[index + (index === 0 ? 1 : -1)];
-        setPrimaryStream(newPrimary ? newPrimary : undefined);
-      }
-      setStreams(
-        produce((draft) => {
-          draft.splice(index, 1);
-        })
-      );
-    },
-    [primaryStreamName, setPrimaryStream, streams]
-  );
+  // const removeStream = useCallback(
+  //   function removeStream(index: number) {
+  //     if (
+  //       streams.findIndex((s) => s.toLowerCase() === primaryStreamNames) ===
+  //       index
+  //     ) {
+  //       const newPrimary = streams[index + (index === 0 ? 1 : -1)];
+  //       setPrimaryStream(newPrimary ? newPrimary : undefined);
+  //     }
+  //     setStreams(
+  //       produce((draft) => {
+  //         draft.splice(index, 1);
+  //       })
+  //     );
+  //   },
+  //   [primaryStreamNames, setPrimaryStream, streams]
+  // );
 
   // set URL params
   useEffect(() => {
@@ -101,8 +96,8 @@ export default function App() {
     streams && streams.length
       ? params.set("streams", streams.filter(Boolean).toString())
       : params.delete("streams");
-    primaryStreamName
-      ? params.set("primary", primaryStreamName)
+    primaryStreamNames
+      ? params.set("primary", primaryStreamNames)
       : params.delete("primary");
 
     url.search = params.toString();
@@ -112,11 +107,11 @@ export default function App() {
         STREAM_STATE_COOKIE,
         JSON.stringify({
           streams: streams,
-          primaryStream: primaryStreamName,
+          primaryStream: primaryStreamNames,
         })
       );
     });
-  }, [streams, primaryStreamName]);
+  }, [streams, primaryStreamNames]);
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
@@ -126,18 +121,18 @@ export default function App() {
       channel: string;
     }>
   >(
-    primaryStreamName
-      ? [{ channel: primaryStreamName, lastOpened: epoch() }]
+    primaryStreamNames
+      ? [{ channel: primaryStreamNames, lastOpened: epoch() }]
       : []
   );
 
   // lazy loading chats
   useEffect(() => {
-    if (primaryStreamName) {
+    if (primaryStreamNames) {
       let primaryChatIndex, primaryChatLastOpened;
       const hasLoadedPrimary = loadedChats.some(
         ({ channel, lastOpened }, i) => {
-          const isPrimary = channel === primaryStreamName;
+          const isPrimary = channel === primaryStreamNames;
           if (isPrimary) {
             primaryChatIndex = i;
             primaryChatLastOpened = lastOpened;
@@ -151,7 +146,7 @@ export default function App() {
       if (!hasLoadedPrimary) {
         setLoadedChats((state) => [
           ...state,
-          { channel: primaryStreamName, lastOpened: epoch() },
+          { channel: primaryStreamNames, lastOpened: epoch() },
         ]);
       } else {
         const now = epoch();
@@ -197,7 +192,7 @@ export default function App() {
         setLoadedChats((state) =>
           state.filter(
             ({ lastOpened, channel }) =>
-              channel === primaryStreamName ||
+              channel === primaryStreamNames ||
               lastOpened > epoch(-CHAT_EVICT_SEC)
           )
         );
@@ -208,12 +203,13 @@ export default function App() {
     const interval = setInterval(evictOldChats, 10000);
     return () => clearInterval(interval);
   }, [
-    primaryStreamName,
+    primaryStreamNames,
     loadedChats,
     setLoadedChats,
     streams,
     prevPrimaryStream,
   ]);
+
   const queryClient = useQueryClient();
 
   const { data: twitchUser } = useQuery("authedTwitchUser", getAuthedUser, {
@@ -251,7 +247,7 @@ export default function App() {
           fullHeightPlayer && "fullheight-player"
         )}
       >
-        {!primaryStreamName && !forceShowMainPane && (
+        {!primaryStreamNames && !forceShowMainPane && (
           <button
             className="fixed top-4 left-4 rounded px-4 py-3 bg-gray-500"
             onClick={() => setForceShowMainPane(true)}
@@ -262,7 +258,7 @@ export default function App() {
         <div
           className={classNames(
             "flex primary-container",
-            !primaryStreamName && !forceShowMainPane && "hidden"
+            !primaryStreamNames && !forceShowMainPane && "hidden"
           )}
         >
           <Sidebar
@@ -271,7 +267,7 @@ export default function App() {
             setSettings={setSettings}
             followedStreams={followedStreams}
             streams={streams}
-            primaryStream={primaryStreamName}
+            primaryStream={primaryStreamNames}
             addStream={addNewStream}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
@@ -308,7 +304,9 @@ export default function App() {
                 key={channel}
                 channel={channel}
                 className={classNames(
-                  channel === primaryStreamName ? "chat-standard-width" : "w-0",
+                  channel === primaryStreamNames
+                    ? "chat-standard-width"
+                    : "w-0",
                   "transition-all"
                 )}
               />
@@ -324,7 +322,7 @@ export default function App() {
               className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
               key={stream}
               stream={stream}
-              isPrimary={stream.toLowerCase() === primaryStreamName}
+              isPrimary={stream.toLowerCase() === primaryStreamNames}
               primaryContainerRect={primaryContainerRect}
               setPrimaryStream={setPrimaryStream}
               remove={() => removeStream(i)}
@@ -334,7 +332,7 @@ export default function App() {
         <div className="mx-auto p-8 mt-16 mb-8 bg-gray-900 rounded-md text-center">
           <h1 className="text-6xl mb-2">YATMV</h1>
           <h2 className="text-lg mb-8">Yet Another Twitch Multi-View</h2>
-          {!primaryStreamName && (
+          {!primaryStreamNames && (
             <p className="mx-auto mb-8 font-bold">
               Add a channel above to start.
             </p>
