@@ -32,7 +32,7 @@ import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
 import { useQuery, useQueryClient } from "react-query";
 import { epoch } from "./utils";
-import useStreams, { Layouts } from "./useStreams";
+import useStreams, { Layout } from "./useStreams";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -45,20 +45,31 @@ const urlPrimary = pageURL.searchParams.get("primary");
 if (urlPrimary) {
   parsedUrlPrimary = urlPrimary.split(",");
 }
+let parsedUrlLayout: Layout | undefined;
+const urlLayout = pageURL.searchParams.get("layout");
+if (urlLayout) {
+  const num = Number(urlLayout);
+  parsedUrlLayout = Number.isNaN(num) ? Layout.OneUp : num;
+}
 
-let { reloadFromAuthStreams, reloadFromAuthPrimary } =
+let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
   handleTwitchAuthCallback();
 
-const initialStreams = reloadFromAuthStreams || parsedUrlStreams || [];
-const initialPrimary = reloadFromAuthPrimary || parsedUrlPrimary || [];
+const initialStreamState = {
+  streams: reloadFromAuthStreams || parsedUrlStreams || [],
+  primaryStreams: reloadFromAuthPrimary || parsedUrlPrimary || [],
+  layout: reloadFromAuthLayout || parsedUrlLayout || Layout.OneUp,
+};
 
 export default function App() {
   const [settings, setSettings] = useSettings();
-  const [streams, { addStream: addNewStream }] = useStreams({
-    streams: initialStreams,
-    primaryStreams: initialPrimary,
-    layout: Layouts.OneUp,
-  });
+  const {
+    state: streamState,
+    addStream: addNewStream,
+    removeStream,
+  } = useStreams(initialStreamState);
+  const { streams, primaryStreams, layout } = streamState;
+  const prevStreamState = usePrevious(streamState);
 
   // const [primaryStreamNames, _setPrimaryStreams] =
   //   useState<string[]>(initialPrimary);
@@ -96,9 +107,12 @@ export default function App() {
     streams && streams.length
       ? params.set("streams", streams.filter(Boolean).toString())
       : params.delete("streams");
-    primaryStreamNames
-      ? params.set("primary", primaryStreamNames)
+    primaryStreams && primaryStreams.length
+      ? params.set("primary", primaryStreams.toString())
       : params.delete("primary");
+    layout !== Layout.OneUp
+      ? params.set("layout", layout.toString())
+      : params.delete("layout");
 
     url.search = params.toString();
     window.history.replaceState({}, window.document.title, url.toString());
@@ -106,12 +120,12 @@ export default function App() {
       Cookies.set(
         STREAM_STATE_COOKIE,
         JSON.stringify({
-          streams: streams,
-          primaryStream: primaryStreamNames,
+          streams,
+          primaryStreams,
         })
       );
     });
-  }, [streams, primaryStreamNames]);
+  }, [streams, primaryStreams, layout]);
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
@@ -121,18 +135,16 @@ export default function App() {
       channel: string;
     }>
   >(
-    primaryStreamNames
-      ? [{ channel: primaryStreamNames, lastOpened: epoch() }]
-      : []
+    primaryStreams ? [{ channel: primaryStreams[0], lastOpened: epoch() }] : []
   );
 
   // lazy loading chats
   useEffect(() => {
-    if (primaryStreamNames) {
+    if (primaryStreams.length) {
       let primaryChatIndex, primaryChatLastOpened;
       const hasLoadedPrimary = loadedChats.some(
         ({ channel, lastOpened }, i) => {
-          const isPrimary = channel === primaryStreamNames;
+          const isPrimary = primaryStreams.includes(channel);
           if (isPrimary) {
             primaryChatIndex = i;
             primaryChatLastOpened = lastOpened;

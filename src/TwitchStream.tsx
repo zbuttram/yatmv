@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useContext, useState } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
 
@@ -7,6 +7,7 @@ import Log from "./log";
 import { usePrevious } from "react-use";
 import { AppContext } from "./appContext";
 import { TWITCH_PLAYER_URL } from "./const";
+import { Layout } from "./useStreams";
 
 let scriptElement: HTMLScriptElement | null = null;
 let scriptLoaded = false;
@@ -29,6 +30,103 @@ function loadWithScript(callback) {
 
 function getChannelVolumeKey(channel) {
   return `player-channel-volume-${channel.toLowerCase()}`;
+}
+
+function getPrimarySubRect(
+  position: Layout,
+  layout: Layout,
+  bigRect: DOMRect
+): Partial<DOMRect> {
+  if (layout === Layout.OneUp) {
+    return bigRect;
+  }
+
+  const { top, right, left, bottom, width, height } = bigRect;
+  const subHeight = height / 2;
+  const subWidth = width / 2;
+
+  switch (layout) {
+    case Layout.TwoUp:
+      return {
+        right,
+        left,
+        width,
+        height: subHeight,
+        top: position === 0 ? top : top + subHeight,
+        bottom: position === 0 ? bottom - subHeight : bottom,
+      };
+    case Layout.ThreeUp:
+      switch (position) {
+        case 0:
+          return {
+            left,
+            top,
+            width,
+            right,
+            height: subHeight,
+            bottom: bottom - subHeight,
+          };
+        case 1:
+          return {
+            left,
+            bottom,
+            height: subHeight,
+            width: subWidth,
+            right: right - subWidth,
+            top: top - subHeight,
+          };
+        case 2:
+          return {
+            right,
+            bottom,
+            height: subHeight,
+            width: subWidth,
+            left: left + subWidth,
+            top: top - subHeight,
+          };
+      }
+      throw new Error("getPrimarySubRect() was given invalid position");
+    case Layout.FourUp:
+      switch (position) {
+        case 0:
+          return {
+            left,
+            top,
+            width: subWidth,
+            height: subHeight,
+            right: right - subWidth,
+            bottom: bottom - subHeight,
+          };
+        case 1:
+          return {
+            right,
+            top,
+            width: subWidth,
+            height: subHeight,
+            left: left + subWidth,
+            bottom: bottom - subHeight,
+          };
+        case 2:
+          return {
+            left,
+            bottom,
+            width: subWidth,
+            height: subHeight,
+            right: right - subWidth,
+            top: top - subHeight,
+          };
+        case 3:
+          return {
+            right,
+            bottom,
+            width: subWidth,
+            height: subHeight,
+            left: left + subWidth,
+            top: top - subHeight,
+          };
+      }
+      throw new Error("getPrimarySubRect() was given invalid position");
+  }
 }
 
 type TwitchPlayer = {

@@ -11,6 +11,7 @@ import {
   TWITCH_AUTH_URL,
 } from "./const";
 import { useQuery } from "react-query";
+import { Layout } from "./useStreams";
 
 if (!TWITCH_CLIENT_ID) {
   throw new Error(
@@ -31,6 +32,7 @@ if (accessToken && savedScopes !== TWITCH_SCOPES.toString()) {
 export function handleTwitchAuthCallback() {
   let reloadFromAuthStreams: string[] | undefined,
     reloadFromAuthPrimary: string[] | undefined,
+    reloadFromAuthLayout: Layout | undefined,
     hasTwitchAuth: boolean = !!accessToken;
 
   if (document.location.hash) {
@@ -47,14 +49,23 @@ export function handleTwitchAuthCallback() {
       document.location.hash = "";
       const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
       if (rawStreamState) {
-        const parsedStreamState: { streams: string[]; primary: string[] } =
-          JSON.parse(rawStreamState);
+        const parsedStreamState: {
+          streams: string[];
+          primary: string[];
+          layout: Layout | undefined;
+        } = JSON.parse(rawStreamState);
         reloadFromAuthStreams = parsedStreamState.streams;
         reloadFromAuthPrimary = parsedStreamState.primary;
+        reloadFromAuthLayout = parsedStreamState.layout;
       }
     }
   }
-  return { reloadFromAuthStreams, reloadFromAuthPrimary, hasTwitchAuth };
+  return {
+    reloadFromAuthStreams,
+    reloadFromAuthPrimary,
+    reloadFromAuthLayout,
+    hasTwitchAuth,
+  };
 }
 
 export function checkTwitchAuth() {
