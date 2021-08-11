@@ -12,22 +12,28 @@ import { useQuery } from "react-query";
 import { FETCH_OPEN_STREAMS_INTERVAL_MINS } from "./const";
 import { checkTwitchAuth, getStream } from "./twitch";
 import TwitchStream from "./TwitchStream";
+import { Layout } from "./useStreams";
+import { range } from "lodash";
 
 export function StreamContainer({
   stream,
-  isPrimary,
+  primaryPosition,
   primaryContainerRect,
   remove,
   setPrimaryStream,
+  layout,
   className,
 }: {
   stream: string;
-  isPrimary: boolean;
+  primaryPosition: number;
   primaryContainerRect: Partial<DOMRect>;
   remove: () => void;
-  setPrimaryStream: (stream: string) => void;
+  setPrimaryStream: (stream: string, position: number) => void;
+  layout: Layout;
   className?: string;
 }) {
+  const isPrimary = primaryPosition > -1;
+
   const {
     data: streamData,
     failureCount: streamFetchFailCount,
@@ -78,9 +84,10 @@ export function StreamContainer({
     <div className={className}>
       <TwitchStream
         channel={stream.toLowerCase()}
-        primary={isPrimary}
+        primaryPosition={primaryPosition}
         primaryContainerRect={primaryContainerRect}
         reloadCounter={reloadCounter}
+        layout={layout}
       />
       <div className="w-full flex flex-col self-end">
         <div className="pt-2 pb-1">
@@ -109,13 +116,27 @@ export function StreamContainer({
           )}
         </div>
         <div className="flex">
-          {!isPrimary && (
+          {layout === Layout.OneUp && !isPrimary ? (
             <button
               className="btn mr-2 w-full text-black bg-green-400"
-              onClick={() => setPrimaryStream(stream)}
+              onClick={() => setPrimaryStream(stream, 0)}
             >
               <FontAwesomeIcon icon={faExpand} />
             </button>
+          ) : (
+            range(0, layout + 1).map((pos) => (
+              <button
+                key={pos}
+                className={classNames(
+                  "btn mr-2 w-full text-black font-bold",
+                  pos === primaryPosition ? "bg-red-800" : "bg-green-400"
+                )}
+                disabled={pos === primaryPosition}
+                onClick={() => setPrimaryStream(stream, pos)}
+              >
+                {pos + 1}
+              </button>
+            ))
           )}
           <button
             className={classNames("btn w-full", isRemoving && "bg-red-500")}
@@ -128,3 +149,9 @@ export function StreamContainer({
     </div>
   );
 }
+// <button
+//     className="btn mr-2 w-full text-black bg-green-400"
+//     onClick={() => setPrimaryStream(stream, 1)}
+// >
+//   <FontAwesomeIcon icon={faExpand} />
+// </button>

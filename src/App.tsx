@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -9,6 +9,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { usePrevious } from "react-use";
+import { useQuery, useQueryClient } from "react-query";
+import { difference as arrayDiff, uniq } from "lodash";
 
 import TwitchChat from "./TwitchChat";
 import useBounding from "./useBounding";
@@ -30,7 +32,6 @@ import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
-import { useQuery, useQueryClient } from "react-query";
 import { epoch } from "./utils";
 import useStreams, { Layout } from "./useStreams";
 
@@ -56,8 +57,8 @@ let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
   handleTwitchAuthCallback();
 
 const initialStreamState = {
-  streams: reloadFromAuthStreams || parsedUrlStreams || [],
-  primaryStreams: reloadFromAuthPrimary || parsedUrlPrimary || [],
+  streams: uniq(reloadFromAuthStreams || parsedUrlStreams || []),
+  primaryStreams: uniq(reloadFromAuthPrimary || parsedUrlPrimary || []),
   layout: reloadFromAuthLayout || parsedUrlLayout || Layout.OneUp,
 };
 
@@ -67,9 +68,10 @@ export default function App() {
     state: streamState,
     addStream: addNewStream,
     removeStream,
+    setPrimaryStream,
   } = useStreams(initialStreamState);
-  const { streams, primaryStreams, layout } = streamState;
   const prevStreamState = usePrevious(streamState);
+  const { streams, primaryStreams, layout } = streamState;
 
   // const [primaryStreamNames, _setPrimaryStreams] =
   //   useState<string[]>(initialPrimary);
@@ -158,7 +160,10 @@ export default function App() {
       if (!hasLoadedPrimary) {
         setLoadedChats((state) => [
           ...state,
-          { channel: primaryStreamNames, lastOpened: epoch() },
+          ...primaryStreams.map((channel) => ({
+            channel,
+            lastOpened: epoch(),
+          })),
         ]);
       } else {
         const now = epoch();
@@ -172,12 +177,21 @@ export default function App() {
       }
     }
 
-    if (prevPrimaryStream) {
+    if (prevStreamState) {
+      const closedStreams = arrayDiff(
+        prevStreamState.primaryStreams,
+        primaryStreams
+      );
       setLoadedChats(
         produce((state) => {
-          state[
-            state.findIndex(({ channel }) => channel === prevPrimaryStream)
-          ].lastOpened = epoch();
+          closedStreams.forEach((prevPrimaryStream) => {
+            const index = state.findIndex(
+              ({ channel }) => channel === prevPrimaryStream
+            );
+            if (state[index]) {
+              state[index].lastOpened = epoch();
+            }
+          });
         })
       );
     }
@@ -204,7 +218,7 @@ export default function App() {
         setLoadedChats((state) =>
           state.filter(
             ({ lastOpened, channel }) =>
-              channel === primaryStreamNames ||
+              primaryStreams.includes(channel) ||
               lastOpened > epoch(-CHAT_EVICT_SEC)
           )
         );
@@ -214,13 +228,7 @@ export default function App() {
     evictOldChats();
     const interval = setInterval(evictOldChats, 10000);
     return () => clearInterval(interval);
-  }, [
-    primaryStreamNames,
-    loadedChats,
-    setLoadedChats,
-    streams,
-    prevPrimaryStream,
-  ]);
+  }, [primaryStreams, loadedChats, setLoadedChats, streams, prevStreamState]);
 
   const queryClient = useQueryClient();
 
@@ -259,7 +267,7 @@ export default function App() {
           fullHeightPlayer && "fullheight-player"
         )}
       >
-        {!primaryStreamNames && !forceShowMainPane && (
+        {!primaryStreams && !forceShowMainPane && (
           <button
             className="fixed top-4 left-4 rounded px-4 py-3 bg-gray-500"
             onClick={() => setForceShowMainPane(true)}
@@ -270,7 +278,7 @@ export default function App() {
         <div
           className={classNames(
             "flex primary-container",
-            !primaryStreamNames && !forceShowMainPane && "hidden"
+            !primaryStreams && !forceShowMainPane && "hidden"
           )}
         >
           <Sidebar
@@ -279,15 +287,15 @@ export default function App() {
             setSettings={setSettings}
             followedStreams={followedStreams}
             streams={streams}
-            primaryStream={primaryStreamNames}
+            primaryStreams={primaryStreams}
             addStream={addNewStream}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
           <div
             id="chats-container"
             className={classNames(
-              "flex relative transition-all",
-              showChat ? "" : "w-0"
+              "flex relative transition-all"
+              // showChat ? "" : "w-0"
             )}
           >
             {loadedChats.length > 0 && (
@@ -316,7 +324,7 @@ export default function App() {
                 key={channel}
                 channel={channel}
                 className={classNames(
-                  channel === primaryStreamNames
+                  channel === primaryStreams[0] && showChat
                     ? "chat-standard-width"
                     : "w-0",
                   "transition-all"
@@ -334,7 +342,8 @@ export default function App() {
               className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
               key={stream}
               stream={stream}
-              isPrimary={stream.toLowerCase() === primaryStreamNames}
+              layout={layout}
+              primaryPosition={primaryStreams.indexOf(stream)}
               primaryContainerRect={primaryContainerRect}
               setPrimaryStream={setPrimaryStream}
               remove={() => removeStream(i)}
@@ -344,7 +353,7 @@ export default function App() {
         <div className="mx-auto p-8 mt-16 mb-8 bg-gray-900 rounded-md text-center">
           <h1 className="text-6xl mb-2">YATMV</h1>
           <h2 className="text-lg mb-8">Yet Another Twitch Multi-View</h2>
-          {!primaryStreamNames && (
+          {!primaryStreams && (
             <p className="mx-auto mb-8 font-bold">
               Add a channel above to start.
             </p>

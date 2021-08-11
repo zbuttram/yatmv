@@ -23,7 +23,7 @@ export function Sidebar({
   settings,
   setSettings,
   streams,
-  primaryStream,
+  primaryStreams,
   followedStreams,
   addStream,
 }: {
@@ -32,16 +32,11 @@ export function Sidebar({
   setSettings: Dispatch<SetStateAction<Settings>>;
   followedStreams?: StreamData[];
   streams: string[];
-  primaryStream?: string;
+  primaryStreams: string[];
   addStream: (streamName: string) => void;
 }) {
   const { boostMode, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
-
-  const streamsLowercase = useMemo(
-    () => streams.map((s) => s.toLowerCase()),
-    [streams]
-  );
 
   return (
     <div
@@ -77,10 +72,10 @@ export function Sidebar({
             {followedStreams.map((stream) => (
               <FollowedStream
                 key={stream.userId}
-                isOpen={streamsLowercase.includes(
+                isOpen={streams.includes(stream.userName.toLowerCase())}
+                isPrimary={primaryStreams.includes(
                   stream.userName.toLowerCase()
                 )}
-                isPrimary={stream.userName.toLowerCase() === primaryStream}
                 stream={stream}
                 addStream={addStream}
                 sidebarExpanded={open}

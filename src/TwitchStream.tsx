@@ -35,25 +35,31 @@ function getChannelVolumeKey(channel) {
 function getPrimarySubRect(
   position: Layout,
   layout: Layout,
-  bigRect: DOMRect
+  bigRect: Partial<DOMRect>
 ): Partial<DOMRect> {
   if (layout === Layout.OneUp) {
     return bigRect;
   }
 
-  const { top, right, left, bottom, width, height } = bigRect;
+  const { top, left, width, height } = bigRect;
+  if (
+    top === undefined ||
+    left === undefined ||
+    width === undefined ||
+    height === undefined
+  ) {
+    return {};
+  }
   const subHeight = height / 2;
   const subWidth = width / 2;
 
   switch (layout) {
     case Layout.TwoUp:
       return {
-        right,
         left,
         width,
         height: subHeight,
         top: position === 0 ? top : top + subHeight,
-        bottom: position === 0 ? bottom - subHeight : bottom,
       };
     case Layout.ThreeUp:
       switch (position) {
@@ -62,27 +68,21 @@ function getPrimarySubRect(
             left,
             top,
             width,
-            right,
             height: subHeight,
-            bottom: bottom - subHeight,
           };
         case 1:
           return {
             left,
-            bottom,
             height: subHeight,
             width: subWidth,
-            right: right - subWidth,
-            top: top - subHeight,
+            top: top + subHeight,
           };
         case 2:
           return {
-            right,
-            bottom,
             height: subHeight,
             width: subWidth,
             left: left + subWidth,
-            top: top - subHeight,
+            top: top + subHeight,
           };
       }
       throw new Error("getPrimarySubRect() was given invalid position");
@@ -94,35 +94,27 @@ function getPrimarySubRect(
             top,
             width: subWidth,
             height: subHeight,
-            right: right - subWidth,
-            bottom: bottom - subHeight,
           };
         case 1:
           return {
-            right,
             top,
             width: subWidth,
             height: subHeight,
             left: left + subWidth,
-            bottom: bottom - subHeight,
           };
         case 2:
           return {
             left,
-            bottom,
             width: subWidth,
             height: subHeight,
-            right: right - subWidth,
-            top: top - subHeight,
+            top: top + subHeight,
           };
         case 3:
           return {
-            right,
-            bottom,
             width: subWidth,
             height: subHeight,
             left: left + subWidth,
-            top: top - subHeight,
+            top: top + subHeight,
           };
       }
       throw new Error("getPrimarySubRect() was given invalid position");
@@ -158,16 +150,19 @@ declare var Twitch: { Player: TwitchPlayer };
 
 export default function TwitchStream({
   channel,
-  primary = false,
+  primaryPosition,
   primaryContainerRect,
   reloadCounter,
+  layout,
 }: {
   channel: string;
-  primary: boolean;
+  primaryPosition: number;
   primaryContainerRect: Partial<DOMRect>;
   reloadCounter: number;
+  layout: Layout;
 }) {
   const divId = `twitch-stream-embed-${channel}`;
+  const isPrimary = primaryPosition > -1;
 
   const posDivId = divId + "-pos";
   const channelRect = useBounding(posDivId);
@@ -185,8 +180,8 @@ export default function TwitchStream({
         position: "absolute";
       }
     | undefined => {
-    const { top, left, width, height } = primary
-      ? primaryContainerRect
+    const { top, left, width, height } = isPrimary
+      ? getPrimarySubRect(primaryPosition, layout, primaryContainerRect)
       : channelRect;
     if (top !== undefined && left !== undefined && width && height) {
       return {
@@ -200,7 +195,7 @@ export default function TwitchStream({
         }),
       };
     }
-  }, [primary, primaryContainerRect, channelRect]);
+  }, [isPrimary, primaryContainerRect, channelRect, primaryPosition, layout]);
 
   const player = useRef<TwitchPlayer>();
 
@@ -209,7 +204,7 @@ export default function TwitchStream({
       loadWithScript(() => {
         player.current = new Twitch.Player(divId, {
           channel,
-          muted: !primary,
+          muted: !isPrimary,
           width: "100%",
           height: "100%",
         });
@@ -243,7 +238,7 @@ export default function TwitchStream({
       return;
     }
 
-    player.current.setMuted(!primary);
+    player.current.setMuted(!isPrimary);
     const currentVolume = player.current.getVolume();
     currentVolume &&
       localStorage.setItem(
@@ -251,8 +246,8 @@ export default function TwitchStream({
         currentVolume.toString()
       );
 
-    Log("player-primary-updated", channel, { boostMode, primary });
-    const desiredQuality = primary ? "chunked" : "auto";
+    Log("player-isPrimary-updated", channel, { boostMode, primary: isPrimary });
+    const desiredQuality = isPrimary ? "chunked" : "auto";
     if (boostMode) {
       player.current.setQuality(desiredQuality);
       Log("player-quality-update", channel, desiredQuality);
@@ -272,7 +267,7 @@ export default function TwitchStream({
           Log("player-set-onplay-quality", channel, desiredQuality);
         }
       }
-      player.current.setMuted(!primary);
+      player.current.setMuted(!isPrimary);
     }
 
     player.current.addEventListener(Twitch.Player.PLAYING, onPlay);
@@ -280,7 +275,7 @@ export default function TwitchStream({
     return () =>
       player.current &&
       player.current.removeEventListener(Twitch.Player.PLAYING, onPlay);
-  }, [channel, boostMode, prevBoostMode, primary]);
+  }, [channel, boostMode, prevBoostMode, isPrimary]);
 
   const prevReloadCounter = usePrevious(reloadCounter);
   useEffect(() => {
@@ -303,7 +298,7 @@ export default function TwitchStream({
         className="transition-all"
       />
       <div id={posDivId} className="flex flex-grow bg-black">
-        <span className={classNames("m-auto", !primary && "hidden")}>
+        <span className={classNames("m-auto", !isPrimary && "hidden")}>
           Watching
         </span>
       </div>
