@@ -278,7 +278,14 @@ export default function TwitchStream({
     return () =>
       player.current &&
       player.current.removeEventListener(Twitch.Player.PLAYING, onPlay);
-  }, [channel, boostMode, prevBoostMode, isPrimary, isFirstSlot]);
+  }, [
+    channel,
+    boostMode,
+    prevBoostMode,
+    primaryPosition,
+    isPrimary,
+    isFirstSlot,
+  ]);
 
   const prevReloadCounter = usePrevious(reloadCounter);
   useEffect(() => {

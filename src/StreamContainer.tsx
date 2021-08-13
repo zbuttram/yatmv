@@ -120,7 +120,7 @@ export function StreamContainer({
             <button
               className={classNames(
                 "btn mr-2 w-full text-black",
-                isPrimary ? "bg-red-800" : "bg-green-400"
+                isPrimary ? "bg-red-800 cursor-not-allowed" : "bg-green-400"
               )}
               onClick={() => setPrimaryStream(stream, 0)}
               disabled={isPrimary}
@@ -133,7 +133,9 @@ export function StreamContainer({
                 key={pos}
                 className={classNames(
                   "btn mr-2 w-full text-black font-bold",
-                  pos === primaryPosition ? "bg-red-800" : "bg-green-400"
+                  pos === primaryPosition
+                    ? "bg-red-800 cursor-not-allowed"
+                    : "bg-green-400"
                 )}
                 disabled={pos === primaryPosition}
                 onClick={() => setPrimaryStream(stream, pos)}

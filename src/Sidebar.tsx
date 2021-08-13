@@ -36,7 +36,7 @@ export function Sidebar({
   streams: string[];
   primaryStreams: string[];
   addStream: (streamName: string) => void;
-  toggleLayout: () => void;
+  toggleLayout: (reverse?: boolean) => void;
 }) {
   const { boostMode, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
@@ -153,7 +153,18 @@ export function Sidebar({
           <button
             title="Toggle Layout"
             className="btn-sidebar bg-black"
-            onClick={toggleLayout}
+            onClick={() => toggleLayout()}
+            onMouseDown={(e) => {
+              if (e.button === 2) {
+                e.preventDefault();
+                toggleLayout(true);
+                return false;
+              }
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              return false;
+            }}
           >
             <FontAwesomeIcon fixedWidth icon={faTh} />
           </button>

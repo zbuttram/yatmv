@@ -19,7 +19,7 @@ type StreamAction =
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
-  | { type: "TOGGLE_LAYOUT" };
+  | { type: "TOGGLE_LAYOUT"; payload: { reverse: boolean } };
 
 const streamsReducer = produce(function produceStreams(
   draft: StreamState,
@@ -70,8 +70,13 @@ const streamsReducer = produce(function produceStreams(
       }
       break;
     case "TOGGLE_LAYOUT":
-      const next = draft.layout + 1;
-      draft.layout = next > Layout.FourUp ? 0 : next;
+      if (action.payload.reverse) {
+        const next = draft.layout - 1;
+        draft.layout = next < Layout.OneUp ? Layout.FourUp : next;
+      } else {
+        const next = draft.layout + 1;
+        draft.layout = next > Layout.FourUp ? 0 : next;
+      }
       break;
     default:
       throw new Error("Unknown action type in useStreams reducer");
@@ -110,8 +115,8 @@ export default function useStreams(init: StreamState) {
       setPrimaryStream(stream: string, position: number) {
         dispatch({ type: "SET_PRIMARY", payload: { stream, position } });
       },
-      toggleLayout() {
-        dispatch({ type: "TOGGLE_LAYOUT" });
+      toggleLayout(reverse = false) {
+        dispatch({ type: "TOGGLE_LAYOUT", payload: { reverse } });
       },
     },
   };
