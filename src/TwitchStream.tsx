@@ -270,7 +270,7 @@ export default function TwitchStream({
           Log("player-set-onplay-quality", channel, desiredQuality);
         }
       }
-      player.current.setMuted(!isPrimary);
+      player.current.setMuted(!isFirstSlot);
     }
 
     player.current.addEventListener(Twitch.Player.PLAYING, onPlay);
