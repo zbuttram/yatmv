@@ -28,20 +28,6 @@ export function useLazyLoadingChats({
   // lazy loading chats
   useEffect(() => {
     if (primaryStreams.length) {
-      // let primaryChatIndex, primaryChatLastOpened;
-      // const hasLoadedPrimary = loadedChats.some(
-      //   ({ channel, lastOpened }, i) => {
-      //     const isPrimary = primaryStreams.includes(channel);
-      //     if (isPrimary) {
-      //       primaryChatIndex = i;
-      //       primaryChatLastOpened = lastOpened;
-      //       return true;
-      //     } else {
-      //       return false;
-      //     }
-      //   }
-      // );
-
       const notLoadedPrimaries = primaryStreams.filter(
         (ps) => !loadedChats.find((ch) => ch.channel === ps)
       );

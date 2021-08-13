@@ -153,9 +153,3 @@ export function StreamContainer({
     </div>
   );
 }
-// <button
-//     className="btn mr-2 w-full text-black bg-green-400"
-//     onClick={() => setPrimaryStream(stream, 1)}
-// >
-//   <FontAwesomeIcon icon={faExpand} />
-// </button>

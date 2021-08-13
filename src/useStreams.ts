@@ -21,8 +21,6 @@ type StreamAction =
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
   | { type: "TOGGLE_LAYOUT" };
 
-// http://localhost:3000/?streams=garek%2Charry%2Cwhippy%2Cnakkida&primary=whippy%2Cnakkida&layout=1
-
 const streamsReducer = produce(function produceStreams(
   draft: StreamState,
   action: StreamAction
