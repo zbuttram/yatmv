@@ -165,6 +165,7 @@ export default function TwitchStream({
 }) {
   const divId = `twitch-stream-embed-${channel}`;
   const isPrimary = primaryPosition > -1;
+  const isFirstSlot = primaryPosition === 0;
 
   const posDivId = divId + "-pos";
   const channelRect = useBounding(posDivId);
@@ -206,7 +207,7 @@ export default function TwitchStream({
       loadWithScript(() => {
         player.current = new Twitch.Player(divId, {
           channel,
-          muted: !isPrimary,
+          muted: !isFirstSlot,
           width: "100%",
           height: "100%",
         });
@@ -240,7 +241,7 @@ export default function TwitchStream({
       return;
     }
 
-    player.current.setMuted(!isPrimary);
+    player.current.setMuted(!isFirstSlot);
     const currentVolume = player.current.getVolume();
     currentVolume &&
       localStorage.setItem(
@@ -277,7 +278,7 @@ export default function TwitchStream({
     return () =>
       player.current &&
       player.current.removeEventListener(Twitch.Player.PLAYING, onPlay);
-  }, [channel, boostMode, prevBoostMode, isPrimary]);
+  }, [channel, boostMode, prevBoostMode, isPrimary, isFirstSlot]);
 
   const prevReloadCounter = usePrevious(reloadCounter);
   useEffect(() => {
