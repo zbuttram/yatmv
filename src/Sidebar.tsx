@@ -8,6 +8,7 @@ import {
   faRocket,
   faTachometerAlt,
   faUsers,
+  faTh,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
@@ -26,6 +27,7 @@ export function Sidebar({
   primaryStreams,
   followedStreams,
   addStream,
+  toggleLayout,
 }: {
   className?: string;
   settings: Settings;
@@ -34,6 +36,7 @@ export function Sidebar({
   streams: string[];
   primaryStreams: string[];
   addStream: (streamName: string) => void;
+  toggleLayout: () => void;
 }) {
   const { boostMode, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
@@ -143,6 +146,18 @@ export function Sidebar({
           <span className="btn-txt">
             {fullHeightPlayer ? "Disable" : "Enable"} Full Height
           </span>
+        </label>
+      </div>
+      <div>
+        <label>
+          <button
+            title="Toggle Layout"
+            className="btn-sidebar bg-black"
+            onClick={toggleLayout}
+          >
+            <FontAwesomeIcon fixedWidth icon={faTh} />
+          </button>
+          <span className="btn-txt">Toggle Layout</span>
         </label>
       </div>
       <div className="flex-grow" />

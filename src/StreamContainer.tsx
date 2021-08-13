@@ -116,10 +116,14 @@ export function StreamContainer({
           )}
         </div>
         <div className="flex">
-          {layout === Layout.OneUp && !isPrimary ? (
+          {layout === Layout.OneUp ? (
             <button
-              className="btn mr-2 w-full text-black bg-green-400"
+              className={classNames(
+                "btn mr-2 w-full text-black",
+                isPrimary ? "bg-red-800" : "bg-green-400"
+              )}
               onClick={() => setPrimaryStream(stream, 0)}
+              disabled={isPrimary}
             >
               <FontAwesomeIcon icon={faExpand} />
             </button>

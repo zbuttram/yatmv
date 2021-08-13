@@ -64,11 +64,15 @@ export default function App() {
   const {
     state: streamState,
     prevState: prevStreamState,
+    actions: streamActions,
+  } = useStreams(initialStreamState);
+  const { streams, primaryStreams, layout } = streamState;
+  const {
     addStream: addNewStream,
     removeStream,
     setPrimaryStream,
-  } = useStreams(initialStreamState);
-  const { streams, primaryStreams, layout } = streamState;
+    toggleLayout,
+  } = streamActions;
 
   // set URL params
   useEffect(() => {
@@ -161,6 +165,7 @@ export default function App() {
             streams={streams}
             primaryStreams={primaryStreams}
             addStream={addNewStream}
+            toggleLayout={toggleLayout}
           />
           <div id="primary-stream-container" className="flex-grow h-full" />
           <div

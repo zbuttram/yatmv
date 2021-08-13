@@ -20,44 +20,50 @@ export function useLazyLoadingChats({
       channel: string;
     }>
   >(
-    primaryStreams ? [{ channel: primaryStreams[0], lastOpened: epoch() }] : []
+    primaryStreams.length
+      ? primaryStreams.map((ps) => ({ channel: ps, lastOpened: epoch() }))
+      : []
   );
 
   // lazy loading chats
   useEffect(() => {
     if (primaryStreams.length) {
-      let primaryChatIndex, primaryChatLastOpened;
-      const hasLoadedPrimary = loadedChats.some(
-        ({ channel, lastOpened }, i) => {
-          const isPrimary = primaryStreams.includes(channel);
-          if (isPrimary) {
-            primaryChatIndex = i;
-            primaryChatLastOpened = lastOpened;
-            return true;
-          } else {
-            return false;
-          }
-        }
+      // let primaryChatIndex, primaryChatLastOpened;
+      // const hasLoadedPrimary = loadedChats.some(
+      //   ({ channel, lastOpened }, i) => {
+      //     const isPrimary = primaryStreams.includes(channel);
+      //     if (isPrimary) {
+      //       primaryChatIndex = i;
+      //       primaryChatLastOpened = lastOpened;
+      //       return true;
+      //     } else {
+      //       return false;
+      //     }
+      //   }
+      // );
+
+      const notLoadedPrimaries = primaryStreams.filter(
+        (ps) => !loadedChats.find((ch) => ch.channel === ps)
       );
 
-      if (!hasLoadedPrimary) {
-        setLoadedChats((state) => [
-          ...state,
-          ...primaryStreams.map((channel) => ({
-            channel,
-            lastOpened: epoch(),
-          })),
-        ]);
-      } else {
-        const now = epoch();
-        if (primaryChatLastOpened <= now - 1) {
-          setLoadedChats(
-            produce((state) => {
-              state[primaryChatIndex].lastOpened = epoch();
-            })
-          );
-        }
-      }
+      setLoadedChats(
+        produce((draft) => {
+          if (notLoadedPrimaries.length) {
+            draft.push(
+              ...notLoadedPrimaries.map((channel) => ({
+                channel,
+                lastOpened: epoch(),
+              }))
+            );
+          }
+          primaryStreams.forEach((ps) => {
+            const idx = loadedChats.findIndex((ch) => ch.channel === ps);
+            if (draft[idx]) {
+              draft[idx].lastOpened = epoch();
+            }
+          });
+        })
+      );
     }
 
     if (prevStreamState) {

@@ -35,10 +35,6 @@ const streamsReducer = produce(function produceStreams(
       draft.primaryStreams = [streamLower];
     } else {
       const prevPosition = draft.primaryStreams.indexOf(streamLower);
-      if (position > draft.primaryStreams.length - 1) {
-        //todo: better message? is this reeeeaally true?
-        throw new Error("Shouldn't happen?");
-      }
       const removed = draft.primaryStreams.splice(position, 1, streamLower);
       if (prevPosition > -1 && removed[0]) {
         draft.primaryStreams[prevPosition] = removed[0];
@@ -82,6 +78,20 @@ const streamsReducer = produce(function produceStreams(
     default:
       throw new Error("Unknown action type in useStreams reducer");
   }
+
+  const maxPrimary = draft.layout + 1;
+  const unusedPrimarySlots = maxPrimary - draft.primaryStreams.length;
+
+  if (draft.primaryStreams.length > maxPrimary) {
+    draft.primaryStreams = draft.primaryStreams.slice(0, draft.layout + 1);
+  } else if (unusedPrimarySlots > 0) {
+    const unusedStreams = draft.streams.filter(
+      (s) => !primaryStreams.includes(s)
+    );
+    if (unusedStreams.length) {
+      primaryStreams.push(...unusedStreams.slice(0, unusedPrimarySlots));
+    }
+  }
 });
 
 export default function useStreams(init: StreamState) {
@@ -92,14 +102,19 @@ export default function useStreams(init: StreamState) {
     state,
     prevState,
     dispatch,
-    addStream(name: string) {
-      dispatch({ type: "ADD_STREAM", payload: name });
-    },
-    removeStream(index: number) {
-      dispatch({ type: "REMOVE_STREAM", payload: index });
-    },
-    setPrimaryStream(stream: string, position: number) {
-      dispatch({ type: "SET_PRIMARY", payload: { stream, position } });
+    actions: {
+      addStream(name: string) {
+        dispatch({ type: "ADD_STREAM", payload: name });
+      },
+      removeStream(index: number) {
+        dispatch({ type: "REMOVE_STREAM", payload: index });
+      },
+      setPrimaryStream(stream: string, position: number) {
+        dispatch({ type: "SET_PRIMARY", payload: { stream, position } });
+      },
+      toggleLayout() {
+        dispatch({ type: "TOGGLE_LAYOUT" });
+      },
     },
   };
 }

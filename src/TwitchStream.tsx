@@ -84,8 +84,9 @@ function getPrimarySubRect(
             left: left + subWidth,
             top: top + subHeight,
           };
+        default:
+          return bigRect;
       }
-      throw new Error("getPrimarySubRect() was given invalid position");
     case Layout.FourUp:
       switch (position) {
         case 0:
@@ -116,8 +117,9 @@ function getPrimarySubRect(
             left: left + subWidth,
             top: top + subHeight,
           };
+        default:
+          return bigRect;
       }
-      throw new Error("getPrimarySubRect() was given invalid position");
   }
 }
 
