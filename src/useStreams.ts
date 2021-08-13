@@ -1,5 +1,6 @@
 import produce from "immer";
 import { useReducer } from "react";
+import { usePrevious } from "react-use";
 
 export enum Layout {
   OneUp,
@@ -8,7 +9,7 @@ export enum Layout {
   FourUp,
 }
 
-type StreamState = {
+export type StreamState = {
   streams: string[];
   primaryStreams: string[];
   layout: Layout;
@@ -17,7 +18,8 @@ type StreamState = {
 type StreamAction =
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
-  | { type: "SET_PRIMARY"; payload: { stream: string; position: number } };
+  | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
+  | { type: "TOGGLE_LAYOUT" };
 
 // http://localhost:3000/?streams=garek%2Charry%2Cwhippy%2Cnakkida&primary=whippy%2Cnakkida&layout=1
 
@@ -33,7 +35,9 @@ const streamsReducer = produce(function produceStreams(
       draft.primaryStreams = [streamLower];
     } else {
       const prevPosition = draft.primaryStreams.indexOf(streamLower);
-      if (draft.primaryStreams.length - 1 < position) {
+      if (position > draft.primaryStreams.length - 1) {
+        //todo: better message? is this reeeeaally true?
+        throw new Error("Shouldn't happen?");
       }
       const removed = draft.primaryStreams.splice(position, 1, streamLower);
       if (prevPosition > -1 && removed[0]) {
@@ -71,6 +75,10 @@ const streamsReducer = produce(function produceStreams(
         draft.primaryStreams = [streams[0]];
       }
       break;
+    case "TOGGLE_LAYOUT":
+      const next = draft.layout + 1;
+      draft.layout = next > Layout.FourUp ? 0 : next;
+      break;
     default:
       throw new Error("Unknown action type in useStreams reducer");
   }
@@ -78,9 +86,11 @@ const streamsReducer = produce(function produceStreams(
 
 export default function useStreams(init: StreamState) {
   const [state, dispatch] = useReducer(streamsReducer, init);
+  const prevState = usePrevious(state);
 
   return {
     state,
+    prevState,
     dispatch,
     addStream(name: string) {
       dispatch({ type: "ADD_STREAM", payload: name });

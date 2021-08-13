@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import produce from "immer";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,14 +7,12 @@ import {
   faCaretSquareRight,
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
-import { usePrevious } from "react-use";
 import { useQuery, useQueryClient } from "react-query";
-import { difference as arrayDiff, uniq } from "lodash";
+import { uniq } from "lodash";
 
 import TwitchChat from "./TwitchChat";
 import useBounding from "./useBounding";
 import {
-  CHAT_EVICT_SEC,
   FETCH_FOLLOWED_INTERVAL_MINS,
   PROJECT_URL,
   STREAM_STATE_COOKIE,
@@ -32,8 +29,8 @@ import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
-import { epoch } from "./utils";
 import useStreams, { Layout } from "./useStreams";
+import { useLazyLoadingChats } from "./useLazyLoadingChats";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -66,40 +63,12 @@ export default function App() {
   const [settings, setSettings] = useSettings();
   const {
     state: streamState,
+    prevState: prevStreamState,
     addStream: addNewStream,
     removeStream,
     setPrimaryStream,
   } = useStreams(initialStreamState);
-  const prevStreamState = usePrevious(streamState);
   const { streams, primaryStreams, layout } = streamState;
-
-  // const [primaryStreamNames, _setPrimaryStreams] =
-  //   useState<string[]>(initialPrimary);
-  // const setPrimaryStream = useCallback(
-  //   function setPrimaryStreamName(streamName?: string) {
-  //     _setPrimaryStreams(streamName?.toLowerCase());
-  //   },
-  //   [_setPrimaryStreams]
-  // );
-  // const prevPrimaryStream = usePrevious(primaryStreamNames);
-
-  // const removeStream = useCallback(
-  //   function removeStream(index: number) {
-  //     if (
-  //       streams.findIndex((s) => s.toLowerCase() === primaryStreamNames) ===
-  //       index
-  //     ) {
-  //       const newPrimary = streams[index + (index === 0 ? 1 : -1)];
-  //       setPrimaryStream(newPrimary ? newPrimary : undefined);
-  //     }
-  //     setStreams(
-  //       produce((draft) => {
-  //         draft.splice(index, 1);
-  //       })
-  //     );
-  //   },
-  //   [primaryStreamNames, setPrimaryStream, streams]
-  // );
 
   // set URL params
   useEffect(() => {
@@ -131,104 +100,7 @@ export default function App() {
 
   const primaryContainerRect = useBounding("primary-stream-container");
 
-  const [loadedChats, setLoadedChats] = useState<
-    Array<{
-      lastOpened: number;
-      channel: string;
-    }>
-  >(
-    primaryStreams ? [{ channel: primaryStreams[0], lastOpened: epoch() }] : []
-  );
-
-  // lazy loading chats
-  useEffect(() => {
-    if (primaryStreams.length) {
-      let primaryChatIndex, primaryChatLastOpened;
-      const hasLoadedPrimary = loadedChats.some(
-        ({ channel, lastOpened }, i) => {
-          const isPrimary = primaryStreams.includes(channel);
-          if (isPrimary) {
-            primaryChatIndex = i;
-            primaryChatLastOpened = lastOpened;
-            return true;
-          } else {
-            return false;
-          }
-        }
-      );
-
-      if (!hasLoadedPrimary) {
-        setLoadedChats((state) => [
-          ...state,
-          ...primaryStreams.map((channel) => ({
-            channel,
-            lastOpened: epoch(),
-          })),
-        ]);
-      } else {
-        const now = epoch();
-        if (primaryChatLastOpened <= now - 1) {
-          setLoadedChats(
-            produce((state) => {
-              state[primaryChatIndex].lastOpened = epoch();
-            })
-          );
-        }
-      }
-    }
-
-    if (prevStreamState) {
-      const closedStreams = arrayDiff(
-        prevStreamState.primaryStreams,
-        primaryStreams
-      );
-      setLoadedChats(
-        produce((state) => {
-          closedStreams.forEach((prevPrimaryStream) => {
-            const index = state.findIndex(
-              ({ channel }) => channel === prevPrimaryStream
-            );
-            if (state[index]) {
-              state[index].lastOpened = epoch();
-            }
-          });
-        })
-      );
-    }
-
-    const channelsToRemove: string[] = [];
-    loadedChats.forEach(({ channel }) => {
-      if (!streams.map((s) => s.toLowerCase()).includes(channel)) {
-        channelsToRemove.push(channel);
-      }
-    });
-    if (channelsToRemove.length) {
-      setLoadedChats((state) =>
-        state.filter(({ channel }) => !channelsToRemove.includes(channel))
-      );
-    }
-
-    function evictOldChats() {
-      if (
-        loadedChats.length > 4 &&
-        loadedChats.some(
-          ({ lastOpened }) => lastOpened < epoch(-CHAT_EVICT_SEC)
-        )
-      ) {
-        setLoadedChats((state) =>
-          state.filter(
-            ({ lastOpened, channel }) =>
-              primaryStreams.includes(channel) ||
-              lastOpened > epoch(-CHAT_EVICT_SEC)
-          )
-        );
-      }
-    }
-
-    evictOldChats();
-    const interval = setInterval(evictOldChats, 10000);
-    return () => clearInterval(interval);
-  }, [primaryStreams, loadedChats, setLoadedChats, streams, prevStreamState]);
+  const loadedChats = useLazyLoadingChats({ streamState, prevStreamState });
 
   const queryClient = useQueryClient();
 
