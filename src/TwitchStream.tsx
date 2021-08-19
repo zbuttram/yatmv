@@ -1,13 +1,19 @@
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { usePrevious } from "react-use";
 
 import useBounding from "./useBounding";
 import Log from "./log";
-import { usePrevious } from "react-use";
 import { AppContext } from "./appContext";
 import { TWITCH_PLAYER_URL } from "./const";
 import { Layout } from "./useStreams";
+import {
+  faPlay,
+  faVolumeMute,
+  faVolumeUp,
+} from "@fortawesome/free-solid-svg-icons";
 
 let scriptElement: HTMLScriptElement | null = null;
 let scriptLoaded = false;
@@ -129,6 +135,7 @@ type TwitchPlayer = {
     options: {
       channel: string;
       muted: boolean;
+      controls: boolean;
       width: string;
       height: string;
     }
@@ -174,6 +181,8 @@ export default function TwitchStream({
   const { boostMode } = settings ?? {};
   const prevBoostMode = usePrevious(boostMode);
 
+  const [muted, setMuted] = useState(!isFirstSlot);
+
   const style = useMemo(():
     | {
         top: number;
@@ -207,7 +216,8 @@ export default function TwitchStream({
       loadWithScript(() => {
         player.current = new Twitch.Player(divId, {
           channel,
-          muted: !isFirstSlot,
+          muted,
+          controls: false,
           width: "100%",
           height: "100%",
         });
@@ -237,11 +247,15 @@ export default function TwitchStream({
   }, [channel]);
 
   useEffect(() => {
+    player?.current?.setMuted(muted);
+  }, [muted]);
+
+  useEffect(() => {
     if (!player.current) {
       return;
     }
 
-    player.current.setMuted(!isFirstSlot);
+    setMuted(!isFirstSlot);
     const currentVolume = player.current.getVolume();
     currentVolume &&
       localStorage.setItem(
@@ -304,9 +318,27 @@ export default function TwitchStream({
     <>
       <div
         id={divId}
-        style={style || { height: 0 }}
-        className="transition-all"
+        style={style ? { ...style, zIndex: 10 } : { height: 0 }}
+        className={classNames(
+          "transition-all",
+          !isPrimary && "pointer-events-none"
+        )}
       />
+      <div
+        style={style ? { ...style, zIndex: 100 } : { height: 0 }}
+        className={classNames(
+          "transition-all opacity-0 flex flex-col-reverse",
+          isPrimary && "hover:opacity-100"
+        )}
+      >
+        <div className="m-4">
+          <FontAwesomeIcon
+            icon={muted ? faVolumeMute : faVolumeUp}
+            size="2x"
+            onClick={() => setMuted((state) => !state)}
+          />
+        </div>
+      </div>
       <div id={posDivId} className="flex flex-grow bg-black">
         <span className={classNames("m-auto", !isPrimary && "hidden")}>
           Watching
