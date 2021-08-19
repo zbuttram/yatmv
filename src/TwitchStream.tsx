@@ -11,7 +11,9 @@ import { TWITCH_PLAYER_URL } from "./const";
 import { Layout } from "./useStreams";
 import {
   faPlay,
+  faVolumeDown,
   faVolumeMute,
+  faVolumeOff,
   faVolumeUp,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -129,13 +131,28 @@ function getPrimarySubRect(
   }
 }
 
+function getChannelVolume(channel: string): number {
+  const channelVolumeString = localStorage.getItem(
+    getChannelVolumeKey(channel)
+  );
+
+  if (channelVolumeString) {
+    const channelVolume = Number(channelVolumeString);
+    if (channelVolume && !Number.isNaN(channelVolume) && channelVolume >= 0) {
+      return channelVolume;
+    }
+  }
+
+  return 0.5;
+}
+
 type TwitchPlayer = {
   new (
     el: HTMLElement | string,
     options: {
       channel: string;
-      muted: boolean;
-      controls: boolean;
+      muted?: boolean;
+      controls?: boolean;
       width: string;
       height: string;
     }
@@ -182,6 +199,7 @@ export default function TwitchStream({
   const prevBoostMode = usePrevious(boostMode);
 
   const [muted, setMuted] = useState(!isFirstSlot);
+  const [volume, setVolume] = useState(getChannelVolume(channel));
 
   const style = useMemo(():
     | {
@@ -217,25 +235,10 @@ export default function TwitchStream({
         player.current = new Twitch.Player(divId, {
           channel,
           muted,
-          controls: false,
+          // controls: false,
           width: "100%",
           height: "100%",
         });
-
-        const channelVolumeString = localStorage.getItem(
-          getChannelVolumeKey(channel)
-        );
-
-        if (channelVolumeString) {
-          const channelVolume = Number(channelVolumeString);
-          if (
-            channelVolume &&
-            !Number.isNaN(channelVolume) &&
-            channelVolume >= 0
-          ) {
-            player.current?.setVolume(channelVolume);
-          }
-        }
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -247,21 +250,24 @@ export default function TwitchStream({
   }, [channel]);
 
   useEffect(() => {
-    player?.current?.setMuted(muted);
-  }, [muted]);
+    player?.current?.setMuted(muted || !isFirstSlot);
+  }, [muted, isFirstSlot]);
 
   useEffect(() => {
-    if (!player.current) {
-      return;
-    }
-
-    setMuted(!isFirstSlot);
-    const currentVolume = player.current.getVolume();
+    player?.current?.setVolume(volume);
+    setMuted(false);
+    const currentVolume = player?.current?.getVolume();
     currentVolume &&
       localStorage.setItem(
         getChannelVolumeKey(channel),
         currentVolume.toString()
       );
+  }, [channel, volume]);
+
+  useEffect(() => {
+    if (!player.current) {
+      return;
+    }
 
     Log("player-isPrimary-updated", channel, { boostMode, primary: isPrimary });
     const desiredQuality = isPrimary ? "chunked" : "auto";
@@ -284,7 +290,6 @@ export default function TwitchStream({
           Log("player-set-onplay-quality", channel, desiredQuality);
         }
       }
-      player.current.setMuted(!isFirstSlot);
     }
 
     player.current.addEventListener(Twitch.Player.PLAYING, onPlay);
@@ -292,14 +297,7 @@ export default function TwitchStream({
     return () =>
       player.current &&
       player.current.removeEventListener(Twitch.Player.PLAYING, onPlay);
-  }, [
-    channel,
-    boostMode,
-    prevBoostMode,
-    primaryPosition,
-    isPrimary,
-    isFirstSlot,
-  ]);
+  }, [channel, boostMode, prevBoostMode, isPrimary, isFirstSlot]);
 
   const prevReloadCounter = usePrevious(reloadCounter);
   useEffect(() => {
@@ -319,31 +317,95 @@ export default function TwitchStream({
       <div
         id={divId}
         style={style ? { ...style, zIndex: 10 } : { height: 0 }}
-        className={classNames(
-          "transition-all",
-          !isPrimary && "pointer-events-none"
-        )}
+        className={classNames("transition-all")}
       />
-      <div
-        style={style ? { ...style, zIndex: 100 } : { height: 0 }}
-        className={classNames(
-          "transition-all opacity-0 flex flex-col-reverse",
-          isPrimary && "hover:opacity-100"
-        )}
-      >
-        <div className="m-4">
-          <FontAwesomeIcon
-            icon={muted ? faVolumeMute : faVolumeUp}
-            size="2x"
-            onClick={() => setMuted((state) => !state)}
-          />
-        </div>
-      </div>
+      <Overlay
+        style={style}
+        primary={isPrimary}
+        muted={muted}
+        toggleMute={() => setMuted((state) => !state)}
+        volume={volume}
+        setVolume={setVolume}
+      />
       <div id={posDivId} className="flex flex-grow bg-black">
         <span className={classNames("m-auto", !isPrimary && "hidden")}>
           Watching
         </span>
       </div>
     </>
+  );
+}
+
+function Overlay({
+  style,
+  primary,
+  muted,
+  toggleMute,
+  volume,
+  setVolume,
+}: {
+  style:
+    | {
+        top: number;
+        left: number;
+        width: number;
+        height: number;
+        position: "absolute";
+      }
+    | undefined;
+  primary: boolean;
+  muted: boolean;
+  toggleMute: () => void;
+  volume: number;
+  setVolume: (vol: number) => void;
+}) {
+  let volumeIcon;
+  if (muted) {
+    volumeIcon = faVolumeMute;
+  } else if (volume === 0) {
+    volumeIcon = faVolumeOff;
+  } else if (volume > 0.5) {
+    volumeIcon = faVolumeUp;
+  } else {
+    volumeIcon = faVolumeDown;
+  }
+
+  const pos = style
+    ? {
+        ...style,
+        top: style.top + style.height * 0.8,
+        height: style.height * 0.2,
+        width: style.width * 0.5,
+        zIndex: 100,
+      }
+    : undefined;
+
+  return (
+    <div
+      style={pos ?? { height: 0 }}
+      className={classNames(
+        "transition-all opacity-0 hover:opacity-100 flex flex-col-reverse"
+      )}
+    >
+      {primary ? (
+        <div className="m-4 mr-auto p-2 bg-black rounded">
+          <FontAwesomeIcon
+            icon={volumeIcon}
+            size="2x"
+            fixedWidth={true}
+            onClick={toggleMute}
+          />
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.025}
+            value={volume}
+            onChange={(e) => setVolume(e.target.valueAsNumber)}
+            className="ml-2"
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
