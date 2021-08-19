@@ -317,7 +317,10 @@ export default function TwitchStream({
       <div
         id={divId}
         style={style ? { ...style, zIndex: 10 } : { height: 0 }}
-        className={classNames("transition-all")}
+        className={classNames(
+          "transition-all",
+          !isPrimary && "pointer-events-none"
+        )}
       />
       <Overlay
         style={style}
@@ -370,15 +373,19 @@ function Overlay({
     volumeIcon = faVolumeDown;
   }
 
-  const pos = style
-    ? {
-        ...style,
-        top: style.top + style.height * 0.8,
-        height: style.height * 0.2,
-        width: style.width * 0.5,
-        zIndex: 100,
-      }
-    : undefined;
+  const pos = useMemo(
+    () =>
+      style
+        ? {
+            ...style,
+            top: style.top + style.height * 0.8,
+            height: style.height * 0.2,
+            width: style.width * 0.5,
+            zIndex: 100,
+          }
+        : undefined,
+    [style]
+  );
 
   return (
     <div
@@ -388,7 +395,7 @@ function Overlay({
       )}
     >
       {primary ? (
-        <div className="m-4 mr-auto p-2 bg-black rounded">
+        <div className="m-2 mr-auto p-2 bg-black rounded">
           <FontAwesomeIcon
             icon={volumeIcon}
             size="2x"
