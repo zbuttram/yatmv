@@ -92,7 +92,18 @@ export function StreamContainer({
       <div className="w-full flex flex-col self-end">
         <div className="pt-2 pb-1">
           <div className="flex">
-            <div className="font-bold">{userName ?? stream}</div>
+            <div
+              className={classNames(
+                "font-bold",
+                userName && "hover:underline cursor-pointer"
+              )}
+              onClick={() =>
+                userName &&
+                window.open(`https://twitch.tv/${userName}`, "_blank")
+              }
+            >
+              {userName ?? stream}
+            </div>
             <div
               className="ml-auto text-sm my-auto cursor-pointer"
               onClick={reload}

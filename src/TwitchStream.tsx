@@ -10,7 +10,6 @@ import { AppContext } from "./appContext";
 import { TWITCH_PLAYER_URL } from "./const";
 import { Layout } from "./useStreams";
 import {
-  faPlay,
   faVolumeDown,
   faVolumeMute,
   faVolumeOff,
@@ -331,7 +330,9 @@ export default function TwitchStream({
         setVolume={setVolume}
       />
       <div id={posDivId} className="flex flex-grow bg-black">
-        <span className={classNames("m-auto", !isPrimary && "hidden")}>
+        <span
+          className={classNames("m-auto select-none", !isPrimary && "hidden")}
+        >
           Watching
         </span>
       </div>
