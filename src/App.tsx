@@ -133,6 +133,7 @@ export default function App() {
   const { showChat, fullHeightPlayer } = settings;
 
   const [forceShowMainPane, setForceShowMainPane] = useState(false);
+  const showMainPane = primaryStreams.length || forceShowMainPane;
 
   //region AppReturn
   return (
@@ -143,7 +144,7 @@ export default function App() {
           fullHeightPlayer && "fullheight-player"
         )}
       >
-        {!primaryStreams && !forceShowMainPane && (
+        {!showMainPane && (
           <button
             className="fixed top-4 left-4 rounded px-4 py-3 bg-gray-500"
             onClick={() => setForceShowMainPane(true)}
@@ -154,7 +155,7 @@ export default function App() {
         <div
           className={classNames(
             "flex primary-container",
-            !primaryStreams && !forceShowMainPane && "hidden"
+            !showMainPane && "hidden"
           )}
         >
           <Sidebar
