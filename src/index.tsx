@@ -6,6 +6,8 @@ import { ReactQueryDevtools } from "react-query/devtools";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
+import { ErrorBoundary } from "react-error-boundary";
+import GlobalErrorBoundary from "./GlobalErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -13,7 +15,9 @@ ReactDOM.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools />
-      <App />
+      <ErrorBoundary FallbackComponent={GlobalErrorBoundary}>
+        <App />
+      </ErrorBoundary>
     </QueryClientProvider>
   </React.StrictMode>,
   document.getElementById("root")

@@ -21,11 +21,15 @@ if (!TWITCH_CLIENT_ID) {
   );
 }
 
+export function removeTwitchAuth() {
+  Cookies.remove(TWITCH_ACCESS_TOKEN_COOKIE);
+  Cookies.remove(TWITCH_SCOPE_COOKIE);
+}
+
 let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
 let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
 if (accessToken && savedScopes !== TWITCH_SCOPES.toString()) {
-  Cookies.remove(TWITCH_ACCESS_TOKEN_COOKIE);
-  Cookies.remove(TWITCH_SCOPE_COOKIE);
+  removeTwitchAuth();
   window.location.href = TWITCH_AUTH_URL;
 }
 
@@ -288,4 +292,28 @@ export async function getFollowedStreams({
     }
   );
   return response.data;
+}
+
+type CategoryData = {
+  id: string;
+  name: string;
+  box_art_url: string;
+};
+
+export function searchCategories({
+  query,
+  first,
+}: {
+  query: string;
+  first?: ParamValue;
+}) {
+  return callTwitch<PaginatedResponse<CategoryData>>("/search/categories", {
+    params: { query, first },
+  });
+}
+
+export function getTopGames({ first }: { first: ParamValue }) {
+  return callTwitch<PaginatedResponse<CategoryData>>("/games/top", {
+    params: { first },
+  });
 }

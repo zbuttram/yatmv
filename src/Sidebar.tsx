@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -72,18 +72,20 @@ export function Sidebar({
         <>
           <hr />
           <div className="overflow-y-auto scrollbar-width-thin overflow-x-hidden bg-gray-900">
-            {followedStreams.map((stream) => (
-              <FollowedStream
-                key={stream.userId}
-                isOpen={streams.includes(stream.userName.toLowerCase())}
-                isPrimary={primaryStreams.includes(
-                  stream.userName.toLowerCase()
-                )}
-                stream={stream}
-                addStream={addStream}
-                sidebarExpanded={open}
-              />
-            ))}
+            {followedStreams
+              .filter((s) => !!s.userName)
+              .map((stream) => (
+                <FollowedStream
+                  key={stream.userId}
+                  isOpen={streams.includes(stream.userName.toLowerCase())}
+                  isPrimary={primaryStreams.includes(
+                    stream.userName.toLowerCase()
+                  )}
+                  stream={stream}
+                  addStream={addStream}
+                  sidebarExpanded={open}
+                />
+              ))}
           </div>
           <hr className="mb-2" />
         </>

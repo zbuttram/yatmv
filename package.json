@@ -25,6 +25,7 @@
     "mitt": "^2.1.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-error-boundary": "^3.1.4",
     "react-lines-ellipsis": "^0.15.0",
     "react-query": "^3.17.2",
     "react-scripts": "4.0.3",
