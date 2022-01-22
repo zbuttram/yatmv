@@ -168,7 +168,7 @@ export function Sidebar({
           >
             <FontAwesomeIcon fixedWidth icon={faTh} />
           </button>
-          <span className="btn-txt">Toggle Layout</span>
+          <span className="btn-txt">Cycle Layout</span>
         </label>
       </div>
       <div className="flex-grow" />
