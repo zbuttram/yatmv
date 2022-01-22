@@ -128,9 +128,7 @@ export function Sidebar({
       <div>
         <label>
           <button
-            title={
-              (fullHeightPlayer ? "Disable" : "Enable") + " Full Height Player"
-            }
+            title={fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
             className="btn-sidebar bg-black"
             onClick={() =>
               setSettings(({ fullHeightPlayer, ...state }) => ({
@@ -146,14 +144,14 @@ export function Sidebar({
             )}
           </button>
           <span className="btn-txt">
-            {fullHeightPlayer ? "Disable" : "Enable"} Full Height
+            {fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
           </span>
         </label>
       </div>
       <div>
         <label>
           <button
-            title="Toggle Layout"
+            title="Cycle Layout"
             className="btn-sidebar bg-black"
             onClick={() => toggleLayout()}
             onMouseDown={(e) => {
