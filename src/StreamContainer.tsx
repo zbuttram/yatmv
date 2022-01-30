@@ -12,8 +12,8 @@ import { useQuery } from "react-query";
 import { FETCH_OPEN_STREAMS_INTERVAL_MINS } from "./const";
 import { checkTwitchAuth, getStream } from "./twitch";
 import TwitchStream from "./TwitchStream";
-import { Layout } from "./useStreams";
 import { range } from "lodash";
+import { Layout } from "./layout";
 
 export function StreamContainer({
   stream,
@@ -116,7 +116,7 @@ export function StreamContainer({
           )}
         </div>
         <div className="flex">
-          {layout === Layout.OneUp ? (
+          {layout === 0 ? (
             <button
               className={classNames(
                 "btn mr-2 w-full text-black",

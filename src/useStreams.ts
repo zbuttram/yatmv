@@ -1,13 +1,7 @@
 import produce from "immer";
 import { useReducer } from "react";
 import { usePrevious } from "react-use";
-
-export enum Layout {
-  OneUp,
-  TwoUp,
-  ThreeUp,
-  FourUp,
-}
+import { Layout, MAX_LAYOUT } from "./layout";
 
 export type StreamState = {
   streams: string[];
@@ -29,7 +23,7 @@ const streamsReducer = produce(function produceStreams(
 
   function setPrimaryStream(stream, position = 0) {
     const streamLower = stream.toLowerCase();
-    if (layout === Layout.OneUp) {
+    if (layout === 0) {
       draft.primaryStreams = [streamLower];
     } else {
       const prevPosition = draft.primaryStreams.indexOf(streamLower);
@@ -72,10 +66,10 @@ const streamsReducer = produce(function produceStreams(
     case "TOGGLE_LAYOUT":
       if (action.payload.reverse) {
         const next = draft.layout - 1;
-        draft.layout = next < Layout.OneUp ? Layout.FourUp : next;
+        draft.layout = next < 0 ? MAX_LAYOUT : next;
       } else {
         const next = draft.layout + 1;
-        draft.layout = next > Layout.FourUp ? 0 : next;
+        draft.layout = next > MAX_LAYOUT ? 0 : next;
       }
       break;
     default:

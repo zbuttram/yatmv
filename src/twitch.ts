@@ -11,7 +11,7 @@ import {
   TWITCH_AUTH_URL,
 } from "./const";
 import { useQuery } from "react-query";
-import { Layout } from "./useStreams";
+import { Layout } from "./layout";
 
 if (!TWITCH_CLIENT_ID) {
   throw new Error(

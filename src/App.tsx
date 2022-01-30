@@ -29,8 +29,9 @@ import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
-import useStreams, { Layout } from "./useStreams";
+import useStreams from "./useStreams";
 import { useLazyLoadingChats } from "./useLazyLoadingChats";
+import { Layout } from "./layout";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -47,7 +48,7 @@ let parsedUrlLayout: Layout | undefined;
 const urlLayout = pageURL.searchParams.get("layout");
 if (urlLayout) {
   const num = Number(urlLayout);
-  parsedUrlLayout = Number.isNaN(num) ? Layout.OneUp : num;
+  parsedUrlLayout = Number.isNaN(num) ? 0 : num;
 }
 
 let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
@@ -56,7 +57,7 @@ let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
 const initialStreamState = {
   streams: uniq(reloadFromAuthStreams || parsedUrlStreams || []),
   primaryStreams: uniq(reloadFromAuthPrimary || parsedUrlPrimary || []),
-  layout: reloadFromAuthLayout || parsedUrlLayout || Layout.OneUp,
+  layout: reloadFromAuthLayout || parsedUrlLayout || 0,
 };
 
 export default function App() {
@@ -85,7 +86,7 @@ export default function App() {
     primaryStreams && primaryStreams.length
       ? params.set("primary", primaryStreams.toString())
       : params.delete("primary");
-    layout !== Layout.OneUp
+    layout !== 0
       ? params.set("layout", layout.toString())
       : params.delete("layout");
 

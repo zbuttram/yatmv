@@ -7,7 +7,7 @@ import Log from "./log";
 import { usePrevious } from "react-use";
 import { AppContext } from "./appContext";
 import { TWITCH_PLAYER_URL } from "./const";
-import { Layout } from "./useStreams";
+import { getPrimarySubRect, Layout } from "./layout";
 
 let scriptElement: HTMLScriptElement | null = null;
 let scriptLoaded = false;
@@ -30,97 +30,6 @@ function loadWithScript(callback) {
 
 function getChannelVolumeKey(channel) {
   return `player-channel-volume-${channel.toLowerCase()}`;
-}
-
-function getPrimarySubRect(
-  position: Layout,
-  layout: Layout,
-  bigRect: Partial<DOMRect>
-): Partial<DOMRect> {
-  if (layout === Layout.OneUp) {
-    return bigRect;
-  }
-
-  const { top, left, width, height } = bigRect;
-  if (
-    top === undefined ||
-    left === undefined ||
-    width === undefined ||
-    height === undefined
-  ) {
-    return {};
-  }
-  const subHeight = height / 2;
-  const subWidth = width / 2;
-
-  switch (layout) {
-    case Layout.TwoUp:
-      return {
-        left,
-        width,
-        height: subHeight,
-        top: position === 0 ? top : top + subHeight,
-      };
-    case Layout.ThreeUp:
-      switch (position) {
-        case 0:
-          return {
-            left,
-            top,
-            width,
-            height: subHeight,
-          };
-        case 1:
-          return {
-            left,
-            height: subHeight,
-            width: subWidth,
-            top: top + subHeight,
-          };
-        case 2:
-          return {
-            height: subHeight,
-            width: subWidth,
-            left: left + subWidth,
-            top: top + subHeight,
-          };
-        default:
-          return bigRect;
-      }
-    case Layout.FourUp:
-      switch (position) {
-        case 0:
-          return {
-            left,
-            top,
-            width: subWidth,
-            height: subHeight,
-          };
-        case 1:
-          return {
-            top,
-            width: subWidth,
-            height: subHeight,
-            left: left + subWidth,
-          };
-        case 2:
-          return {
-            left,
-            width: subWidth,
-            height: subHeight,
-            top: top + subHeight,
-          };
-        case 3:
-          return {
-            width: subWidth,
-            height: subHeight,
-            left: left + subWidth,
-            top: top + subHeight,
-          };
-        default:
-          return bigRect;
-      }
-  }
 }
 
 type TwitchPlayer = {
@@ -184,9 +93,10 @@ export default function TwitchStream({
         position: "absolute";
       }
     | undefined => {
-    const { top, left, width, height } = isPrimary
+    const rect = isPrimary
       ? getPrimarySubRect(primaryPosition, layout, primaryContainerRect)
       : channelRect;
+    const { top, left, width, height } = rect ?? {};
     if (top !== undefined && left !== undefined && width && height) {
       return {
         position: "absolute",
@@ -280,6 +190,7 @@ export default function TwitchStream({
       // eslint-disable-next-line no-self-assign
       player.current._iframe.src = player.current._iframe.src;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reloadCounter]);
 
   return (
