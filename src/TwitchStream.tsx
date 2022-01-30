@@ -131,6 +131,7 @@ type TwitchPlayer = {
       muted: boolean;
       width: string;
       height: string;
+      quality?: string;
     }
   ): TwitchPlayer;
   setChannel(channel: string): void;
@@ -210,6 +211,7 @@ export default function TwitchStream({
           muted: !isFirstSlot,
           width: "100%",
           height: "100%",
+          quality: boostMode ? (isPrimary ? "chunked" : "auto") : undefined,
         });
 
         const channelVolumeString = localStorage.getItem(
@@ -258,26 +260,6 @@ export default function TwitchStream({
     if (prevBoostMode && !boostMode) {
       player.current.setQuality("auto");
     }
-
-    function onPlay() {
-      if (!player.current) {
-        return;
-      }
-      if (boostMode) {
-        const currentQuality = player.current.getQuality();
-        if (currentQuality !== desiredQuality) {
-          player.current.setQuality(desiredQuality);
-          Log("player-set-onplay-quality", channel, desiredQuality);
-        }
-      }
-      player.current.setMuted(!isFirstSlot);
-    }
-
-    player.current.addEventListener(Twitch.Player.PLAYING, onPlay);
-
-    return () =>
-      player.current &&
-      player.current.removeEventListener(Twitch.Player.PLAYING, onPlay);
   }, [
     channel,
     boostMode,
