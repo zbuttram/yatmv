@@ -96,7 +96,7 @@ export function StreamContainer({
           <div className="flex">
             <div className="font-bold">{userName ?? stream}</div>
             <div className="flex-grow" />
-            {!!viewerCount && (
+            {!!viewerCount && !streamOffline && (
               <div className="text-sm text-right my-auto mr-1 text-red-400 whitespace-nowrap">
                 {simplifyViewerCount(viewerCount)}
               </div>
