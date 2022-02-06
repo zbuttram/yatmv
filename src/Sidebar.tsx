@@ -7,17 +7,17 @@ import {
   faExpandArrowsAlt,
   faRocket,
   faTachometerAlt,
-  faUsers,
   faTh,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
-import { round } from "lodash";
 
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
 import { Settings } from "./useSettings";
 import { checkTwitchAuth, StreamData, useTwitchUser } from "./twitch";
 import useBounding from "./useBounding";
+import { simplifyViewerCount } from "./utils";
 
 export function Sidebar({
   className,
@@ -288,12 +288,4 @@ function FollowedStream({
       </div>
     </>
   );
-}
-
-function simplifyViewerCount(viewerCount) {
-  if (viewerCount < 1000) {
-    return viewerCount;
-  } else {
-    return round(viewerCount / 1000, viewerCount < 100000 ? 1 : 0) + "k";
-  }
 }

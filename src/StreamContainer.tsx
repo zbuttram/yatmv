@@ -14,6 +14,7 @@ import { checkTwitchAuth, getStream } from "./twitch";
 import TwitchStream from "./TwitchStream";
 import { range } from "lodash";
 import { Layout } from "./layout";
+import { simplifyViewerCount } from "./utils";
 
 export function StreamContainer({
   stream,
@@ -48,7 +49,7 @@ export function StreamContainer({
     }
   );
   const streamOffline = streamFetchFailCount > 1;
-  const { title, userName } = streamData ?? {};
+  const { title, userName, viewerCount } = streamData ?? {};
 
   const [isRemoving, setIsRemoving] = useState(false);
   const removeConfirmTimeout =
@@ -83,18 +84,25 @@ export function StreamContainer({
   return (
     <div className={className}>
       <TwitchStream
+        className="pt-4"
         channel={stream.toLowerCase()}
         primaryPosition={primaryPosition}
         primaryContainerRect={primaryContainerRect}
         reloadCounter={reloadCounter}
         layout={layout}
       />
-      <div className="w-full flex flex-col self-end">
-        <div className="pt-2 pb-1">
+      <div className="w-full flex flex-col px-1">
+        <div className="pt-3 pb-1">
           <div className="flex">
             <div className="font-bold">{userName ?? stream}</div>
+            <div className="flex-grow" />
+            {!!viewerCount && (
+              <div className="text-sm text-right my-auto mr-1 text-red-400 whitespace-nowrap">
+                {simplifyViewerCount(viewerCount)}
+              </div>
+            )}
             <div
-              className="ml-auto text-sm my-auto cursor-pointer"
+              className="text-sm my-auto cursor-pointer"
               onClick={reload}
               onMouseEnter={() => setHovering(true)}
               onMouseLeave={() => setHovering(false)}

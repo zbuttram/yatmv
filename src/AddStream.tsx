@@ -84,12 +84,15 @@ export default function AddStream({ addNewStream, className = "" }) {
   }
 
   return (
-    <form onSubmit={submitNewStream} className={"flex h-full" + className}>
-      <div className="flex flex-col w-4/5 h-full">
+    <form
+      onSubmit={submitNewStream}
+      className={"flex flex-col h-full" + className}
+    >
+      <div className="flex mb-1">
         <input
-          type="text"
+          type={checkTwitchAuth() ? "search" : "text"}
           placeholder="Channel"
-          className="bg-black border border-gray-400 focus:outline-none focus:border-white"
+          className="w-4/5 bg-black border border-gray-400 focus:outline-none focus:border-white"
           onKeyDown={(e) => {
             if (
               e.key === "Escape" ||
@@ -117,33 +120,33 @@ export default function AddStream({ addNewStream, className = "" }) {
           value={selectedSearchResult?.displayName ?? newStream}
           onChange={(e) => setNewStream(e.target.value)}
         />
-        {newStream &&
-          (isFetching || newStream !== searchQuery ? (
-            <div>Searching...</div>
-          ) : (
-            <div className="overflow-y-auto">
-              {searchResults.map((result) => (
-                <SearchResult
-                  key={result.displayName}
-                  result={result}
-                  isSelected={result === selectedSearchResult}
-                  onClick={() => {
-                    addNewStream(result.displayName);
-                    setNewStream("");
-                  }}
-                  prefetchStreamData={() =>
-                    prefetchStreamData(result.broadcasterLogin)
-                  }
-                />
-              ))}
-            </div>
-          ))}
+        <input
+          type="submit"
+          value="Add"
+          className="ml-1 mb-auto px-1 bg-black border"
+        />
       </div>
-      <input
-        type="submit"
-        value="Add"
-        className="w-1/5 ml-1 mb-auto px-1 bg-black border"
-      />
+      {newStream &&
+        (isFetching || newStream !== searchQuery ? (
+          <div>Searching...</div>
+        ) : (
+          <div className="overflow-y-auto overflow-x-hidden overflow-ellipsis scrollbar-width-thin">
+            {searchResults.map((result) => (
+              <SearchResult
+                key={result.displayName}
+                result={result}
+                isSelected={result === selectedSearchResult}
+                onClick={() => {
+                  addNewStream(result.displayName);
+                  setNewStream("");
+                }}
+                prefetchStreamData={() =>
+                  prefetchStreamData(result.broadcasterLogin)
+                }
+              />
+            ))}
+          </div>
+        ))}
     </form>
   );
 }

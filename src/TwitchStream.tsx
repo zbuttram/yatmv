@@ -66,12 +66,14 @@ export default function TwitchStream({
   primaryContainerRect,
   reloadCounter,
   layout,
+  className,
 }: {
   channel: string;
   primaryPosition: number;
   primaryContainerRect: Partial<DOMRect>;
   reloadCounter: number;
   layout: Layout;
+  className?: string;
 }) {
   const divId = `twitch-stream-embed-${channel}`;
   const isPrimary = primaryPosition > -1;
@@ -200,7 +202,10 @@ export default function TwitchStream({
         style={style || { height: 0 }}
         className="transition-all"
       />
-      <div id={posDivId} className="flex flex-grow bg-black">
+      <div
+        id={posDivId}
+        className={classNames("flex aspect-video bg-black", className)}
+      >
         <span className={classNames("m-auto", !isPrimary && "hidden")}>
           Watching
         </span>

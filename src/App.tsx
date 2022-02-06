@@ -212,13 +212,13 @@ export default function App() {
             ))}
           </div>
         </div>
-        <div className="flex justify-center flex-wrap px-4 gap-4 bg-gray-900">
-          <div className="w-64 flex flex-col p-3 stream-container">
+        <div className="flex justify-center flex-wrap px-2 gap-1 bg-gray-900">
+          <div className="w-52 flex flex-col py-3 stream-container">
             <AddStream addNewStream={addNewStream} />
           </div>
           {streams.map((stream, i) => (
             <StreamContainer
-              className="h-full w-64 flex flex-col justify-center p-3 bg-black stream-container"
+              className="h-full w-64 flex flex-col justify-center py-3 px-1 bg-black stream-container"
               key={stream}
               stream={stream}
               layout={layout}
