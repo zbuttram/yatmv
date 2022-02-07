@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import App from "./App";
 
@@ -13,11 +13,7 @@ function QCProvider({ children }) {
 test("doesn't explode", () => {
   render(
     <QCProvider>
-      <App twitchAuthCallbackData={{
-        reloadFromAuthPrimary: undefined,
-        reloadFromAuthStreams: [],
-        hasTwitchAuth: false
-      }} />
+      <App />
     </QCProvider>
   );
 });
