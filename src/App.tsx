@@ -221,7 +221,7 @@ export default function App() {
         </div>
         <div
           id="streams-outer-container"
-          className="flex justify-center flex-wrap px-2 gap-1 bg-gray-900"
+          className="flex justify-center flex-wrap px-2 gap-1 bg-slate-900"
         >
           <div className="w-52 flex flex-col py-3 stream-container">
             <AddStream addNewStream={addNewStream} />
