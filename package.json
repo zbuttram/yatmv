@@ -32,7 +32,7 @@
   },
   "scripts": {
     "start": "concurrently \"yarn dev\" \"yarn dev:css\"",
-    "build": "react-scripts build",
+    "build": "yarn build:css && react-scripts build",
     "build:css": "tailwindcss -i ./src/index.css -o ./src/build.css",
     "dev": "react-scripts start",
     "dev:css": "yarn build:css --watch",
