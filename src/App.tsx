@@ -223,7 +223,14 @@ export default function App() {
           id="streams-outer-container"
           className="flex justify-center flex-wrap px-2 gap-1 bg-slate-900"
         >
-          <div className="w-52 flex flex-col py-3 stream-container">
+          <div
+            className="w-52 flex flex-col py-3 stream-container"
+            style={{
+              maxHeight: referenceStreamContainerRect.height
+                ? referenceStreamContainerRect.height
+                : undefined,
+            }}
+          >
             <AddStream addNewStream={addNewStream} />
           </div>
           {streams.map((stream, i) => (
