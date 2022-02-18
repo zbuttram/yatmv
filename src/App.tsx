@@ -161,7 +161,7 @@ export default function App() {
           style={{
             height: `calc(100vh - ${
               fullHeightPlayer
-                ? 0
+                ? "0px"
                 : referenceStreamContainerRect.height
                 ? referenceStreamContainerRect.height + "px"
                 : "20vh"
