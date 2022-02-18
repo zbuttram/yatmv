@@ -3,14 +3,10 @@
   "version": "0.1.0",
   "license": "MIT",
   "dependencies": {
-    "@craco/craco": "^6.1.2",
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
     "@fortawesome/free-brands-svg-icons": "^5.15.3",
     "@fortawesome/free-solid-svg-icons": "^5.15.3",
     "@fortawesome/react-fontawesome": "^0.1.14",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.23",
     "@types/lodash": "^4.14.169",
     "@types/node": "^15.3.0",
@@ -35,9 +31,12 @@
     "web-vitals": "^1.0.1"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
+    "start": "concurrently \"yarn dev\" \"yarn dev:css\"",
+    "build": "react-scripts build",
+    "build:css": "tailwindcss -i ./src/index.css -o ./src/build.css",
+    "dev": "react-scripts start",
+    "dev:css": "yarn build:css --watch",
+    "test": "react-scripts test",
     "e2e": "cd e2e && jest",
     "eject": "react-scripts eject"
   },
@@ -68,11 +67,13 @@
     ]
   },
   "devDependencies": {
-    "autoprefixer": "9",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "concurrently": "^7.0.0",
     "jest-puppeteer": "^5.0.4",
-    "postcss": "7",
     "prettier": "^2.3.0",
     "puppeteer": "^10.1.0",
-    "tailwindcss": "npm:@tailwindcss/postcss7-compat"
+    "tailwindcss": "^3.0.23"
   }
 }
