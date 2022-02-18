@@ -17,6 +17,7 @@ import { Layout } from "./layout";
 import { simplifyViewerCount } from "./utils";
 
 export function StreamContainer({
+  id,
   stream,
   primaryPosition,
   primaryContainerRect,
@@ -25,6 +26,7 @@ export function StreamContainer({
   layout,
   className,
 }: {
+  id?: string;
   stream: string;
   primaryPosition: number;
   primaryContainerRect: Partial<DOMRect>;
@@ -82,7 +84,7 @@ export function StreamContainer({
   );
 
   return (
-    <div className={className}>
+    <div className={className} id={id}>
       <TwitchStream
         className="pt-4"
         channel={stream.toLowerCase()}
@@ -117,9 +119,15 @@ export function StreamContainer({
               )}
             </div>
           </div>
-          {streamData && (
-            <div className="text-xs truncate" title={title}>
-              {title}
+          {checkTwitchAuth() && (
+            <div
+              className={classNames(
+                "text-xs truncate",
+                !streamData && "invisible"
+              )}
+              title={streamData ? title : undefined}
+            >
+              {streamData ? title : "N/A"}
             </div>
           )}
         </div>

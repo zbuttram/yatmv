@@ -32,6 +32,7 @@ import { StreamContainer } from "./StreamContainer";
 import useStreams from "./useStreams";
 import { useLazyLoadingChats } from "./useLazyLoadingChats";
 import { Layout } from "./layout";
+import useScroll from "./useScroll";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -104,6 +105,10 @@ export default function App() {
   }, [streams, primaryStreams, layout]);
 
   const primaryContainerRect = useBounding("primary-stream-container");
+  const referenceStreamContainerRect = useBounding(
+    "stream-container-reference"
+  );
+  const scrollY = useScroll();
 
   const loadedChats = useLazyLoadingChats({ streamState, prevStreamState });
 
@@ -139,12 +144,7 @@ export default function App() {
   //region AppReturn
   return (
     <AppProvider value={{ settings }}>
-      <main
-        className={classNames(
-          "flex flex-col ring-white ring-opacity-60",
-          fullHeightPlayer && "fullheight-player"
-        )}
-      >
+      <main id="main" className="flex flex-col ring-white ring-opacity-60">
         {!showMainPane && (
           <button
             className="fixed top-4 left-4 rounded px-4 py-3 bg-gray-500"
@@ -158,6 +158,15 @@ export default function App() {
             "flex primary-container",
             !showMainPane && "hidden"
           )}
+          style={{
+            height: `calc(100vh - ${
+              fullHeightPlayer
+                ? 0
+                : referenceStreamContainerRect.height
+                ? referenceStreamContainerRect.height + "px"
+                : "20vh"
+            })`,
+          }}
         >
           <Sidebar
             className="flex flex-col bg-blue-800"
@@ -169,14 +178,12 @@ export default function App() {
             addStream={addNewStream}
             toggleLayout={toggleLayout}
           />
-          <div id="primary-stream-container" className="flex-grow h-full" />
           <div
-            id="chats-container"
-            className={classNames(
-              "flex relative transition-all"
-              // showChat ? "" : "w-0"
-            )}
-          >
+            id="primary-stream-container"
+            className="flex-grow self-end"
+            style={{ height: scrollY ? `calc(100% - ${scrollY}px)` : "100%" }}
+          />
+          <div id="chats-container" className="flex relative transition-all">
             {loadedChats.length > 0 && (
               <div
                 className={classNames(
@@ -212,12 +219,16 @@ export default function App() {
             ))}
           </div>
         </div>
-        <div className="flex justify-center flex-wrap px-2 gap-1 bg-gray-900">
+        <div
+          id="streams-outer-container"
+          className="flex justify-center flex-wrap px-2 gap-1 bg-gray-900"
+        >
           <div className="w-52 flex flex-col py-3 stream-container">
             <AddStream addNewStream={addNewStream} />
           </div>
           {streams.map((stream, i) => (
             <StreamContainer
+              id={i === 0 ? "stream-container-reference" : undefined}
               className="h-full w-64 flex flex-col justify-center py-3 px-1 bg-black stream-container"
               key={stream}
               stream={stream}
