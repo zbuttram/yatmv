@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
 
@@ -195,13 +195,18 @@ export default function TwitchStream({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reloadCounter]);
 
+  const [hovering, setHovering] = useState(false);
+
   return (
     <>
       <div
         id={divId}
-        style={style || { height: 0 }}
+        style={style ?? { height: 0 }}
         className="transition-all"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
       />
+      <Overlay style={style} primary={isPrimary} hovering={hovering} />
       <div
         id={posDivId}
         className={classNames("flex aspect-video bg-black", className)}
@@ -211,5 +216,34 @@ export default function TwitchStream({
         </span>
       </div>
     </>
+  );
+}
+
+function Overlay({
+  style,
+  primary,
+  hovering,
+}: {
+  style?: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+    position: "absolute";
+  };
+  primary: boolean;
+  hovering: boolean;
+}) {
+  return (
+    <div
+      style={
+        style
+          ? { ...style, zIndex: 100, opacity: hovering ? 1 : 0 }
+          : { height: 0 }
+      }
+      className="transition-all pointer-events-none flex flex-col-reverse"
+    >
+      <div className="flex justify-center">HELLO</div>
+    </div>
   );
 }

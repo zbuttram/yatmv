@@ -466,6 +466,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   --tw-backdrop-sepia:  ;
 }
 
+.pointer-events-none {
+  pointer-events: none;
+}
+
 .invisible {
   visibility: hidden;
 }
@@ -658,6 +662,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   flex-direction: column;
 }
 
+.flex-col-reverse {
+  flex-direction: column-reverse;
+}
+
 .flex-wrap {
   flex-wrap: wrap;
 }
@@ -825,6 +833,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   text-align: right;
 }
 
+.align-middle {
+  vertical-align: middle;
+}
+
 .text-6xl {
   font-size: 3.75rem;
   line-height: 1;
@@ -886,6 +898,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .opacity-40 {
   opacity: 0.4;
+}
+
+.opacity-0 {
+  opacity: 0;
 }
 
 .ring-white {
@@ -1063,6 +1079,10 @@ body {
 
 .hover\:opacity-75:hover {
   opacity: 0.75;
+}
+
+.hover\:opacity-100:hover {
+  opacity: 1;
 }
 
 .focus\:border-white:focus {
