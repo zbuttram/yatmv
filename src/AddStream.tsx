@@ -26,7 +26,7 @@ export default function AddStream({ addNewStream, className = "" }) {
       searchResultData?.data.sort(({ displayName }) =>
         displayName.toLowerCase() === searchQuery.toLowerCase() ? -1 : 1
       ) ?? [],
-    [searchResultData]
+    [searchResultData, searchQuery]
   );
   const prevSearchResults = usePrevious(searchResults);
 

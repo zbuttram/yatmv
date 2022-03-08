@@ -9,7 +9,7 @@ import {
   faTachometerAlt,
   faTh,
   faUsers,
-  faArrowCircleRight,
+  faSyncAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
@@ -29,6 +29,7 @@ export function Sidebar({
   followedStreams,
   addStream,
   toggleLayout,
+  rotatePrimary,
 }: {
   className?: string;
   settings: Settings;
@@ -38,6 +39,7 @@ export function Sidebar({
   primaryStreams: string[];
   addStream: (streamName: string) => void;
   toggleLayout: (reverse?: boolean) => void;
+  rotatePrimary: (reverse?: boolean) => void;
 }) {
   const { boostMode, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
@@ -172,6 +174,31 @@ export function Sidebar({
           <span className="btn-txt">Cycle Layout</span>
         </label>
       </div>
+      {primaryStreams.length > 1 && (
+        <div>
+          <label>
+            <button
+              title="Rotate Streams"
+              className="btn-sidebar bg-black"
+              onClick={() => rotatePrimary()}
+              onMouseDown={(e) => {
+                if (e.button === 2) {
+                  e.preventDefault();
+                  rotatePrimary(true);
+                  return false;
+                }
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                return false;
+              }}
+            >
+              <FontAwesomeIcon fixedWidth icon={faSyncAlt} />
+            </button>
+            <span className="btn-txt">Rotate Streams</span>
+          </label>
+        </div>
+      )}
       <div className="flex-grow" />
       <div className="mb-3 mt-2">
         <label>

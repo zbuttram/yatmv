@@ -77,12 +77,12 @@ const streamsReducer = produce(function produceStreams(
     case "ROTATE_PRIMARY":
       if (draft.primaryStreams.length > 0) {
         const element = action.payload.reverse
-          ? draft.primaryStreams.pop()
-          : draft.primaryStreams.shift();
+          ? draft.primaryStreams.shift()
+          : draft.primaryStreams.pop();
         invariant(!!element);
         action.payload.reverse
-          ? draft.primaryStreams.unshift(element)
-          : draft.primaryStreams.push(element);
+          ? draft.primaryStreams.push(element)
+          : draft.primaryStreams.unshift(element);
       }
       break;
     default:
@@ -125,7 +125,7 @@ export default function useStreams(init: StreamState) {
       toggleLayout(reverse = false) {
         dispatch({ type: "TOGGLE_LAYOUT", payload: { reverse } });
       },
-      cyclePrimary(reverse = false) {
+      rotatePrimary(reverse = false) {
         dispatch({ type: "ROTATE_PRIMARY", payload: { reverse } });
       },
     },
