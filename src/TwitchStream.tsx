@@ -155,6 +155,13 @@ export default function TwitchStream({
       return;
     }
 
+    Log("player-state-updated", channel, {
+      boostMode,
+      primary: isPrimary,
+      isFirstSlot,
+      currentPlayerQuality: player.current?.getQuality(),
+    });
+
     player.current.setMuted(!isFirstSlot);
     const currentVolume = player.current.getVolume();
     currentVolume &&
@@ -163,15 +170,38 @@ export default function TwitchStream({
         currentVolume.toString()
       );
 
-    Log("player-isPrimary-updated", channel, { boostMode, primary: isPrimary });
-    const desiredQuality = isPrimary ? "chunked" : "auto";
-    if (boostMode) {
-      player.current.setQuality(desiredQuality);
-      Log("player-quality-update", channel, desiredQuality);
+    function updateQuality() {
+      if (!player.current) {
+        return;
+      }
+      if (boostMode) {
+        const currentQuality = player.current?.getQuality();
+        const desiredQuality = isPrimary ? "chunked" : "auto";
+        Log("player-quality-check", channel, {
+          currentQuality,
+          desiredQuality,
+        });
+        if (currentQuality !== desiredQuality) {
+          player.current.setQuality(desiredQuality);
+          Log("player-quality-update", channel, desiredQuality);
+        }
+      }
+      if (prevBoostMode && !boostMode) {
+        player.current.setQuality("auto");
+      }
     }
-    if (prevBoostMode && !boostMode) {
-      player.current.setQuality("auto");
+    updateQuality();
+
+    function onPlay() {
+      Log("player-onplay", channel);
+      player.current?.setMuted(!isFirstSlot);
+      updateQuality();
     }
+
+    player.current?.addEventListener(Twitch.Player.PLAYING, onPlay);
+    return () => {
+      player.current?.removeEventListener(Twitch.Player.PLAYING, onPlay);
+    };
   }, [
     channel,
     boostMode,
