@@ -1,6 +1,7 @@
 import produce from "immer";
 import { useReducer } from "react";
 import { usePrevious } from "react-use";
+import invariant from "tiny-invariant";
 import { Layout, MAX_LAYOUT } from "./layout";
 
 export type StreamState = {
@@ -13,7 +14,8 @@ type StreamAction =
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
-  | { type: "TOGGLE_LAYOUT"; payload: { reverse: boolean } };
+  | { type: "TOGGLE_LAYOUT"; payload: { reverse: boolean } }
+  | { type: "ROTATE_PRIMARY"; payload: { reverse: boolean } };
 
 const streamsReducer = produce(function produceStreams(
   draft: StreamState,
@@ -72,6 +74,17 @@ const streamsReducer = produce(function produceStreams(
         draft.layout = next > MAX_LAYOUT ? 0 : next;
       }
       break;
+    case "ROTATE_PRIMARY":
+      if (draft.primaryStreams.length > 0) {
+        const element = action.payload.reverse
+          ? draft.primaryStreams.pop()
+          : draft.primaryStreams.shift();
+        invariant(!!element);
+        action.payload.reverse
+          ? draft.primaryStreams.unshift(element)
+          : draft.primaryStreams.push(element);
+      }
+      break;
     default:
       throw new Error("Unknown action type in useStreams reducer");
   }
@@ -111,6 +124,9 @@ export default function useStreams(init: StreamState) {
       },
       toggleLayout(reverse = false) {
         dispatch({ type: "TOGGLE_LAYOUT", payload: { reverse } });
+      },
+      cyclePrimary(reverse = false) {
+        dispatch({ type: "ROTATE_PRIMARY", payload: { reverse } });
       },
     },
   };

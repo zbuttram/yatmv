@@ -9,6 +9,7 @@ import {
   faTachometerAlt,
   faTh,
   faUsers,
+  faArrowCircleRight,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
