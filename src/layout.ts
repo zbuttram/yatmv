@@ -35,7 +35,6 @@ const getOffset = memoize(
     invariant(layout !== 0);
 
     const rows = getLayoutRows(layout);
-    console.log(rows);
     const rowIndex = rows.findIndex((r) => r.includes(position));
     const row = rows[rowIndex];
     const colIndex = row.findIndex((col) => col === position);
