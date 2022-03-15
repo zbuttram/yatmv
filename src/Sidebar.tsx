@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useRef, useState } from "react";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -19,6 +19,9 @@ import { Settings } from "./useSettings";
 import { checkTwitchAuth, StreamData, useTwitchUser } from "./twitch";
 import useBounding from "./useBounding";
 import { simplifyViewerCount } from "./utils";
+import { useClickAway } from "react-use";
+import { range } from "lodash";
+import { Layout, MAX_LAYOUT } from "./layout";
 
 export function Sidebar({
   className,
@@ -28,8 +31,8 @@ export function Sidebar({
   primaryStreams,
   followedStreams,
   addStream,
-  toggleLayout,
   rotatePrimary,
+  setLayout,
 }: {
   className?: string;
   settings: Settings;
@@ -38,8 +41,8 @@ export function Sidebar({
   streams: string[];
   primaryStreams: string[];
   addStream: (streamName: string) => void;
-  toggleLayout: (reverse?: boolean) => void;
   rotatePrimary: (reverse?: boolean) => void;
+  setLayout: (layout: Layout) => void;
 }) {
   const { boostMode, fullHeightPlayer } = settings;
   const [open, setOpen] = useState(false);
@@ -94,110 +97,60 @@ export function Sidebar({
         </>
       ) : null}
       {!checkTwitchAuth() && (
-        <div>
-          <label>
-            <button
-              title="Connect to Twitch"
-              className="btn-sidebar bg-black bg-purple-700"
-              onClick={() => (window.location.href = TWITCH_AUTH_URL)}
-            >
-              <FontAwesomeIcon icon={faTwitch} fixedWidth />
-            </button>
-            <span className="btn-txt">Connect to Twitch</span>
-          </label>
-        </div>
+        <SidebarButton
+          title="Connect to Twitch"
+          onClick={() => (window.location.href = TWITCH_AUTH_URL)}
+          icon={<FontAwesomeIcon icon={faTwitch} fixedWidth />}
+        />
       )}
-      <div>
-        <label>
-          <button
-            title={(boostMode ? "Disable" : "Enable") + " Boost Mode"}
-            className="btn-sidebar bg-black"
-            onClick={() =>
-              setSettings(({ boostMode, ...state }) => ({
-                ...state,
-                boostMode: !boostMode,
-              }))
-            }
-          >
-            <div className="fa-layers fa-fw">
-              <FontAwesomeIcon icon={boostMode ? faTachometerAlt : faRocket} />
-            </div>
-          </button>
-          <span className="btn-txt">
-            {boostMode ? "Disable" : "Enable"} Boost Mode
-          </span>
-        </label>
-      </div>
-      <div>
-        <label>
-          <button
-            title={fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
-            className="btn-sidebar bg-black"
-            onClick={() =>
-              setSettings(({ fullHeightPlayer, ...state }) => ({
-                ...state,
-                fullHeightPlayer: !fullHeightPlayer,
-              }))
-            }
-          >
-            {fullHeightPlayer ? (
-              <FontAwesomeIcon icon={faCompressArrowsAlt} fixedWidth />
-            ) : (
-              <FontAwesomeIcon icon={faExpandArrowsAlt} fixedWidth />
-            )}
-          </button>
-          <span className="btn-txt">
-            {fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
-          </span>
-        </label>
-      </div>
-      <div>
-        <label>
-          <button
-            title="Cycle Layout"
-            className="btn-sidebar bg-black"
-            onClick={() => toggleLayout()}
-            onMouseDown={(e) => {
-              if (e.button === 2) {
-                e.preventDefault();
-                toggleLayout(true);
-                return false;
-              }
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              return false;
-            }}
-          >
-            <FontAwesomeIcon fixedWidth icon={faTh} />
-          </button>
-          <span className="btn-txt">Cycle Layout</span>
-        </label>
-      </div>
+      <SidebarButton
+        title={(boostMode ? "Disable" : "Enable") + " Boost Mode"}
+        onClick={() =>
+          setSettings(({ boostMode, ...state }) => ({
+            ...state,
+            boostMode: !boostMode,
+          }))
+        }
+        icon={
+          <div className="fa-layers fa-fw">
+            <FontAwesomeIcon icon={boostMode ? faTachometerAlt : faRocket} />
+          </div>
+        }
+      />
+      <SidebarButton
+        title={fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
+        onClick={() =>
+          setSettings(({ fullHeightPlayer, ...state }) => ({
+            ...state,
+            fullHeightPlayer: !fullHeightPlayer,
+          }))
+        }
+        icon={
+          fullHeightPlayer ? (
+            <FontAwesomeIcon icon={faCompressArrowsAlt} fixedWidth />
+          ) : (
+            <FontAwesomeIcon icon={faExpandArrowsAlt} fixedWidth />
+          )
+        }
+      />
+      <ChangeLayoutButton setLayout={setLayout} />
       {primaryStreams.length > 1 && (
-        <div>
-          <label>
-            <button
-              title="Rotate Streams"
-              className="btn-sidebar bg-black"
-              onClick={() => rotatePrimary()}
-              onMouseDown={(e) => {
-                if (e.button === 2) {
-                  e.preventDefault();
-                  rotatePrimary(true);
-                  return false;
-                }
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                return false;
-              }}
-            >
-              <FontAwesomeIcon fixedWidth icon={faSyncAlt} />
-            </button>
-            <span className="btn-txt">Rotate Streams</span>
-          </label>
-        </div>
+        <SidebarButton
+          title="Rotate Streams"
+          onClick={() => rotatePrimary()}
+          onMouseDown={(e) => {
+            if (e.button === 2) {
+              e.preventDefault();
+              rotatePrimary(true);
+              return false;
+            }
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            return false;
+          }}
+          icon={<FontAwesomeIcon fixedWidth icon={faSyncAlt} />}
+        />
       )}
       <div className="flex-grow" />
       <div className="mb-3 mt-2">
@@ -214,6 +167,87 @@ export function Sidebar({
           <span className="btn-txt">GitHub</span>
         </label>
       </div>
+    </div>
+  );
+}
+
+function ChangeLayoutButton({ setLayout }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownLocation, setDropdownLocation] = useState({});
+
+  return (
+    <SidebarButton
+      title="Change Layout"
+      onClick={(e) => {
+        setDropdownLocation({ left: e.clientX, top: e.clientY });
+        setDropdownOpen(true);
+      }}
+      onClickAway={() => setDropdownOpen(false)}
+      className="relative"
+      icon={<FontAwesomeIcon fixedWidth icon={faTh} />}
+      append={
+        <div
+          style={dropdownLocation}
+          className={classNames(
+            "fixed rounded bg-gray-900 z-20",
+            dropdownOpen ? "" : "hidden"
+          )}
+        >
+          {range(0, MAX_LAYOUT).map((layout) => (
+            <div
+              className="cursor-pointer px-4 py-1 hover:bg-gray-700"
+              onClick={() => {
+                setLayout(layout);
+                setDropdownOpen(false);
+              }}
+              key={layout}
+            >
+              {layout + 1}-up
+            </div>
+          ))}
+        </div>
+      }
+    />
+  );
+}
+
+function SidebarButton({
+  className,
+  title,
+  onClick,
+  onClickAway = () => {},
+  onMouseDown,
+  onContextMenu,
+  icon,
+  append = null,
+}: {
+  className?: string;
+  title: string;
+  onClick: (e: React.MouseEvent) => void;
+  onClickAway?: () => void;
+  onMouseDown?: (e: React.MouseEvent) => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  icon: React.ReactElement;
+  append?: null | React.ReactElement;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useClickAway(ref, onClickAway);
+
+  return (
+    <div className={className} ref={ref}>
+      <label>
+        <button
+          title={title}
+          className="btn-sidebar bg-black"
+          onClick={onClick}
+          onMouseDown={onMouseDown}
+          onContextMenu={onContextMenu}
+        >
+          {icon}
+        </button>
+        <span className="btn-txt">{title}</span>
+      </label>
+      {append}
     </div>
   );
 }

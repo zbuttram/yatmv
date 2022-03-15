@@ -21,16 +21,18 @@ if (!TWITCH_CLIENT_ID) {
   );
 }
 
-export function removeTwitchAuth() {
+export function removeTwitchAuth(tryReAuth = false) {
   Cookies.remove(TWITCH_ACCESS_TOKEN_COOKIE);
   Cookies.remove(TWITCH_SCOPE_COOKIE);
+  if (tryReAuth) {
+    window.location.href = TWITCH_AUTH_URL;
+  }
 }
 
 let accessToken = Cookies.get(TWITCH_ACCESS_TOKEN_COOKIE);
 let savedScopes = Cookies.get(TWITCH_SCOPE_COOKIE);
 if (accessToken && savedScopes !== TWITCH_SCOPES.toString()) {
-  removeTwitchAuth();
-  window.location.href = TWITCH_AUTH_URL;
+  removeTwitchAuth(true);
 }
 
 export function handleTwitchAuthCallback() {
@@ -139,7 +141,15 @@ async function callTwitch<T = any>(
     signal,
   });
   if (!response.ok) {
-    throw new Error("Twitch API response not OK");
+    if (response.status === 401) {
+      console.error(
+        "Twitch API returned 401, token is expired, trying to re-auth..."
+      );
+      removeTwitchAuth(true);
+    }
+    throw new Error(
+      `Twitch API response not OK: (${response.status}) ${response.statusText}`
+    );
   }
   const parsed = await response.json();
   return mapKeysDeep(parsed, (_, key) => camelCase(key));

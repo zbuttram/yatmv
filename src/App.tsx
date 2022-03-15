@@ -73,8 +73,8 @@ export default function App() {
     addStream: addNewStream,
     removeStream,
     setPrimaryStream,
-    toggleLayout,
     rotatePrimary,
+    setLayout,
   } = streamActions;
 
   // set URL params
@@ -177,7 +177,7 @@ export default function App() {
             streams={streams}
             primaryStreams={primaryStreams}
             addStream={addNewStream}
-            toggleLayout={toggleLayout}
+            setLayout={setLayout}
             rotatePrimary={rotatePrimary}
           />
           <div

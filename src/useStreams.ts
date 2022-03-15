@@ -2,7 +2,7 @@ import produce from "immer";
 import { useReducer } from "react";
 import { usePrevious } from "react-use";
 import invariant from "tiny-invariant";
-import { Layout, MAX_LAYOUT } from "./layout";
+import { Layout } from "./layout";
 
 export type StreamState = {
   streams: string[];
@@ -14,7 +14,7 @@ type StreamAction =
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
-  | { type: "TOGGLE_LAYOUT"; payload: { reverse: boolean } }
+  | { type: "SET_LAYOUT"; payload: { layout: Layout } }
   | { type: "ROTATE_PRIMARY"; payload: { reverse: boolean } };
 
 const streamsReducer = produce(function produceStreams(
@@ -65,14 +65,8 @@ const streamsReducer = produce(function produceStreams(
         draft.primaryStreams = [streams[0]];
       }
       break;
-    case "TOGGLE_LAYOUT":
-      if (action.payload.reverse) {
-        const next = draft.layout - 1;
-        draft.layout = next < 0 ? MAX_LAYOUT : next;
-      } else {
-        const next = draft.layout + 1;
-        draft.layout = next > MAX_LAYOUT ? 0 : next;
-      }
+    case "SET_LAYOUT":
+      draft.layout = action.payload.layout;
       break;
     case "ROTATE_PRIMARY":
       if (draft.primaryStreams.length > 0) {
@@ -122,8 +116,8 @@ export default function useStreams(init: StreamState) {
       setPrimaryStream(stream: string, position: number) {
         dispatch({ type: "SET_PRIMARY", payload: { stream, position } });
       },
-      toggleLayout(reverse = false) {
-        dispatch({ type: "TOGGLE_LAYOUT", payload: { reverse } });
+      setLayout(layout: Layout) {
+        dispatch({ type: "SET_LAYOUT", payload: { layout } });
       },
       rotatePrimary(reverse = false) {
         dispatch({ type: "ROTATE_PRIMARY", payload: { reverse } });
