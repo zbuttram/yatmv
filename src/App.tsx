@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -33,6 +33,7 @@ import useStreams from "./useStreams";
 import { useLazyLoadingChats } from "./useLazyLoadingChats";
 import { Layout } from "./layout";
 import useScroll from "./useScroll";
+import { TwitchChatService } from "./TwitchChatService";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -146,6 +147,15 @@ export default function App() {
       setForceShowMainPane(true);
     }
   }, [showMainPane]);
+
+  const chatService = useRef<TwitchChatService>();
+  useEffect(() => {
+    if (!chatService.current) {
+      chatService.current = new TwitchChatService(streams);
+    } else {
+      chatService.current.channels = streams;
+    }
+  }, [streams]);
 
   //region AppReturn
   return (
