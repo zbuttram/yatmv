@@ -99,6 +99,7 @@ export function Sidebar({
       {!checkTwitchAuth() && (
         <SidebarButton
           title="Connect to Twitch"
+          bgColorClass="bg-purple-700"
           onClick={() => (window.location.href = TWITCH_AUTH_URL)}
           icon={<FontAwesomeIcon icon={faTwitch} fixedWidth />}
         />
@@ -212,6 +213,7 @@ function ChangeLayoutButton({ setLayout }) {
 }
 
 function SidebarButton({
+  bgColorClass,
   className,
   title,
   onClick,
@@ -221,6 +223,7 @@ function SidebarButton({
   icon,
   append = null,
 }: {
+  bgColorClass?: string;
   className?: string;
   title: string;
   onClick: (e: React.MouseEvent) => void;
@@ -238,7 +241,7 @@ function SidebarButton({
       <label>
         <button
           title={title}
-          className="btn-sidebar bg-black"
+          className={classNames("btn-sidebar", bgColorClass ?? "bg-black")}
           onClick={onClick}
           onMouseDown={onMouseDown}
           onContextMenu={onContextMenu}

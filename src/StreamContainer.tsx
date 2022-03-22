@@ -135,8 +135,10 @@ export function StreamContainer({
           {layout === 0 ? (
             <button
               className={classNames(
-                "btn mr-2 w-full text-black",
-                isPrimary ? "bg-red-800 cursor-not-allowed" : "bg-green-400"
+                "btn mr-2 w-full",
+                isPrimary
+                  ? "bg-red-800 cursor-not-allowed text-white"
+                  : "bg-green-400 text-black"
               )}
               onClick={() => setPrimaryStream(stream, 0)}
               disabled={isPrimary}

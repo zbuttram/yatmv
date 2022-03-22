@@ -11,6 +11,7 @@ export type StreamState = {
 };
 
 type StreamAction =
+  | { type: "INIT" }
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
@@ -37,6 +38,8 @@ const streamsReducer = produce(function produceStreams(
   }
 
   switch (action.type) {
+    case "INIT":
+      break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
       break;
@@ -99,7 +102,9 @@ const streamsReducer = produce(function produceStreams(
 });
 
 export default function useStreams(init: StreamState) {
-  const [state, dispatch] = useReducer(streamsReducer, init);
+  const [state, dispatch] = useReducer(streamsReducer, init, (state) =>
+    streamsReducer(state, { type: "INIT" })
+  );
   const prevState = usePrevious(state);
 
   return {

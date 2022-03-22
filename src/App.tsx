@@ -141,6 +141,11 @@ export default function App() {
 
   const [forceShowMainPane, setForceShowMainPane] = useState(false);
   const showMainPane = primaryStreams.length || forceShowMainPane;
+  useEffect(() => {
+    if (showMainPane) {
+      setForceShowMainPane(true);
+    }
+  }, [showMainPane]);
 
   //region AppReturn
   return (
