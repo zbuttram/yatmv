@@ -1,8 +1,30 @@
 import tmi from "tmi.js";
 import Log from "./log";
 
+// needs better defining
+type TmiTags = Record<string, any>;
+
+type TmiClient = {
+  connect(): Promise<void>;
+  on(
+    event: "message",
+    callback: (channel: string, tags: TmiTags, message: string) => void
+  );
+  on(
+    event: "notice",
+    callback: (channel: string, msgid: string, message: string) => void
+  );
+  on(
+    event: "hosting",
+    callback: (channe: string, target: string, viewers: number) => void
+  );
+  join(channel: string): Promise<void>;
+  part(channel: string): Promise<void>;
+  getChannels(): string[];
+};
+
 export class TwitchChatService {
-  client: any;
+  client: TmiClient;
   connected: boolean = false;
 
   constructor(streams: string[]) {
@@ -10,30 +32,34 @@ export class TwitchChatService {
       channels: streams,
     });
     this.client.connect().then(() => (this.connected = true));
-    this.client.on("message", (channel: string, tags, message: string) => {
-      Log(
-        "channel-message",
-        `|${channel}| [${tags["display-name"]}] ${message}`,
-        { tags }
-      );
-    });
+    // this.client.on("message", (channel: string, tags, message: string) => {
+    //   Log(
+    //     "channel-message",
+    //     `|${channel}| [${tags["display-name"]}] ${message}`,
+    //     { tags }
+    //   );
+    // });
     this.client.on("notice", (channel, msgid, message) => {
-      Log("channel-notice", { channel, msgid, message });
+      console.log("YATMV", "channel-notice", { channel, msgid, message });
     });
     this.client.on(
       "hosting",
       (channel: string, target: string, viewers: number) => {
-        Log("channel-hosting", { channel, target, viewers });
+        console.log("YATMV", "channel-hosting", { channel, target, viewers });
       }
     );
   }
 
   join(channel: string) {
-    this.client.join(channel).then(() => Log("channel-join", channel));
+    this.client
+      .join(channel)
+      .then(() => console.log("YATMV", "channel-join", channel));
   }
 
   part(channel: string) {
-    this.client.part(channel).then(() => Log("channel-part", channel));
+    this.client
+      .part(channel)
+      .then(() => console.log("YATMV", "channel-part", channel));
   }
 
   get channels() {
