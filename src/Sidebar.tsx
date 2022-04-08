@@ -190,13 +190,17 @@ function ChangeLayoutButton({ setLayout }) {
         <div
           style={dropdownLocation}
           className={classNames(
-            "fixed rounded bg-gray-900 z-20",
+            "fixed rounded bg-gray-900 z-20 drop-shadow-lg ",
             dropdownOpen ? "" : "hidden"
           )}
         >
-          {range(0, MAX_LAYOUT).map((layout) => (
+          {range(MAX_LAYOUT + 1).map((layout) => (
             <div
-              className="cursor-pointer px-4 py-1 hover:bg-gray-700"
+              className={classNames(
+                "cursor-pointer px-4 py-1 hover:bg-gray-700",
+                layout === 0 && "rounded-t",
+                layout === MAX_LAYOUT && "rounded-b"
+              )}
               onClick={() => {
                 setLayout(layout);
                 setDropdownOpen(false);
