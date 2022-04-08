@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useRef, useState } from "react";
+import { Dispatch, forwardRef, SetStateAction, useRef, useState } from "react";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -175,22 +175,35 @@ export function Sidebar({
 function ChangeLayoutButton({ setLayout }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownLocation, setDropdownLocation] = useState({});
+  const ref = useRef<HTMLDivElement>(null);
+  useClickAway(ref, () => setDropdownOpen(false));
 
   return (
     <SidebarButton
+      ref={ref}
       title="Change Layout"
       onClick={(e) => {
-        setDropdownLocation({ left: e.clientX, top: e.clientY });
+        const buttonRect = ref.current?.getBoundingClientRect();
+        if (!buttonRect) {
+          setDropdownLocation({
+            left: e.clientX,
+            top: e.clientY,
+          });
+        } else {
+          setDropdownLocation({
+            left: buttonRect.left + buttonRect.width / 2,
+            top: buttonRect.top + buttonRect.height / 2,
+          });
+        }
         setDropdownOpen(true);
       }}
-      onClickAway={() => setDropdownOpen(false)}
       className="relative"
       icon={<FontAwesomeIcon fixedWidth icon={faTh} />}
       append={
         <div
-          style={dropdownLocation}
+          style={{ ...dropdownLocation }}
           className={classNames(
-            "fixed rounded bg-gray-900 z-20 drop-shadow-lg ",
+            "fixed rounded bg-gray-900 z-20 border border-slate-400 overflow-y-auto",
             dropdownOpen ? "" : "hidden"
           )}
         >
@@ -216,48 +229,50 @@ function ChangeLayoutButton({ setLayout }) {
   );
 }
 
-function SidebarButton({
-  bgColorClass,
-  className,
-  title,
-  onClick,
-  onClickAway = () => {},
-  onMouseDown,
-  onContextMenu,
-  icon,
-  append = null,
-}: {
+type SidebarButtonProps = {
   bgColorClass?: string;
   className?: string;
   title: string;
   onClick: (e: React.MouseEvent) => void;
-  onClickAway?: () => void;
   onMouseDown?: (e: React.MouseEvent) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
   icon: React.ReactElement;
   append?: null | React.ReactElement;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useClickAway(ref, onClickAway);
+};
 
-  return (
-    <div className={className} ref={ref}>
-      <label>
-        <button
-          title={title}
-          className={classNames("btn-sidebar", bgColorClass ?? "bg-black")}
-          onClick={onClick}
-          onMouseDown={onMouseDown}
-          onContextMenu={onContextMenu}
-        >
-          {icon}
-        </button>
-        <span className="btn-txt">{title}</span>
-      </label>
-      {append}
-    </div>
-  );
-}
+const SidebarButton = forwardRef<HTMLDivElement, SidebarButtonProps>(
+  function _SidebarButton(
+    {
+      bgColorClass,
+      className,
+      title,
+      onClick,
+      onMouseDown,
+      onContextMenu,
+      icon,
+      append = null,
+    },
+    ref
+  ) {
+    return (
+      <div className={className} ref={ref}>
+        <label>
+          <button
+            title={title}
+            className={classNames("btn-sidebar", bgColorClass ?? "bg-black")}
+            onClick={onClick}
+            onMouseDown={onMouseDown}
+            onContextMenu={onContextMenu}
+          >
+            {icon}
+          </button>
+          <span className="btn-txt">{title}</span>
+        </label>
+        {append}
+      </div>
+    );
+  }
+);
 
 function FollowedStream({
   isPrimary,
