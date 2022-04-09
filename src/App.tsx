@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Cookies from "js-cookie";
 import { useQuery, useQueryClient } from "react-query";
-import { uniq } from "lodash";
+import { difference, uniq } from "lodash";
 
 import TwitchChat from "./TwitchChat";
 import useBounding from "./useBounding";
@@ -24,6 +24,7 @@ import {
   getAuthedUser,
   getFollowedStreams,
   handleTwitchAuthCallback,
+  StreamData,
 } from "./twitch";
 import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
@@ -76,6 +77,7 @@ export default function App() {
     setPrimaryStream,
     rotatePrimary,
     setLayout,
+    replaceStream,
   } = streamActions;
 
   // set URL params
@@ -120,6 +122,7 @@ export default function App() {
     enabled: checkTwitchAuth(),
   });
 
+  const prevFollowedStreams = useRef<StreamData[]>([]);
   const { data: followedStreams } = useQuery(
     "followedStreams",
     () => getFollowedStreams({ userId: twitchUser!.id }),
@@ -134,6 +137,15 @@ export default function App() {
             stream
           )
         );
+
+        if (!prevFollowedStreams.current) {
+          prevFollowedStreams.current = data;
+        } else {
+          const newStreams = difference(prevFollowedStreams.current, data);
+          if (newStreams.length) {
+            // do live notification
+          }
+        }
       },
     }
   );
@@ -159,7 +171,7 @@ export default function App() {
 
   //region AppReturn
   return (
-    <AppProvider value={{ settings }}>
+    <AppProvider value={{ settings, chatService: chatService.current }}>
       <main id="main" className="flex flex-col ring-white ring-opacity-60">
         {!showMainPane && (
           <button
@@ -226,6 +238,7 @@ export default function App() {
               <TwitchChat
                 key={channel}
                 channel={channel}
+                replaceStream={replaceStream}
                 className={classNames(
                   channel === primaryStreams[0] && showChat
                     ? "chat-standard-width"

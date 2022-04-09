@@ -16,7 +16,8 @@ type StreamAction =
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
   | { type: "SET_LAYOUT"; payload: { layout: Layout } }
-  | { type: "ROTATE_PRIMARY"; payload: { reverse: boolean } };
+  | { type: "ROTATE_PRIMARY"; payload: { reverse: boolean } }
+  | { type: "REPLACE_STREAM"; payload: { replace: string; with: string } };
 
 const streamsReducer = produce(function produceStreams(
   draft: StreamState,
@@ -82,6 +83,20 @@ const streamsReducer = produce(function produceStreams(
           : draft.primaryStreams.unshift(element);
       }
       break;
+    case "REPLACE_STREAM":
+      draft.streams.splice(
+        draft.streams.indexOf(action.payload.replace),
+        1,
+        action.payload.with
+      );
+      if (draft.primaryStreams.includes(action.payload.replace)) {
+        draft.primaryStreams.splice(
+          draft.primaryStreams.indexOf(action.payload.replace),
+          1,
+          action.payload.with
+        );
+      }
+      break;
     default:
       throw new Error("Unknown action type in useStreams reducer");
   }
@@ -126,6 +141,12 @@ export default function useStreams(init: StreamState) {
       },
       rotatePrimary(reverse = false) {
         dispatch({ type: "ROTATE_PRIMARY", payload: { reverse } });
+      },
+      replaceStream(replace: string, replacement: string) {
+        dispatch({
+          type: "REPLACE_STREAM",
+          payload: { replace, with: replacement },
+        });
       },
     },
   };

@@ -17,7 +17,7 @@
     "js-cookie": "^2.2.1",
     "lodash": "^4.17.21",
     "map-keys-deep-lodash": "^1.2.3",
-    "mitt": "^2.1.0",
+    "mitt": "^3.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-error-boundary": "^3.1.4",
