@@ -35,6 +35,7 @@ import { useLazyLoadingChats } from "./useLazyLoadingChats";
 import { Layout } from "./layout";
 import useScroll from "./useScroll";
 import { TwitchChatService } from "./TwitchChatService";
+import { useImmer } from "use-immer";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -160,14 +161,26 @@ export default function App() {
     }
   }, [showMainPane]);
 
-  const chatService = useRef<TwitchChatService>();
+  const chatService = useRef(new TwitchChatService(streams));
+  const [hostsMap, setHostsMap] = useImmer<Record<string, string>>({});
   useEffect(() => {
-    if (!chatService.current) {
-      chatService.current = new TwitchChatService(streams);
-    } else {
-      chatService.current.channels = streams;
+    return chatService.current.on("hosting", ({ channel, target }) => {
+      setHostsMap((draft) => {
+        draft[channel] = target;
+      });
+    });
+  }, [setHostsMap]);
+  useEffect(() => {
+    chatService.current.channels = streams;
+    const closedChannels = difference(streams, Object.keys(hostsMap));
+    if (closedChannels.length) {
+      setHostsMap((draft) => {
+        closedChannels.forEach((channel) => {
+          delete draft[channel];
+        });
+      });
     }
-  }, [streams]);
+  }, [streams, hostsMap, setHostsMap]);
 
   //region AppReturn
   return (
@@ -239,6 +252,7 @@ export default function App() {
                 key={channel}
                 channel={channel}
                 replaceStream={replaceStream}
+                hostTarget={hostsMap[channel]}
                 className={classNames(
                   channel === primaryStreams[0] && showChat
                     ? "chat-standard-width"

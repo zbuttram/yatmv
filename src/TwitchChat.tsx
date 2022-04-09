@@ -1,28 +1,14 @@
-import { useContext, useEffect, useState } from "react";
-import { AppContext } from "./appContext";
-
 export default function TwitchChat({
   channel,
   className,
   replaceStream,
+  hostTarget,
 }: {
   channel: string;
   className: string;
   replaceStream: (replace: string, replacement: string) => void;
+  hostTarget?: string;
 }) {
-  const { chatService } = useContext(AppContext);
-  const [hostTarget, setHostTarget] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (chatService) {
-      return chatService.on("hosting", ({ channel: eventChannel, target }) => {
-        if (channel === eventChannel) {
-          setHostTarget(target);
-        }
-      });
-    }
-  }, [channel, chatService]);
-
   return (
     <div className={className}>
       {hostTarget ? (
