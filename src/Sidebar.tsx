@@ -174,7 +174,6 @@ export function Sidebar({
 
 function ChangeLayoutButton({ setLayout }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [dropdownLocation, setDropdownLocation] = useState({});
   const ref = useRef<HTMLDivElement>(null);
   useClickAway(ref, () => setDropdownOpen(false));
 
@@ -182,28 +181,14 @@ function ChangeLayoutButton({ setLayout }) {
     <SidebarButton
       ref={ref}
       title="Change Layout"
-      onClick={(e) => {
-        const buttonRect = ref.current?.getBoundingClientRect();
-        if (!buttonRect) {
-          setDropdownLocation({
-            left: e.clientX,
-            top: e.clientY,
-          });
-        } else {
-          setDropdownLocation({
-            left: buttonRect.left + buttonRect.width / 2,
-            top: buttonRect.top + buttonRect.height / 2,
-          });
-        }
-        setDropdownOpen(true);
-      }}
+      onClick={() => setDropdownOpen(true)}
       className="relative"
       icon={<FontAwesomeIcon fixedWidth icon={faTh} />}
       append={
         <div
-          style={{ ...dropdownLocation }}
+          style={{ top: "50%", left: "50%" }}
           className={classNames(
-            "fixed rounded bg-gray-900 z-20 border border-slate-400 overflow-y-auto",
+            "absolute rounded bg-gray-900 z-20 border border-slate-400 overflow-y-auto",
             dropdownOpen ? "" : "hidden"
           )}
         >
