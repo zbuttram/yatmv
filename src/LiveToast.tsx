@@ -9,7 +9,9 @@ export default function LiveToast({
 }) {
   return (
     <div className="bg-slate-900 font-white border border-slate-500 rounded-md flex">
-      <div className="w-4/5 p-2 my-auto">{channel} just went live!</div>
+      <div className="w-4/5 p-2 my-auto">
+        <span className="font-semibold">{channel}</span> just went live!
+      </div>
       <div className="flex-col border-l border-slate-500">
         <div className="">
           <button
