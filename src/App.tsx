@@ -9,6 +9,8 @@ import {
 import Cookies from "js-cookie";
 import { useQuery, useQueryClient } from "react-query";
 import { difference, uniq } from "lodash";
+import { useImmer } from "use-immer";
+import { toast, Toaster } from "react-hot-toast";
 
 import TwitchChat from "./TwitchChat";
 import useBounding from "./useBounding";
@@ -35,7 +37,7 @@ import { useLazyLoadingChats } from "./useLazyLoadingChats";
 import { Layout } from "./layout";
 import useScroll from "./useScroll";
 import { TwitchChatService } from "./TwitchChatService";
-import { useImmer } from "use-immer";
+import LiveToast from "./LiveToast";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -63,6 +65,8 @@ const initialStreamState = {
   primaryStreams: uniq(reloadFromAuthPrimary || parsedUrlPrimary || []),
   layout: reloadFromAuthLayout || parsedUrlLayout || 0,
 };
+
+const ChatService = new TwitchChatService(initialStreamState.streams.slice());
 
 export default function App() {
   const [settings, setSettings] = useSettings();
@@ -144,7 +148,17 @@ export default function App() {
         } else {
           const newStreams = difference(prevFollowedStreams.current, data);
           if (newStreams.length) {
-            // do live notification
+            newStreams
+              .map((s) => s.userName)
+              .forEach((stream) => {
+                toast.custom((t) => (
+                  <LiveToast
+                    channel={stream}
+                    addStream={() => addNewStream(stream)}
+                    dismiss={() => toast.dismiss(t.id)}
+                  />
+                ));
+              });
           }
         }
       },
@@ -161,17 +175,16 @@ export default function App() {
     }
   }, [showMainPane]);
 
-  const chatService = useRef(new TwitchChatService(streams));
   const [hostsMap, setHostsMap] = useImmer<Record<string, string>>({});
   useEffect(() => {
-    return chatService.current.on("hosting", ({ channel, target }) => {
+    return ChatService.on("hosting", ({ channel, target }) => {
       setHostsMap((draft) => {
         draft[channel] = target;
       });
     });
   }, [setHostsMap]);
   useEffect(() => {
-    chatService.current.channels = streams;
+    ChatService.channels = streams;
     const closedChannels = difference(streams, Object.keys(hostsMap));
     if (closedChannels.length) {
       setHostsMap((draft) => {
@@ -184,7 +197,8 @@ export default function App() {
 
   //region AppReturn
   return (
-    <AppProvider value={{ settings, chatService: chatService.current }}>
+    <AppProvider value={{ settings, chatService: ChatService }}>
+      <Toaster />
       <main id="main" className="flex flex-col ring-white ring-opacity-60">
         {!showMainPane && (
           <button
@@ -253,12 +267,7 @@ export default function App() {
                 channel={channel}
                 replaceStream={replaceStream}
                 hostTarget={hostsMap[channel]}
-                className={classNames(
-                  channel === primaryStreams[0] && showChat
-                    ? "chat-standard-width"
-                    : "w-0",
-                  "transition-all"
-                )}
+                isDisplayed={channel === primaryStreams[0] && showChat}
               />
             ))}
           </div>

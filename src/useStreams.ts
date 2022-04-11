@@ -84,11 +84,15 @@ const streamsReducer = produce(function produceStreams(
       }
       break;
     case "REPLACE_STREAM":
-      draft.streams.splice(
-        draft.streams.indexOf(action.payload.replace),
-        1,
-        action.payload.with
-      );
+      if (draft.streams.includes(action.payload.with)) {
+        draft.streams.splice(draft.streams.indexOf(action.payload.replace), 1);
+      } else {
+        draft.streams.splice(
+          draft.streams.indexOf(action.payload.replace),
+          1,
+          action.payload.with
+        );
+      }
       if (draft.primaryStreams.includes(action.payload.replace)) {
         draft.primaryStreams.splice(
           draft.primaryStreams.indexOf(action.payload.replace),

@@ -4,7 +4,7 @@ export const PROJECT_URL = "https://github.com/zbuttram/yatmv";
 export const STREAM_STATE_COOKIE = "yatmv-state";
 export const FETCH_FOLLOWED_INTERVAL_MINS = numDefault(
   process.env.REACT_APP_FETCH_FOLLOWED_INTERVAL_MINS,
-  2
+  1.25
 );
 export const FETCH_OPEN_STREAMS_INTERVAL_MINS = numDefault(
   process.env.REACT_APP_FETCH_OPEN_STREAMS_INTERVAL_MINS,
