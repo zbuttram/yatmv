@@ -144,19 +144,20 @@ export default function App() {
         );
 
         if (prevFollowedStreams.current.length > 0) {
-          const newStreams = difference(prevFollowedStreams.current, data);
+          const newStreams = difference(
+            prevFollowedStreams.current.map((s) => s.userName),
+            data.map((s) => s.userName)
+          );
           if (newStreams.length) {
-            newStreams
-              .map((s) => s.userName)
-              .forEach((stream) => {
-                toast.custom((t) => (
-                  <LiveToast
-                    channel={stream}
-                    addStream={() => addNewStream(stream)}
-                    dismiss={() => toast.dismiss(t.id)}
-                  />
-                ));
-              });
+            newStreams.forEach((stream) => {
+              toast.custom((t) => (
+                <LiveToast
+                  channel={stream}
+                  addStream={() => addNewStream(stream)}
+                  dismiss={() => toast.dismiss(t.id)}
+                />
+              ));
+            });
           }
         }
 
