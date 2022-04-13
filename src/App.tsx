@@ -143,9 +143,7 @@ export default function App() {
           )
         );
 
-        if (!prevFollowedStreams.current) {
-          prevFollowedStreams.current = data;
-        } else {
+        if (prevFollowedStreams.current.length > 0) {
           const newStreams = difference(prevFollowedStreams.current, data);
           if (newStreams.length) {
             newStreams
@@ -161,6 +159,8 @@ export default function App() {
               });
           }
         }
+
+        prevFollowedStreams.current = data;
       },
     }
   );
