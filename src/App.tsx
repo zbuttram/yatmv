@@ -149,15 +149,18 @@ export default function App() {
             data.map((s) => s.userName)
           );
           if (newStreams.length) {
-            newStreams.forEach((stream) => {
-              toast.custom((t) => (
-                <LiveToast
-                  channel={stream}
-                  addStream={() => addNewStream(stream)}
-                  dismiss={() => toast.dismiss(t.id)}
-                />
-              ));
-            });
+            newStreams.forEach(
+              (stream) => {
+                toast.custom((t) => (
+                  <LiveToast
+                    channel={stream}
+                    addStream={() => addNewStream(stream)}
+                    dismiss={() => toast.dismiss(t.id)}
+                  />
+                ));
+              },
+              { duration: 10000 }
+            );
           }
         }
 
