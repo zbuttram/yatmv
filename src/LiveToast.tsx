@@ -15,7 +15,10 @@ export default function LiveToast({
       <div className="flex-col border-l border-slate-500">
         <div className="">
           <button
-            onClick={addStream}
+            onClick={() => {
+              addStream();
+              dismiss();
+            }}
             className="p-1 w-full h-full flex justify-center items-center"
           >
             Add
