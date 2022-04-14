@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useQuery, useQueryClient } from "react-query";
-import { difference } from "lodash";
+import { without } from "lodash";
 import { toast } from "react-hot-toast";
 
 import {
@@ -38,9 +38,11 @@ export default function useFollowedStreams({
         );
 
         if (prevFollowedStreams.current.length > 0) {
-          const newStreams = difference(
-            prevFollowedStreams.current.map((s) => s.userName).filter(Boolean),
-            data.map((s) => s.userName).filter(Boolean)
+          const newStreams = without(
+            data.map((s) => s.userName).filter(Boolean),
+            ...prevFollowedStreams.current
+              .map((s) => s.userName)
+              .filter(Boolean)
           );
           if (newStreams.length) {
             newStreams.forEach(

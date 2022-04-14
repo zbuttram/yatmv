@@ -1,6 +1,6 @@
 import { useImmer } from "use-immer";
 import { useEffect, useRef } from "react";
-import { difference } from "lodash";
+import { without } from "lodash";
 
 import { getChatService } from "./TwitchChatService";
 
@@ -16,7 +16,7 @@ export default function useHostsMap({ streams }: { streams: string[] }) {
   }, [setHostsMap]);
   useEffect(() => {
     ChatService.current.channels = streams;
-    const closedChannels = difference(streams, Object.keys(hostsMap));
+    const closedChannels = without(Object.keys(hostsMap), ...streams);
     if (closedChannels.length) {
       setHostsMap((draft) => {
         closedChannels.forEach((channel) => {

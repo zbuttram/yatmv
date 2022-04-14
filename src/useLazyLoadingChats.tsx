@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import produce from "immer";
-import { difference as arrayDiff } from "lodash";
+import { without } from "lodash";
 import { StreamState } from "./useStreams";
 import { epoch } from "./utils";
 import { CHAT_EVICT_SEC } from "./const";
@@ -53,9 +53,9 @@ export function useLazyLoadingChats({
     }
 
     if (prevStreamState) {
-      const closedStreams = arrayDiff(
+      const closedStreams = without(
         prevStreamState.primaryStreams,
-        primaryStreams
+        ...primaryStreams
       );
       setLoadedChats(
         produce((state) => {
