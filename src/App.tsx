@@ -6,51 +6,22 @@ import {
   faCaretSquareLeft,
   faCaretSquareRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { uniq } from "lodash";
 import { Toaster } from "react-hot-toast";
 
 import TwitchChat from "./TwitchChat";
 import useBounding from "./useBounding";
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
 import AddStream from "./AddStream";
-import { checkTwitchAuth, handleTwitchAuthCallback } from "./twitch";
+import { checkTwitchAuth } from "./twitch";
 import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
 import useStreams from "./useStreams";
 import { useLazyLoadingChats } from "./useLazyLoadingChats";
-import { Layout } from "./layout";
 import useScroll from "./useScroll";
 import useFollowedStreams from "./useFollowedStreams";
 import useHostsMap from "./useHostsMap";
-
-const pageURL = new URL(window.location.href);
-let parsedUrlStreams: string[] = [];
-const urlStreams = pageURL.searchParams.get("streams");
-if (urlStreams) {
-  parsedUrlStreams = urlStreams.split(",");
-}
-let parsedUrlPrimary: string[] = [];
-const urlPrimary = pageURL.searchParams.get("primary");
-if (urlPrimary) {
-  parsedUrlPrimary = urlPrimary.split(",");
-}
-let parsedUrlLayout: Layout | undefined;
-const urlLayout = pageURL.searchParams.get("layout");
-if (urlLayout) {
-  const num = Number(urlLayout);
-  parsedUrlLayout = Number.isNaN(num) ? 0 : num;
-}
-
-let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
-  handleTwitchAuthCallback();
-
-const initialStreamState = {
-  streams: uniq(reloadFromAuthStreams || parsedUrlStreams || []),
-  primaryStreams: uniq(reloadFromAuthPrimary || parsedUrlPrimary || []),
-  layout: reloadFromAuthLayout || parsedUrlLayout || 0,
-};
 
 export default function App() {
   const [settings, setSettings] = useSettings();
@@ -60,7 +31,7 @@ export default function App() {
     state: streamState,
     prevState: prevStreamState,
     actions: streamActions,
-  } = useStreams(initialStreamState);
+  } = useStreams();
   const { streams, primaryStreams, layout } = streamState;
   const {
     addStream: addNewStream,

@@ -2,15 +2,47 @@ import produce from "immer";
 import { useEffect, useReducer } from "react";
 import { usePrevious } from "react-use";
 import invariant from "tiny-invariant";
-import { Layout } from "./layout";
 import Cookies from "js-cookie";
+import { uniq } from "lodash";
+
+import { Layout } from "./layout";
 import { STREAM_STATE_COOKIE } from "./const";
+import { handleTwitchAuthCallback } from "./twitch";
 
 export type StreamState = {
   streams: string[];
   primaryStreams: string[];
   layout: Layout;
 };
+
+function getInitialStreamState(): StreamState {
+  const pageURL = new URL(window.location.href);
+  let parsedUrlStreams: string[] = [];
+  const urlStreams = pageURL.searchParams.get("streams");
+  if (urlStreams) {
+    parsedUrlStreams = urlStreams.split(",");
+  }
+  let parsedUrlPrimary: string[] = [];
+  const urlPrimary = pageURL.searchParams.get("primary");
+  if (urlPrimary) {
+    parsedUrlPrimary = urlPrimary.split(",");
+  }
+  let parsedUrlLayout: Layout | undefined;
+  const urlLayout = pageURL.searchParams.get("layout");
+  if (urlLayout) {
+    const num = Number(urlLayout);
+    parsedUrlLayout = Number.isNaN(num) ? 0 : num;
+  }
+
+  let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
+    handleTwitchAuthCallback();
+
+  return {
+    streams: uniq(reloadFromAuthStreams || parsedUrlStreams || []),
+    primaryStreams: uniq(reloadFromAuthPrimary || parsedUrlPrimary || []),
+    layout: reloadFromAuthLayout || parsedUrlLayout || 0,
+  };
+}
 
 type StreamAction =
   | { type: "INIT" }
@@ -42,6 +74,7 @@ const streamsReducer = produce(function produceStreams(
 
   switch (action.type) {
     case "INIT":
+      Object.assign(draft, getInitialStreamState());
       break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
@@ -122,9 +155,11 @@ const streamsReducer = produce(function produceStreams(
   }
 });
 
-export default function useStreams(init: StreamState) {
-  const [state, dispatch] = useReducer(streamsReducer, init, (state) =>
-    streamsReducer(state, { type: "INIT" })
+export default function useStreams() {
+  const [state, dispatch] = useReducer(
+    streamsReducer,
+    { streams: [], primaryStreams: [], layout: 0 },
+    (state) => streamsReducer(state, { type: "INIT" })
   );
   const prevState = usePrevious(state);
   const { streams, primaryStreams, layout } = state;
