@@ -31,7 +31,7 @@ type ChatEvents = {
 
 type ChatEventEmitter = Emitter<ChatEvents>;
 
-export class TwitchChatService {
+class TwitchChatService {
   client: TmiClient;
   connected: boolean = false;
   emitter: ChatEventEmitter;
@@ -111,4 +111,12 @@ export class TwitchChatService {
     this.emitter.on(type, handler);
     return () => this.emitter.off(type, handler);
   }
+}
+
+let ChatService;
+export function getChatService(streams: string[]) {
+  if (!ChatService) {
+    ChatService = new TwitchChatService(streams);
+  }
+  return ChatService;
 }

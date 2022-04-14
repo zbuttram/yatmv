@@ -1,8 +1,10 @@
 import produce from "immer";
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { usePrevious } from "react-use";
 import invariant from "tiny-invariant";
 import { Layout } from "./layout";
+import Cookies from "js-cookie";
+import { STREAM_STATE_COOKIE } from "./const";
 
 export type StreamState = {
   streams: string[];
@@ -125,6 +127,35 @@ export default function useStreams(init: StreamState) {
     streamsReducer(state, { type: "INIT" })
   );
   const prevState = usePrevious(state);
+  const { streams, primaryStreams, layout } = state;
+
+  // set URL params
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+
+    streams && streams.length
+      ? params.set("streams", streams.filter(Boolean).toString())
+      : params.delete("streams");
+    primaryStreams && primaryStreams.length
+      ? params.set("primary", primaryStreams.toString())
+      : params.delete("primary");
+    layout !== 0
+      ? params.set("layout", layout.toString())
+      : params.delete("layout");
+
+    url.search = params.toString();
+    window.history.replaceState({}, window.document.title, url.toString());
+    setTimeout(() => {
+      Cookies.set(
+        STREAM_STATE_COOKIE,
+        JSON.stringify({
+          streams,
+          primaryStreams,
+        })
+      );
+    });
+  }, [streams, primaryStreams, layout]);
 
   return {
     state,

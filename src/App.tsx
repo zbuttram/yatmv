@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -6,28 +6,14 @@ import {
   faCaretSquareLeft,
   faCaretSquareRight,
 } from "@fortawesome/free-solid-svg-icons";
-import Cookies from "js-cookie";
-import { useQuery, useQueryClient } from "react-query";
-import { difference, uniq } from "lodash";
-import { useImmer } from "use-immer";
-import { toast, Toaster } from "react-hot-toast";
+import { uniq } from "lodash";
+import { Toaster } from "react-hot-toast";
 
 import TwitchChat from "./TwitchChat";
 import useBounding from "./useBounding";
-import {
-  FETCH_FOLLOWED_INTERVAL_MINS,
-  PROJECT_URL,
-  STREAM_STATE_COOKIE,
-  TWITCH_AUTH_URL,
-} from "./const";
+import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
 import AddStream from "./AddStream";
-import {
-  checkTwitchAuth,
-  getAuthedUser,
-  getFollowedStreams,
-  handleTwitchAuthCallback,
-  StreamData,
-} from "./twitch";
+import { checkTwitchAuth, handleTwitchAuthCallback } from "./twitch";
 import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
@@ -36,8 +22,8 @@ import useStreams from "./useStreams";
 import { useLazyLoadingChats } from "./useLazyLoadingChats";
 import { Layout } from "./layout";
 import useScroll from "./useScroll";
-import { TwitchChatService } from "./TwitchChatService";
-import LiveToast from "./LiveToast";
+import useFollowedStreams from "./useFollowedStreams";
+import useHostsMap from "./useHostsMap";
 
 const pageURL = new URL(window.location.href);
 let parsedUrlStreams: string[] = [];
@@ -66,10 +52,10 @@ const initialStreamState = {
   layout: reloadFromAuthLayout || parsedUrlLayout || 0,
 };
 
-const ChatService = new TwitchChatService(initialStreamState.streams.slice());
-
 export default function App() {
   const [settings, setSettings] = useSettings();
+  const { showChat, fullHeightPlayer } = settings;
+
   const {
     state: streamState,
     prevState: prevStreamState,
@@ -85,91 +71,13 @@ export default function App() {
     replaceStream,
   } = streamActions;
 
-  // set URL params
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
-
-    streams && streams.length
-      ? params.set("streams", streams.filter(Boolean).toString())
-      : params.delete("streams");
-    primaryStreams && primaryStreams.length
-      ? params.set("primary", primaryStreams.toString())
-      : params.delete("primary");
-    layout !== 0
-      ? params.set("layout", layout.toString())
-      : params.delete("layout");
-
-    url.search = params.toString();
-    window.history.replaceState({}, window.document.title, url.toString());
-    setTimeout(() => {
-      Cookies.set(
-        STREAM_STATE_COOKIE,
-        JSON.stringify({
-          streams,
-          primaryStreams,
-        })
-      );
-    });
-  }, [streams, primaryStreams, layout]);
-
   const primaryContainerRect = useBounding("primary-stream-container");
   const referenceStreamContainerRect = useBounding(
     "stream-container-reference"
   );
   const scrollY = useScroll();
-
   const loadedChats = useLazyLoadingChats({ streamState, prevStreamState });
-
-  const queryClient = useQueryClient();
-
-  const { data: twitchUser } = useQuery("authedTwitchUser", getAuthedUser, {
-    enabled: checkTwitchAuth(),
-  });
-
-  const prevFollowedStreams = useRef<StreamData[]>([]);
-  const { data: followedStreams } = useQuery(
-    "followedStreams",
-    () => getFollowedStreams({ userId: twitchUser!.id }),
-    {
-      enabled: !!twitchUser,
-      refetchInterval: FETCH_FOLLOWED_INTERVAL_MINS * 60 * 1000,
-      onSuccess: (data) => {
-        // pre-populate stream query data since these endpoints return the same datatype
-        data.forEach((stream) =>
-          queryClient.setQueryData(
-            ["stream", stream.userLogin.toLowerCase()],
-            stream
-          )
-        );
-
-        if (prevFollowedStreams.current.length > 0) {
-          const newStreams = difference(
-            prevFollowedStreams.current.map((s) => s.userName).filter(Boolean),
-            data.map((s) => s.userName).filter(Boolean)
-          );
-          if (newStreams.length) {
-            newStreams.forEach(
-              (stream) => {
-                toast.custom((t) => (
-                  <LiveToast
-                    channel={stream}
-                    addStream={() => addNewStream(stream)}
-                    dismiss={() => toast.dismiss(t.id)}
-                  />
-                ));
-              },
-              { duration: 10000 }
-            );
-          }
-        }
-
-        prevFollowedStreams.current = data;
-      },
-    }
-  );
-
-  const { showChat, fullHeightPlayer } = settings;
+  const followedStreams = useFollowedStreams({ addNewStream });
 
   const [forceShowMainPane, setForceShowMainPane] = useState(false);
   const showMainPane = primaryStreams.length || forceShowMainPane;
@@ -179,29 +87,11 @@ export default function App() {
     }
   }, [showMainPane]);
 
-  const [hostsMap, setHostsMap] = useImmer<Record<string, string>>({});
-  useEffect(() => {
-    return ChatService.on("hosting", ({ channel, target }) => {
-      setHostsMap((draft) => {
-        draft[channel] = target;
-      });
-    });
-  }, [setHostsMap]);
-  useEffect(() => {
-    ChatService.channels = streams;
-    const closedChannels = difference(streams, Object.keys(hostsMap));
-    if (closedChannels.length) {
-      setHostsMap((draft) => {
-        closedChannels.forEach((channel) => {
-          delete draft[channel];
-        });
-      });
-    }
-  }, [streams, hostsMap, setHostsMap]);
+  const hostsMap = useHostsMap({ streams });
 
   //region AppReturn
   return (
-    <AppProvider value={{ settings, chatService: ChatService }}>
+    <AppProvider value={{ settings }}>
       <Toaster />
       <main id="main" className="flex flex-col ring-white ring-opacity-60">
         {!showMainPane && (
