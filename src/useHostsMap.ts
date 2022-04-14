@@ -10,7 +10,7 @@ export default function useHostsMap({ streams }: { streams: string[] }) {
   useEffect(() => {
     return ChatService.current.on("hosting", ({ channel, target }) => {
       setHostsMap((draft) => {
-        draft[channel] = target;
+        draft[channel.toLowerCase()] = target;
       });
     });
   }, [setHostsMap]);
