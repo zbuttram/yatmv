@@ -191,6 +191,8 @@ export default function App() {
               primaryContainerRect={primaryContainerRect}
               setPrimaryStream={setPrimaryStream}
               remove={() => removeStream(i)}
+              hostTarget={hostsMap[stream]}
+              replaceStream={replaceStream}
             />
           ))}
         </div>

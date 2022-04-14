@@ -25,6 +25,8 @@ export function StreamContainer({
   setPrimaryStream,
   layout,
   className,
+  hostTarget,
+  replaceStream,
 }: {
   id?: string;
   stream: string;
@@ -34,6 +36,8 @@ export function StreamContainer({
   setPrimaryStream: (stream: string, position: number) => void;
   layout: Layout;
   className?: string;
+  hostTarget?: string;
+  replaceStream: (replace: string, replacement: string) => void;
 }) {
   const isPrimary = primaryPosition > -1;
 
@@ -92,6 +96,14 @@ export function StreamContainer({
         primaryContainerRect={primaryContainerRect}
         reloadCounter={reloadCounter}
         layout={layout}
+        overlay={
+          <StreamOverlay
+            isPrimary={isPrimary}
+            hostTarget={hostTarget}
+            replaceStream={replaceStream}
+            stream={stream}
+          />
+        }
       />
       <div className="w-full flex flex-col px-1">
         <div className="pt-3 pb-1">
@@ -170,6 +182,36 @@ export function StreamContainer({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StreamOverlay({
+  isPrimary,
+  hostTarget,
+  replaceStream,
+  stream,
+}: {
+  isPrimary: boolean;
+  hostTarget?: string;
+  replaceStream: (replace: string, replacement: string) => void;
+  stream: string;
+}) {
+  if (isPrimary || !hostTarget) {
+    return null;
+  }
+
+  return (
+    <div className="w-full h-full flex justify-center items-center bg-black pointer-events-auto">
+      <p>
+        Hosted{" "}
+        <button
+          className="underline font-semibold"
+          onClick={() => replaceStream(stream, hostTarget)}
+        >
+          {hostTarget}
+        </button>
+      </p>
     </div>
   );
 }

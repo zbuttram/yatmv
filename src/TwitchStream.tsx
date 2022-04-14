@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { ReactNode, useContext, useEffect, useMemo, useRef } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
 
@@ -67,6 +67,7 @@ export default function TwitchStream({
   reloadCounter,
   layout,
   className,
+  overlay,
 }: {
   channel: string;
   primaryPosition: number;
@@ -74,6 +75,7 @@ export default function TwitchStream({
   reloadCounter: number;
   layout: Layout;
   className?: string;
+  overlay?: ReactNode;
 }) {
   const divId = `twitch-stream-embed-${channel}`;
   const isPrimary = primaryPosition > -1;
@@ -232,6 +234,14 @@ export default function TwitchStream({
         style={style || { height: 0 }}
         className="transition-all"
       />
+      {overlay ? (
+        <div
+          style={style || { height: 0 }}
+          className="z-20 pointer-events-none"
+        >
+          {overlay}
+        </div>
+      ) : null}
       <div
         id={posDivId}
         className={classNames("flex aspect-video bg-black", className)}

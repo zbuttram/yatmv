@@ -1,5 +1,6 @@
 import tmi from "tmi.js";
 import mitt, { Emitter, WildcardHandler } from "mitt";
+import Log from "./log";
 
 // needs better defining
 type TmiTags = Record<string, any>;
@@ -71,13 +72,13 @@ class TwitchChatService {
 
   join(channel: string) {
     this.client.join(channel).then(() => {
-      console.log("YATMV", "channel-join", channel);
+      Log("chat-channel-join", channel);
     });
   }
 
   part(channel: string) {
     this.client.part(channel).then(() => {
-      console.log("YATMV", "channel-part", channel);
+      Log("chat-channel-part", channel);
     });
   }
 
@@ -119,4 +120,15 @@ export function getChatService(streams: string[]) {
     ChatService = new TwitchChatService(streams);
   }
   return ChatService;
+}
+
+if (process.env.NODE_ENV === "development") {
+  // @ts-ignore
+  window._setHost = (hoster, hostee) => {
+    ChatService.emitter.emit("hosting", {
+      channel: hoster,
+      target: hostee,
+      viewers: 0,
+    });
+  };
 }
