@@ -145,8 +145,8 @@ export default function App() {
 
         if (prevFollowedStreams.current.length > 0) {
           const newStreams = difference(
-            prevFollowedStreams.current.map((s) => s.userName),
-            data.map((s) => s.userName)
+            prevFollowedStreams.current.map((s) => s.userName).filter(Boolean),
+            data.map((s) => s.userName).filter(Boolean)
           );
           if (newStreams.length) {
             newStreams.forEach(
