@@ -4,6 +4,7 @@ const INITIAL_SETTINGS = {
   boostMode: false,
   showChat: true,
   fullHeightPlayer: false,
+  sidebarOpen: true,
 };
 
 export type Settings = typeof INITIAL_SETTINGS;

@@ -10,6 +10,7 @@ import {
   faTh,
   faUsers,
   faSyncAlt,
+  faSliders,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
 import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
@@ -33,6 +34,7 @@ export function Sidebar({
   addStream,
   rotatePrimary,
   setLayout,
+  showSettingsModal,
 }: {
   className?: string;
   settings: Settings;
@@ -43,15 +45,15 @@ export function Sidebar({
   addStream: (streamName: string) => void;
   rotatePrimary: (reverse?: boolean) => void;
   setLayout: (layout: Layout) => void;
+  showSettingsModal: () => void;
 }) {
-  const { boostMode, fullHeightPlayer } = settings;
-  const [open, setOpen] = useState(false);
+  const { boostMode, fullHeightPlayer, sidebarOpen } = settings;
 
   return (
     <div
       className={classNames(
         "sidebar flex flex-col",
-        open ? "open w-56" : "w-16",
+        sidebarOpen ? "open w-56" : "w-16",
         className
       )}
     >
@@ -59,15 +61,20 @@ export function Sidebar({
         <label>
           <span className="btn-txt">Collapse</span>
           <button
-            title={open ? "Collapse" : "Expand"}
+            title={sidebarOpen ? "Collapse" : "Expand"}
             className="px-2 py-1 mx-3 my-1"
-            onClick={() => setOpen((state) => !state)}
+            onClick={() =>
+              setSettings((state) => ({
+                ...state,
+                sidebarOpen: !state.sidebarOpen,
+              }))
+            }
           >
             <FontAwesomeIcon
               icon={faArrowLeft}
               className={classNames(
                 "transition-transform text-lg",
-                !open && "flip-horizontal"
+                !sidebarOpen && "flip-horizontal"
               )}
               fixedWidth
             />
@@ -89,7 +96,7 @@ export function Sidebar({
                   )}
                   stream={stream}
                   addStream={addStream}
-                  sidebarExpanded={open}
+                  sidebarExpanded={sidebarOpen}
                 />
               ))}
           </div>
@@ -117,6 +124,11 @@ export function Sidebar({
             <FontAwesomeIcon icon={boostMode ? faTachometerAlt : faRocket} />
           </div>
         }
+      />
+      <SidebarButton
+        title="Settings"
+        onClick={showSettingsModal}
+        icon={<FontAwesomeIcon icon={faSliders} fixedWidth />}
       />
       <SidebarButton
         title={fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
