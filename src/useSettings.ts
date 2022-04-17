@@ -14,7 +14,7 @@ function getSettings() {
   const result = localStorage.getItem(key);
   if (result) {
     try {
-      return JSON.parse(result);
+      return Object.assign(INITIAL_SETTINGS, JSON.parse(result));
     } catch (e) {
       return undefined;
     }
