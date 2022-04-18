@@ -42,7 +42,6 @@ export function paramsToString(params?: Params): string {
   }
 }
 
-const thumbnailCache = new Map();
 export function sizeThumbnailUrl({
   url,
   width,
@@ -52,12 +51,5 @@ export function sizeThumbnailUrl({
   width: string;
   height: string;
 }) {
-  const key = [url, width, height].join(",");
-  if (thumbnailCache.has(key)) {
-    return thumbnailCache.get(key);
-  } else {
-    const sized = url.replace("{width}", width).replace("{height}", height);
-    thumbnailCache.set(key, sized);
-    return sized;
-  }
+  return url.replace("{width}", width).replace("{height}", height);
 }
