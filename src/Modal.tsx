@@ -20,7 +20,7 @@ export function Modal({ children, isOpen, close, className }: BaseModalProps) {
   return (
     <div
       className={classNames(
-        "z-30 w-2/3 bg-slate-800 relative pointer-events-auto",
+        "z-30 w-2/3 bg-neutral-900 relative pointer-events-auto drop-shadow-xl",
         isOpen ? "" : "hidden",
         className
       )}

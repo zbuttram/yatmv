@@ -10,7 +10,7 @@ import {
   TWITCH_SCOPE_COOKIE,
   TWITCH_SCOPES,
 } from "./const";
-import { useQuery } from "react-query";
+import { QueryClient, useQuery } from "react-query";
 import { Layout } from "./layout";
 import { Params, paramsToString, ParamValue } from "./utils";
 
@@ -90,6 +90,11 @@ export function checkTwitchAuth() {
 }
 
 type PaginatedResponse<T> = { data: T[]; pagination: { cursor?: string } };
+type PaginationParams = {
+  after?: ParamValue;
+  before?: ParamValue;
+  first?: ParamValue;
+};
 
 async function callTwitch<T = any>(
   path,
@@ -188,13 +193,10 @@ export function getStreams({
   gameId,
   userId,
   userLogin,
-}: Partial<
-  {
-    first: number;
-  } & StreamQueryParams
->) {
+  after,
+}: Partial<PaginationParams & StreamQueryParams>) {
   return callTwitch<PaginatedResponse<StreamData>>("/streams", {
-    params: { first, gameId, userId, userLogin },
+    params: { first, after, gameId, userId, userLogin },
   });
 }
 
@@ -203,7 +205,7 @@ export async function getStream({
   userId,
   userLogin,
 }: Partial<StreamQueryParams>): Promise<StreamData> {
-  const response = await getStreams({ gameId, userId, userLogin });
+  const response = await getStreams({ first: 1, gameId, userId, userLogin });
   if (response?.data[0]) {
     return response.data[0];
   } else {
@@ -283,10 +285,10 @@ export async function getFollowedStreams({
   return response.data;
 }
 
-type CategoryData = {
+export type CategoryData = {
   id: string;
   name: string;
-  box_art_url: string;
+  boxArtUrl: string;
 };
 
 export function searchCategories({
@@ -301,8 +303,11 @@ export function searchCategories({
   });
 }
 
-export function getTopGames({ first }: { first: ParamValue }) {
+export function getTopGames({
+  first,
+  after,
+}: { first?: ParamValue; after?: ParamValue } = {}) {
   return callTwitch<PaginatedResponse<CategoryData>>("/games/top", {
-    params: { first },
+    params: { first, after },
   });
 }

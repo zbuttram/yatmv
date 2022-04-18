@@ -1,10 +1,13 @@
 import { Modal, ModalProps } from "./Modal";
-import { StreamData } from "./twitch";
+import { CategoryData, getStreams, getTopGames, StreamData } from "./twitch";
 import classNames from "classnames";
 import { ReactNode, useState } from "react";
 import { simplifyViewerCount } from "./utils";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useInfiniteQuery } from "react-query";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 
 export default function TwitchBrowser({
   isOpen,
@@ -19,9 +22,11 @@ export default function TwitchBrowser({
 
   return (
     <Modal isOpen={isOpen} close={close}>
+      <div className="absolute top-1 left-2 text-3xl">
+        <FontAwesomeIcon className="text-purple-700" icon={faTwitch} />
+      </div>
       <div className="p-4">
-        <h3 className="text-2xl font-semibold">Twitch Browser</h3>
-        <div className="flex">
+        <div className="flex justify-center">
           <Tab active={tab === "followed"} onClick={() => setTab("followed")}>
             Followed
           </Tab>
@@ -33,39 +38,19 @@ export default function TwitchBrowser({
           </Tab>
         </div>
       </div>
-      <div
-        className="border-t border-gray-400 py-2 overflow-y-auto"
-        style={{ maxHeight: "800px" }}
-      >
+      <div className="border-t border-gray-400 py-2">
         {tab === "followed" ? (
-          <div className="flex flex-wrap gap-3 justify-center">
+          <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
             {followedStreams?.map((stream) => (
-              <div className="w-1/5">
-                <img
-                  className="cursor-pointer"
-                  onClick={() => addNewStream(stream.userLogin)}
-                  src={stream.thumbnailUrl
-                    .replace("{width}", "440")
-                    .replace("{height}", "248")}
-                  alt={`thumbnail-${stream.userLogin}`}
-                />
-                <div className="flex">
-                  <h3 className="font-semibold">{stream.userName}</h3>
-                  <div className="flex-grow" />
-                  <div className="text-sm text-right my-auto mr-1 text-red-400 whitespace-nowrap">
-                    {simplifyViewerCount(stream.viewerCount)}{" "}
-                    <FontAwesomeIcon icon={faUsers} />
-                  </div>
-                </div>
-                <div
-                  className={classNames("text-xs truncate")}
-                  title={stream.title}
-                >
-                  {stream.title}
-                </div>
-              </div>
+              <Stream
+                onClick={() => addNewStream(stream.userLogin)}
+                stream={stream}
+              />
             ))}
           </div>
+        ) : null}
+        {tab === "categories" ? (
+          <Categories addNewStream={addNewStream} />
         ) : null}
       </div>
     </Modal>
@@ -88,5 +73,150 @@ function Tab({
     >
       {children}
     </button>
+  );
+}
+
+function Stream(props: { onClick: () => void; stream: StreamData }) {
+  return (
+    <div className="w-56">
+      <img
+        className="cursor-pointer"
+        onClick={props.onClick}
+        src={props.stream.thumbnailUrl
+          .replace("{width}", "440")
+          .replace("{height}", "248")}
+        alt={`${props.stream.userLogin} thumbnail`}
+      />
+      <div className="flex">
+        <h3 className="font-semibold">{props.stream.userName}</h3>
+        <div className="flex-grow" />
+        <div className="text-sm text-right my-auto mr-1 text-red-400 whitespace-nowrap">
+          {simplifyViewerCount(props.stream.viewerCount)}{" "}
+          <FontAwesomeIcon icon={faUsers} />
+        </div>
+      </div>
+      <div
+        className={classNames("text-xs truncate")}
+        title={props.stream.title}
+      >
+        {props.stream.title}
+      </div>
+    </div>
+  );
+}
+
+function Categories({ addNewStream }) {
+  const [category, setCategory] = useState(null);
+
+  if (category) {
+    return (
+      <ShowCategory
+        category={category}
+        back={() => setCategory(null)}
+        addNewStream={addNewStream}
+      />
+    );
+  }
+
+  return <BrowseCategories setCategory={setCategory} />;
+}
+
+function BrowseCategories({ setCategory }) {
+  const { data, fetchNextPage, isFetchingNextPage } = useInfiniteQuery(
+    "topGames",
+    ({ pageParam = 0 }) => getTopGames({ first: 20, after: pageParam }),
+    {
+      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+      refetchInterval: 60000,
+    }
+  );
+
+  return (
+    <>
+      <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
+        {data?.pages?.map((page) => (
+          <>
+            {page.data.map((cat, i, arr) => (
+              <div className="w-40">
+                <img
+                  onClick={() => setCategory(cat)}
+                  className="cursor-pointer"
+                  src={cat.boxArtUrl
+                    .replace("{width}", "285")
+                    .replace("{height}", "380")}
+                  alt={`${cat.name} box art`}
+                />
+                <div className="truncate">{cat.name}</div>
+              </div>
+            ))}
+          </>
+        ))}
+      </div>
+      <div className="flex justify-center my-4">
+        <button
+          onClick={() => fetchNextPage()}
+          className="font-semibold underline"
+        >
+          {isFetchingNextPage ? "Loading..." : "Load More"}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function ShowCategory({
+  category,
+  back,
+  addNewStream,
+}: {
+  category: CategoryData | null;
+  back: () => void;
+  addNewStream: (name: string) => void;
+}) {
+  const { data, fetchNextPage, isFetchingNextPage } = useInfiniteQuery(
+    ["getStreamsByGameId", category?.id],
+    ({ queryKey: [_, gameId], pageParam }) =>
+      getStreams({ gameId, first: 30, after: pageParam }),
+    {
+      enabled: !!category,
+      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+      refetchInterval: 120000,
+    }
+  );
+
+  if (!category) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="p-4 flex justify-between">
+        <button onClick={back} className="mr-3 font-semibold text-lg">
+          <FontAwesomeIcon icon={faArrowLeft} />{" "}
+          <span className="underline">Back</span>
+        </button>
+        <div className="text-2xl">{category.name}</div>
+      </div>
+      <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
+        {data?.pages.map((page) => (
+          <>
+            {page.data.map((stream) => (
+              <Stream
+                onClick={() => addNewStream(stream.userLogin)}
+                stream={stream}
+              />
+            ))}
+          </>
+        ))}
+      </div>
+      <div className="flex justify-center my-4">
+        <button
+          onClick={() => fetchNextPage()}
+          className="font-semibold underline"
+        >
+          {isFetchingNextPage ? "Loading..." : "Load More"}
+        </button>
+      </div>
+    </>
   );
 }
