@@ -1,15 +1,9 @@
-import { numDefault } from "./utils";
-
 export const PROJECT_URL = "https://github.com/zbuttram/yatmv";
 export const STREAM_STATE_COOKIE = "yatmv-state";
-export const FETCH_FOLLOWED_INTERVAL_MINS = numDefault(
-  process.env.REACT_APP_FETCH_FOLLOWED_INTERVAL_MINS,
-  1.25
-);
-export const FETCH_OPEN_STREAMS_INTERVAL_MINS = numDefault(
-  process.env.REACT_APP_FETCH_OPEN_STREAMS_INTERVAL_MINS,
-  1
-);
+export const FETCH_FOLLOWED_INTERVAL = 1.25 * 60 * 1000;
+export const FETCH_OPEN_STREAMS_INTERVAL = 60000;
+export const TWITCH_CATEGORY_REFETCH = 60000;
+export const TWITCH_CATEGORY_STREAMS_REFETCH = 120000;
 export const CHAT_EVICT_SEC = 60 * 15;
 
 // @ts-ignore

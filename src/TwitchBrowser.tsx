@@ -2,12 +2,16 @@ import { Modal, ModalProps } from "./Modal";
 import { CategoryData, getStreams, getTopGames, StreamData } from "./twitch";
 import classNames from "classnames";
 import { ReactNode, useState } from "react";
-import { simplifyViewerCount } from "./utils";
+import { simplifyViewerCount, sizeThumbnailUrl } from "./utils";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useInfiniteQuery } from "react-query";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
+import {
+  TWITCH_CATEGORY_REFETCH,
+  TWITCH_CATEGORY_STREAMS_REFETCH,
+} from "./const";
 
 export default function TwitchBrowser({
   isOpen,
@@ -50,7 +54,7 @@ export default function TwitchBrowser({
           </div>
         ) : null}
         {tab === "categories" ? (
-          <Categories addNewStream={addNewStream} />
+          <Categories addNewStream={addNewStream} isOpen={isOpen} />
         ) : null}
       </div>
     </Modal>
@@ -82,9 +86,11 @@ function Stream(props: { onClick: () => void; stream: StreamData }) {
       <img
         className="cursor-pointer"
         onClick={props.onClick}
-        src={props.stream.thumbnailUrl
-          .replace("{width}", "440")
-          .replace("{height}", "248")}
+        src={sizeThumbnailUrl({
+          url: props.stream.thumbnailUrl,
+          width: "440",
+          height: "248",
+        })}
         alt={`${props.stream.userLogin} thumbnail`}
       />
       <div className="flex">
@@ -105,7 +111,7 @@ function Stream(props: { onClick: () => void; stream: StreamData }) {
   );
 }
 
-function Categories({ addNewStream }) {
+function Categories({ addNewStream, isOpen }) {
   const [category, setCategory] = useState(null);
 
   if (category) {
@@ -114,6 +120,7 @@ function Categories({ addNewStream }) {
         category={category}
         back={() => setCategory(null)}
         addNewStream={addNewStream}
+        isOpen={isOpen}
       />
     );
   }
@@ -124,10 +131,10 @@ function Categories({ addNewStream }) {
 function BrowseCategories({ setCategory }) {
   const { data, fetchNextPage, isFetchingNextPage } = useInfiniteQuery(
     "topGames",
-    ({ pageParam = 0 }) => getTopGames({ first: 20, after: pageParam }),
+    ({ pageParam = 0 }) => getTopGames({ first: 30, after: pageParam }),
     {
       getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-      refetchInterval: 60000,
+      refetchInterval: TWITCH_CATEGORY_REFETCH,
     }
   );
 
@@ -141,9 +148,11 @@ function BrowseCategories({ setCategory }) {
                 <img
                   onClick={() => setCategory(cat)}
                   className="cursor-pointer"
-                  src={cat.boxArtUrl
-                    .replace("{width}", "285")
-                    .replace("{height}", "380")}
+                  src={sizeThumbnailUrl({
+                    url: cat.boxArtUrl,
+                    width: "285",
+                    height: "380",
+                  })}
                   alt={`${cat.name} box art`}
                 />
                 <div className="truncate">{cat.name}</div>
@@ -168,19 +177,21 @@ function ShowCategory({
   category,
   back,
   addNewStream,
+  isOpen,
 }: {
   category: CategoryData | null;
   back: () => void;
   addNewStream: (name: string) => void;
+  isOpen: boolean;
 }) {
   const { data, fetchNextPage, isFetchingNextPage } = useInfiniteQuery(
     ["getStreamsByGameId", category?.id],
     ({ queryKey: [_, gameId], pageParam }) =>
       getStreams({ gameId, first: 30, after: pageParam }),
     {
-      enabled: !!category,
+      enabled: !!category && isOpen,
       getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-      refetchInterval: 120000,
+      refetchInterval: TWITCH_CATEGORY_STREAMS_REFETCH,
     }
   );
 
@@ -197,25 +208,27 @@ function ShowCategory({
         </button>
         <div className="text-2xl">{category.name}</div>
       </div>
-      <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
-        {data?.pages.map((page) => (
-          <>
-            {page.data.map((stream) => (
-              <Stream
-                onClick={() => addNewStream(stream.userLogin)}
-                stream={stream}
-              />
-            ))}
-          </>
-        ))}
-      </div>
-      <div className="flex justify-center my-4">
-        <button
-          onClick={() => fetchNextPage()}
-          className="font-semibold underline"
-        >
-          {isFetchingNextPage ? "Loading..." : "Load More"}
-        </button>
+      <div className="overflow-y-auto modal-scroll">
+        <div className="flex flex-wrap gap-3 justify-center">
+          {data?.pages.map((page) => (
+            <>
+              {page.data.map((stream) => (
+                <Stream
+                  onClick={() => addNewStream(stream.userLogin)}
+                  stream={stream}
+                />
+              ))}
+            </>
+          ))}
+        </div>
+        <div className="flex justify-center my-4">
+          <button
+            onClick={() => fetchNextPage()}
+            className="font-semibold underline"
+          >
+            {isFetchingNextPage ? "Loading..." : "Load More"}
+          </button>
+        </div>
       </div>
     </>
   );

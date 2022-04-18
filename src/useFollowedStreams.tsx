@@ -9,7 +9,7 @@ import {
   getFollowedStreams,
   StreamData,
 } from "./twitch";
-import { FETCH_FOLLOWED_INTERVAL_MINS } from "./const";
+import { FETCH_FOLLOWED_INTERVAL } from "./const";
 import LiveToast from "./LiveToast";
 
 export default function useFollowedStreams({
@@ -27,7 +27,7 @@ export default function useFollowedStreams({
     () => getFollowedStreams({ userId: twitchUser!.id }),
     {
       enabled: !!twitchUser,
-      refetchInterval: FETCH_FOLLOWED_INTERVAL_MINS * 60 * 1000,
+      refetchInterval: FETCH_FOLLOWED_INTERVAL,
       onSuccess: (data) => {
         // pre-populate stream query data since these endpoints return the same datatype
         data.forEach((stream) =>

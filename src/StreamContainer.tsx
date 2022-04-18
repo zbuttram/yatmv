@@ -9,7 +9,7 @@ import {
 import classNames from "classnames";
 import { useQuery } from "react-query";
 
-import { FETCH_OPEN_STREAMS_INTERVAL_MINS } from "./const";
+import { FETCH_OPEN_STREAMS_INTERVAL } from "./const";
 import { checkTwitchAuth, getStream } from "./twitch";
 import TwitchStream from "./TwitchStream";
 import { range } from "lodash";
@@ -50,7 +50,7 @@ export function StreamContainer({
     ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
     {
       enabled: checkTwitchAuth(),
-      refetchInterval: FETCH_OPEN_STREAMS_INTERVAL_MINS * 60 * 1000,
+      refetchInterval: FETCH_OPEN_STREAMS_INTERVAL,
       retry: true,
     }
   );
