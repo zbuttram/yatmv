@@ -125,11 +125,11 @@ export function Sidebar({
           </div>
         }
       />
-      <SidebarButton
-        title="Settings"
-        onClick={showSettingsModal}
-        icon={<FontAwesomeIcon icon={faSliders} fixedWidth />}
-      />
+      {/*<SidebarButton*/}
+      {/*  title="Settings"*/}
+      {/*  onClick={showSettingsModal}*/}
+      {/*  icon={<FontAwesomeIcon icon={faSliders} fixedWidth />}*/}
+      {/*/>*/}
       <SidebarButton
         title={fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
         onClick={() =>

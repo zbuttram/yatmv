@@ -1,19 +1,30 @@
-import { ReactNode } from "react";
+import { CSSProperties, ReactNode, useRef } from "react";
 import classNames from "classnames";
+import { useClickAway } from "react-use";
 
-export type ModalProps = {
+export type BaseModalProps = {
   children?: ReactNode;
   isOpen: boolean;
   close: () => void;
+  className?: string;
 };
 
-export function Modal({ children, isOpen, close }: ModalProps) {
+export type ModalProps = Omit<BaseModalProps, "children">;
+
+export function Modal({ children, isOpen, close, className }: BaseModalProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  useClickAway(ref, () => {
+    isOpen && close();
+  });
+
   return (
     <div
       className={classNames(
-        "z-30 w-2/3 bg-slate-800 p-4 relative pointer-events-auto",
-        isOpen ? "" : "hidden"
+        "z-30 w-2/3 bg-slate-800 relative pointer-events-auto",
+        isOpen ? "" : "hidden",
+        className
       )}
+      ref={ref}
     >
       <div
         className="cursor-pointer font-bold text-3xl absolute top-1 right-2"

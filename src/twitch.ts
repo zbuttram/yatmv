@@ -1,17 +1,18 @@
 import Cookies from "js-cookie";
-import { camelCase, snakeCase } from "lodash";
+import { camelCase } from "lodash";
 import mapKeysDeep from "map-keys-deep-lodash";
 
 import {
+  STREAM_STATE_COOKIE,
   TWITCH_ACCESS_TOKEN_COOKIE,
+  TWITCH_AUTH_URL,
   TWITCH_CLIENT_ID,
   TWITCH_SCOPE_COOKIE,
-  STREAM_STATE_COOKIE,
   TWITCH_SCOPES,
-  TWITCH_AUTH_URL,
 } from "./const";
 import { useQuery } from "react-query";
 import { Layout } from "./layout";
+import { Params, paramsToString, ParamValue } from "./utils";
 
 if (!TWITCH_CLIENT_ID) {
   throw new Error(
@@ -88,29 +89,7 @@ export function checkTwitchAuth() {
   }
 }
 
-type ParamValue = number | string | string[] | boolean | undefined;
-type Params = Record<string, ParamValue>;
-
 type PaginatedResponse<T> = { data: T[]; pagination: { cursor?: string } };
-
-function paramsToString(params?: Params): string {
-  if (!params) {
-    return "";
-  } else {
-    const search = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (!v) {
-        return;
-      }
-      if (Array.isArray(v)) {
-        v.forEach((e) => search.append(snakeCase(k), e));
-      } else {
-        search.append(snakeCase(k), v.toString());
-      }
-    });
-    return search.toString();
-  }
-}
 
 async function callTwitch<T = any>(
   path,

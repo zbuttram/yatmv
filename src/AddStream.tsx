@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
-import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
+import scrollIntoView from "scroll-into-view-if-needed";
 import { useQuery, useQueryClient } from "react-query";
 import { usePrevious } from "react-use";
-import scrollIntoView from "scroll-into-view-if-needed";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 
-export default function AddStream({ addNewStream, className = "" }) {
+import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
+
+export default function AddStream({
+  addNewStream,
+  className = "",
+  setModalOpen,
+}: {
+  addNewStream: (name: string) => void;
+  className?: string;
+  setModalOpen: (modal: "twitch-browser") => void;
+}) {
   const queryClient = useQueryClient();
   const [newStream, setNewStream] = useState("");
   const searchQuery = useDebounce(newStream, 1000);
@@ -89,6 +100,15 @@ export default function AddStream({ addNewStream, className = "" }) {
       className={"flex flex-col h-full" + className}
     >
       <div className="flex mb-1">
+        {checkTwitchAuth() ? (
+          <button
+            title="Browse Twitch"
+            className="bg-purple-700 px-2 mr-1 border border-white"
+            onClick={() => setModalOpen("twitch-browser")}
+          >
+            <FontAwesomeIcon icon={faTwitch} />
+          </button>
+        ) : null}
         <input
           type={checkTwitchAuth() ? "search" : "text"}
           placeholder="Channel"
@@ -123,7 +143,7 @@ export default function AddStream({ addNewStream, className = "" }) {
         <input
           type="submit"
           value="Add"
-          className="ml-1 mb-auto px-1 bg-black border"
+          className="ml-1 mb-auto px-1 bg-black border cursor-pointer"
         />
       </div>
       {newStream &&

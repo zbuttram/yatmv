@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -13,7 +13,7 @@ import useBounding from "./useBounding";
 import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
 import AddStream from "./AddStream";
 import { checkTwitchAuth } from "./twitch";
-import useSettings, { Settings } from "./useSettings";
+import useSettings from "./useSettings";
 import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
@@ -22,7 +22,8 @@ import { useLazyLoadingChats } from "./useLazyLoadingChats";
 import useScroll from "./useScroll";
 import useFollowedStreams from "./useFollowedStreams";
 import useHostsMap from "./useHostsMap";
-import { Modal, ModalProps } from "./Modal";
+import { SettingsModal } from "./SettingsModal";
+import TwitchBrowser from "./TwitchBrowser";
 
 export default function App() {
   const [settings, setSettings] = useSettings();
@@ -61,7 +62,9 @@ export default function App() {
 
   const hostsMap = useHostsMap({ streams });
 
-  const [modalOpen, setModalOpen] = useState<null | "settings">(null);
+  const [modalOpen, setModalOpen] =
+    useState<null | "settings" | "twitch-browser">(null);
+  const closeModal = () => setModalOpen(null);
 
   //region AppReturn
   return (
@@ -146,14 +149,17 @@ export default function App() {
           className="flex justify-center flex-wrap px-2 gap-1 bg-slate-900"
         >
           <div
-            className="w-52 flex flex-col py-3 stream-container"
+            className="w-56 flex flex-col py-3 stream-container"
             style={{
               maxHeight: referenceStreamContainerRect.height
                 ? referenceStreamContainerRect.height
                 : undefined,
             }}
           >
-            <AddStream addNewStream={addNewStream} />
+            <AddStream
+              addNewStream={addNewStream}
+              setModalOpen={setModalOpen}
+            />
           </div>
           {streams.map((stream, i) => (
             <StreamContainer
@@ -206,82 +212,21 @@ export default function App() {
           </div>
         </div>
       </main>
-      <div className="absolute top-0 left-0 z-30 w-screen pointer-events-none flex justify-center pt-16">
+      {/* Modal Container */}
+      <div className="fixed top-0 z-30 w-full pointer-events-none flex justify-center pt-16">
         <SettingsModal
           isOpen={modalOpen === "settings"}
           close={() => setModalOpen(null)}
           settings={settings}
           setSettings={setSettings}
         />
+        <TwitchBrowser
+          isOpen={modalOpen === "twitch-browser"}
+          close={closeModal}
+          followedStreams={followedStreams}
+          addNewStream={addNewStream}
+        />
       </div>
     </AppProvider>
-  );
-}
-
-function SettingsModal({
-  isOpen,
-  close,
-  settings,
-  setSettings,
-}: Omit<ModalProps, "children"> & {
-  settings: Settings;
-  setSettings: Dispatch<SetStateAction<Settings>>;
-}) {
-  return (
-    <Modal isOpen={isOpen} close={close}>
-      <h3 className="text-2xl font-semibold">Settings</h3>
-      <div className="flex">
-        <div>
-          <div>Boost Mode</div>
-          <div>When enabled, forces primary streams into highest quality.</div>
-        </div>
-        <RadioToggle
-          id="boostmode"
-          state={settings.boostMode}
-          update={(newState) =>
-            setSettings((state) => ({ ...state, boostMode: newState }))
-          }
-        />
-      </div>
-    </Modal>
-  );
-}
-
-function RadioToggle({
-  state,
-  id,
-  update,
-}: {
-  state: boolean;
-  id: string;
-  update: (newState: boolean) => void;
-}) {
-  return (
-    <div className="flex">
-      <div className="mr-4">
-        <input
-          className="mr-1 cursor-pointer"
-          type="radio"
-          id={id + "-on"}
-          checked={state}
-          onChange={() => update(true)}
-        />
-        <label className="cursor-pointer" htmlFor={id + "-on"}>
-          On
-        </label>
-      </div>
-      <div>
-        <input
-          className="mr-1 cursor-pointer"
-          type="radio"
-          id={id + "-off"}
-          checked={!state}
-          onChange={() => update(false)}
-        />
-        <label className="cursor-pointer" htmlFor={id + "-off"}>
-          Off
-        </label>
-      </div>
-    </div>
   );
 }
