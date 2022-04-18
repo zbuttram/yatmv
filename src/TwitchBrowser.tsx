@@ -1,13 +1,15 @@
-import { Modal, ModalProps } from "./Modal";
-import { CategoryData, getStreams, getTopGames, StreamData } from "./twitch";
 import classNames from "classnames";
 import { ReactNode, useState } from "react";
-import { simplifyViewerCount, sizeThumbnailUrl } from "./utils";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useInfiniteQuery } from "react-query";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
+import { Waypoint } from "react-waypoint";
+
+import { Modal, ModalProps } from "./Modal";
+import { CategoryData, getStreams, getTopGames, StreamData } from "./twitch";
+import { simplifyViewerCount, sizeThumbnailUrl } from "./utils";
 import {
   TWITCH_CATEGORY_REFETCH,
   TWITCH_CATEGORY_STREAMS_REFETCH,
@@ -81,11 +83,14 @@ function Tab({
 }
 
 function Stream(props: { onClick: () => void; stream: StreamData }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
   return (
-    <div className="w-56">
+    <div className={classNames("w-56", imgLoaded ? "" : "hidden")}>
       <img
         className="cursor-pointer"
         onClick={props.onClick}
+        onLoad={() => setImgLoaded(true)}
         src={sizeThumbnailUrl({
           url: props.stream.thumbnailUrl,
           width: "440",
@@ -129,7 +134,7 @@ function Categories({ addNewStream, isOpen }) {
 }
 
 function BrowseCategories({ setCategory }) {
-  const { data, fetchNextPage, isFetchingNextPage } = useInfiniteQuery(
+  const { data, fetchNextPage } = useInfiniteQuery(
     "topGames",
     ({ pageParam = 0 }) => getTopGames({ first: 30, after: pageParam }),
     {
@@ -143,33 +148,35 @@ function BrowseCategories({ setCategory }) {
       <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
         {data?.pages?.map((page) => (
           <>
-            {page.data.map((cat, i, arr) => (
-              <div className="w-40">
-                <img
-                  onClick={() => setCategory(cat)}
-                  className="cursor-pointer"
-                  src={sizeThumbnailUrl({
-                    url: cat.boxArtUrl,
-                    width: "285",
-                    height: "380",
-                  })}
-                  alt={`${cat.name} box art`}
-                />
-                <div className="truncate">{cat.name}</div>
-              </div>
+            {page.data.map((category) => (
+              <CategoryListing category={category} setCategory={setCategory} />
             ))}
           </>
         ))}
-      </div>
-      <div className="flex justify-center my-4">
-        <button
-          onClick={() => fetchNextPage()}
-          className="font-semibold underline"
-        >
-          {isFetchingNextPage ? "Loading..." : "Load More"}
-        </button>
+        <Waypoint onEnter={() => fetchNextPage()} />
       </div>
     </>
+  );
+}
+
+function CategoryListing({ category, setCategory }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  return (
+    <div className={classNames("w-40", imgLoaded ? "" : "hidden")}>
+      <img
+        onClick={() => setCategory(category)}
+        onLoad={() => setImgLoaded(true)}
+        className="cursor-pointer"
+        src={sizeThumbnailUrl({
+          url: category.boxArtUrl,
+          width: "285",
+          height: "380",
+        })}
+        alt={`${category.name} box art`}
+      />
+      <div className="truncate">{category.name}</div>
+    </div>
   );
 }
 
@@ -184,10 +191,10 @@ function ShowCategory({
   addNewStream: (name: string) => void;
   isOpen: boolean;
 }) {
-  const { data, fetchNextPage, isFetchingNextPage } = useInfiniteQuery(
+  const { data, fetchNextPage } = useInfiniteQuery(
     ["getStreamsByGameId", category?.id],
     ({ queryKey: [_, gameId], pageParam }) =>
-      getStreams({ gameId, first: 30, after: pageParam }),
+      getStreams({ gameId, after: pageParam }),
     {
       enabled: !!category && isOpen,
       getNextPageParam: (lastPage) => lastPage.pagination.cursor,
@@ -220,14 +227,7 @@ function ShowCategory({
               ))}
             </>
           ))}
-        </div>
-        <div className="flex justify-center my-4">
-          <button
-            onClick={() => fetchNextPage()}
-            className="font-semibold underline"
-          >
-            {isFetchingNextPage ? "Loading..." : "Load More"}
-          </button>
+          <Waypoint onEnter={() => fetchNextPage()} />
         </div>
       </div>
     </>
