@@ -289,7 +289,13 @@ function ShowCategory({
   );
 }
 
-function Channels({ addNewStream, isOpen }) {
+function Channels({
+  addNewStream,
+  isOpen,
+}: {
+  addNewStream: (name: string) => void;
+  isOpen: boolean;
+}) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 1000);
 
@@ -342,8 +348,11 @@ function Channels({ addNewStream, isOpen }) {
       <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
         {data?.pages.map((page: PaginatedResponse<StreamData>) => (
           <>
-            {page.data.map((pageData) => (
-              <Stream onClick={addNewStream} stream={pageData} />
+            {page.data.map((stream) => (
+              <Stream
+                onClick={() => addNewStream(stream.userLogin)}
+                stream={stream}
+              />
             ))}
           </>
         ))}
