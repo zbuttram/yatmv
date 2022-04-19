@@ -89,7 +89,10 @@ export function checkTwitchAuth() {
   }
 }
 
-type PaginatedResponse<T> = { data: T[]; pagination: { cursor?: string } };
+export type PaginatedResponse<T> = {
+  data: T[];
+  pagination: { cursor?: string };
+};
 type PaginationParams = {
   after?: ParamValue;
   before?: ParamValue;
@@ -154,14 +157,11 @@ export type ChannelData = {
 
 export function searchChannels(
   query: string,
-  {
-    first,
-    signal,
-  }: Partial<{ first: number | string; signal: AbortSignal }> = {}
+  { signal, ...params }: { signal?: AbortSignal } & PaginationParams = {}
 ) {
   return callTwitch<PaginatedResponse<ChannelData>>("/search/channels", {
     signal,
-    params: { query, first, live_only: true },
+    params: { ...params, query, live_only: true },
   });
 }
 
@@ -194,7 +194,7 @@ export function getStreams({
   userId,
   userLogin,
   after,
-}: Partial<PaginationParams & StreamQueryParams>) {
+}: Partial<PaginationParams & StreamQueryParams> = {}) {
   return callTwitch<PaginatedResponse<StreamData>>("/streams", {
     params: { first, after, gameId, userId, userLogin },
   });
