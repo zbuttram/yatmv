@@ -294,12 +294,12 @@ export type CategoryData = {
 export function searchCategories({
   query,
   first,
+  after,
 }: {
   query: string;
-  first?: ParamValue;
-}) {
+} & PaginationParams) {
   return callTwitch<PaginatedResponse<CategoryData>>("/search/categories", {
-    params: { query, first },
+    params: { query, first, after },
   });
 }
 

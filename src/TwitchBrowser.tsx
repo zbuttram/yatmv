@@ -2,13 +2,19 @@ import classNames from "classnames";
 import { ReactNode, useState } from "react";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useInfiniteQuery } from "react-query";
+import { useInfiniteQuery, useQuery } from "react-query";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { Waypoint } from "react-waypoint";
 
 import { Modal, ModalProps } from "./Modal";
-import { CategoryData, getStreams, getTopGames, StreamData } from "./twitch";
+import {
+  CategoryData,
+  getStreams,
+  getTopGames,
+  searchCategories,
+  StreamData,
+} from "./twitch";
 import { simplifyViewerCount, sizeThumbnailUrl } from "./utils";
 import {
   TWITCH_CATEGORY_REFETCH,
@@ -44,7 +50,7 @@ export default function TwitchBrowser({
           </Tab>
         </div>
       </div>
-      <div className="border-t border-gray-400 py-2">
+      <div className="border-t border-gray-400 pt-2 pb-3">
         {tab === "followed" ? (
           <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
             {followedStreams?.map((stream) => (
@@ -119,32 +125,55 @@ function Stream(props: { onClick: () => void; stream: StreamData }) {
 function Categories({ addNewStream, isOpen }) {
   const [category, setCategory] = useState(null);
 
-  if (category) {
-    return (
-      <ShowCategory
-        category={category}
-        back={() => setCategory(null)}
-        addNewStream={addNewStream}
-        isOpen={isOpen}
-      />
-    );
-  }
-
-  return <BrowseCategories setCategory={setCategory} />;
+  return category ? (
+    <ShowCategory
+      category={category}
+      back={() => setCategory(null)}
+      addNewStream={addNewStream}
+      isOpen={isOpen}
+    />
+  ) : (
+    <BrowseCategories setCategory={setCategory} />
+  );
 }
 
 function BrowseCategories({ setCategory }) {
-  const { data, fetchNextPage } = useInfiniteQuery(
-    "topGames",
-    ({ pageParam = 0 }) => getTopGames({ first: 30, after: pageParam }),
+  const [query, setQuery] = useState("");
+
+  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery(
+    ["searchCategories", query],
+    ({ queryKey: [_, q], pageParam }) =>
+      searchCategories({ query: q, after: pageParam }),
     {
+      enabled: !!query,
       getNextPageParam: (lastPage) => lastPage.pagination.cursor,
       refetchInterval: TWITCH_CATEGORY_REFETCH,
     }
   );
 
+  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery(
+    "topGames",
+    ({ pageParam = 0 }) => getTopGames({ first: 30, after: pageParam }),
+    {
+      enabled: !query,
+      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+      refetchInterval: TWITCH_CATEGORY_REFETCH,
+    }
+  );
+
+  const data = query ? queryData : topData;
+
   return (
     <>
+      <div className="flex justify-center">
+        <input
+          type="search"
+          className="bg-black mt-1 mb-3 border border-gray-400 px-1"
+          placeholder="Search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
       <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
         {data?.pages?.map((page) => (
           <>
@@ -153,7 +182,10 @@ function BrowseCategories({ setCategory }) {
             ))}
           </>
         ))}
-        <Waypoint onEnter={() => fetchNextPage()} />
+        <Waypoint
+          onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
+          bottomOffset="20%"
+        />
       </div>
     </>
   );
@@ -163,11 +195,16 @@ function CategoryListing({ category, setCategory }) {
   const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
-    <div className={classNames("w-40", imgLoaded ? "" : "hidden")}>
+    <div
+      className={classNames(
+        "w-40 hover:text-purple-700",
+        imgLoaded ? "" : "hidden"
+      )}
+    >
       <img
         onClick={() => setCategory(category)}
         onLoad={() => setImgLoaded(true)}
-        className="cursor-pointer"
+        className="cursor-pointer mx-auto"
         src={sizeThumbnailUrl({
           url: category.boxArtUrl,
           width: "285",
@@ -175,7 +212,7 @@ function CategoryListing({ category, setCategory }) {
         })}
         alt={`${category.name} box art`}
       />
-      <div className="truncate">{category.name}</div>
+      <div className="truncate w-full text-center">{category.name}</div>
     </div>
   );
 }
@@ -194,7 +231,11 @@ function ShowCategory({
   const { data, fetchNextPage } = useInfiniteQuery(
     ["getStreamsByGameId", category?.id],
     ({ queryKey: [_, gameId], pageParam }) =>
-      getStreams({ gameId, after: pageParam }),
+      getStreams({
+        gameId,
+        after: pageParam,
+        first: pageParam ? undefined : 50,
+      }),
     {
       enabled: !!category && isOpen,
       getNextPageParam: (lastPage) => lastPage.pagination.cursor,
@@ -227,7 +268,7 @@ function ShowCategory({
               ))}
             </>
           ))}
-          <Waypoint onEnter={() => fetchNextPage()} />
+          <Waypoint onEnter={() => fetchNextPage()} bottomOffset="20%" />
         </div>
       </div>
     </>
