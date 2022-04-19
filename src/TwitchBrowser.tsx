@@ -2,7 +2,7 @@ import classNames from "classnames";
 import { ReactNode, useState } from "react";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useInfiniteQuery, useQuery } from "react-query";
+import { useInfiniteQuery } from "react-query";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { Waypoint } from "react-waypoint";
@@ -10,8 +10,6 @@ import { Waypoint } from "react-waypoint";
 import { Modal, ModalProps } from "./Modal";
 import {
   CategoryData,
-  ChannelData,
-  getStream,
   getStreams,
   getTopGames,
   PaginatedResponse,
@@ -274,20 +272,18 @@ function ShowCategory({
         </button>
         <div className="text-2xl">{category.name}</div>
       </div>
-      <div className="overflow-y-auto modal-scroll">
-        <div className="flex flex-wrap gap-3 justify-center">
-          {data?.pages.map((page) => (
-            <>
-              {page.data.map((stream) => (
-                <Stream
-                  onClick={() => addNewStream(stream.userLogin)}
-                  stream={stream}
-                />
-              ))}
-            </>
-          ))}
-          <Waypoint onEnter={() => fetchNextPage()} bottomOffset="20%" />
-        </div>
+      <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
+        {data?.pages.map((page) => (
+          <>
+            {page.data.map((stream) => (
+              <Stream
+                onClick={() => addNewStream(stream.userLogin)}
+                stream={stream}
+              />
+            ))}
+          </>
+        ))}
+        <Waypoint onEnter={() => fetchNextPage()} bottomOffset="20%" />
       </div>
     </>
   );
@@ -298,17 +294,25 @@ function Channels({ addNewStream, isOpen }) {
   const debouncedQuery = useDebounce(query, 1000);
 
   const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery(
-    ["searchChannels", debouncedQuery],
-    ({ queryKey: [_key, query], pageParam }) =>
-      searchChannels(query, {
+    ["searchStreams", debouncedQuery],
+    async ({ queryKey: [_key, query], pageParam }) => {
+      const channels = await searchChannels(query, {
         first: pageParam ? undefined : 50,
         after: pageParam,
-      }),
+      });
+      const streams = await getStreams({
+        userLogin: channels.data.map((c) => c.broadcasterLogin),
+      });
+      return {
+        ...streams,
+        pagination: channels.pagination,
+      };
+    },
     {
       getNextPageParam: (lastPage) => lastPage.pagination.cursor,
       staleTime: 5000,
       refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
-      enabled: isOpen && !!query,
+      enabled: isOpen && !!debouncedQuery,
     }
   );
   const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery(
@@ -336,25 +340,13 @@ function Channels({ addNewStream, isOpen }) {
         />
       </div>
       <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
-        {data?.pages.map(
-          (page: PaginatedResponse<StreamData | ChannelData>) => (
-            <>
-              {page.data.map((pageData) =>
-                query ? (
-                  <Channel
-                    channel={pageData as ChannelData}
-                    addNewStream={addNewStream}
-                  />
-                ) : (
-                  <Stream
-                    onClick={addNewStream}
-                    stream={pageData as StreamData}
-                  />
-                )
-              )}
-            </>
-          )
-        )}
+        {data?.pages.map((page: PaginatedResponse<StreamData>) => (
+          <>
+            {page.data.map((pageData) => (
+              <Stream onClick={addNewStream} stream={pageData} />
+            ))}
+          </>
+        ))}
         <Waypoint
           onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
           bottomOffset="20%"
@@ -362,29 +354,4 @@ function Channels({ addNewStream, isOpen }) {
       </div>
     </>
   );
-}
-
-function Channel({
-  channel,
-  addNewStream,
-}: {
-  channel: ChannelData;
-  addNewStream: (name: string) => void;
-}) {
-  const { data } = useQuery(
-    ["stream", channel.broadcasterLogin],
-    ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
-    {}
-  );
-
-  if (data) {
-    return (
-      <Stream
-        onClick={() => addNewStream(channel.broadcasterLogin)}
-        stream={data}
-      />
-    );
-  } else {
-    return null;
-  }
 }

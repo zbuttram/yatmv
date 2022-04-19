@@ -10,7 +10,7 @@ import {
   TWITCH_SCOPE_COOKIE,
   TWITCH_SCOPES,
 } from "./const";
-import { QueryClient, useQuery } from "react-query";
+import { useQuery } from "react-query";
 import { Layout } from "./layout";
 import { Params, paramsToString, ParamValue } from "./utils";
 

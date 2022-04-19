@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, useRef } from "react";
+import { ReactNode, useRef } from "react";
 import classNames from "classnames";
 import { useClickAway } from "react-use";
 
