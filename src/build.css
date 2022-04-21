@@ -1270,7 +1270,7 @@ body {
   max-height: 800px;
 }
 
-.twitch-stream-container, .twitch-stream-container > iframe {
+iframe, .twitch-stream-container {
   outline: none;
 }
 
