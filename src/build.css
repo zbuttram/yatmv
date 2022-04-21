@@ -474,6 +474,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   pointer-events: auto;
 }
 
+.visible {
+  visibility: visible;
+}
+
 .invisible {
   visibility: hidden;
 }
@@ -536,10 +540,6 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .m-auto {
   margin: auto;
-}
-
-.m-2 {
-  margin: 0.5rem;
 }
 
 .mx-auto {
@@ -638,10 +638,6 @@ Ensure the default browser behavior of the `hidden` attribute.
   height: 100%;
 }
 
-.h-40 {
-  height: 10rem;
-}
-
 .w-4\/5 {
   width: 80%;
 }
@@ -688,6 +684,72 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .flex-grow {
   flex-grow: 1;
+}
+
+@-webkit-keyframes toast-enter {
+  0% {
+    -webkit-transform: scale(0.9);
+            transform: scale(0.9);
+    opacity: 0;
+  }
+
+  100% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-enter {
+  0% {
+    -webkit-transform: scale(0.9);
+            transform: scale(0.9);
+    opacity: 0;
+  }
+
+  100% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-toast-enter {
+  -webkit-animation: toast-enter 200ms ease-out;
+          animation: toast-enter 200ms ease-out;
+}
+
+@-webkit-keyframes toast-leave {
+  0% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    -webkit-transform: scale(0.9);
+            transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-leave {
+  0% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    -webkit-transform: scale(0.9);
+            transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+.animate-toast-leave {
+  -webkit-animation: toast-leave 150ms ease-in forwards;
+          animation: toast-leave 150ms ease-in forwards;
 }
 
 .cursor-pointer {
@@ -866,11 +928,6 @@ Ensure the default browser behavior of the `hidden` attribute.
   background-color: rgb(239 68 68 / var(--tw-bg-opacity));
 }
 
-.bg-zinc-900 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(24 24 27 / var(--tw-bg-opacity));
-}
-
 .bg-opacity-50 {
   --tw-bg-opacity: 0.5;
 }
@@ -914,11 +971,6 @@ Ensure the default browser behavior of the `hidden` attribute.
 .py-1 {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
-}
-
-.py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
 }
 
 .pt-16 {
@@ -1216,6 +1268,10 @@ body {
 
 .modal-scroll {
   max-height: 800px;
+}
+
+.twitch-stream-container, .twitch-stream-container > iframe {
+  outline: none;
 }
 
 .hover\:bg-gray-400:hover {

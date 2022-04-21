@@ -45,18 +45,7 @@ export default function useFollowedStreams({
               .filter(Boolean)
           );
           if (newStreams.length) {
-            newStreams.forEach(
-              (stream) => {
-                toast.custom((t) => (
-                  <LiveToast
-                    channel={stream}
-                    addStream={() => addNewStream(stream)}
-                    dismiss={() => toast.dismiss(t.id)}
-                  />
-                ));
-              },
-              { duration: 10000 }
-            );
+            newStreams.forEach((stream) => liveToast(stream, addNewStream));
           }
         }
 
@@ -66,4 +55,23 @@ export default function useFollowedStreams({
   );
 
   return followedStreams;
+}
+
+function liveToast(stream: string, add: (stream: string) => void) {
+  toast.custom(
+    (t) => (
+      <LiveToast
+        channel={stream}
+        addStream={() => add(stream)}
+        dismiss={() => toast.dismiss(t.id)}
+        visible={t.visible}
+      />
+    ),
+    { duration: 10000 }
+  );
+}
+
+if (process.env.NODE_ENV === "development") {
+  // @ts-ignore
+  window._liveToast = (name = "test") => liveToast(name, () => {});
 }
