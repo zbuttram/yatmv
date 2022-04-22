@@ -6,7 +6,5 @@
 * save stream "lists"
 * shareable "rooms"
 * chat selector
-* search by game/category with thumbnails
-* HasRoot integration
 * ask if user wants to reopen last open streams when returning
   * check for offline streams?
