@@ -41,7 +41,7 @@ export default function TwitchBrowser({
       <div className="absolute top-1 left-2 text-3xl">
         <FontAwesomeIcon className="text-purple-700" icon={faTwitch} />
       </div>
-      <div className="p-4">
+      <div className="p-4" style={{ height: "3.5rem" }}>
         <div className="flex justify-center">
           <Tab active={tab === "followed"} onClick={() => setTab("followed")}>
             Followed
@@ -57,12 +57,15 @@ export default function TwitchBrowser({
           </Tab>
         </div>
       </div>
-      <div className="border-t border-gray-400 pt-2 pb-3">
+      <div
+        className="border-t border-gray-400 pt-2 pb-3"
+        style={{ height: "calc(100% - 3.5rem)" }}
+      >
         {(() => {
           switch (tab) {
             case "followed":
               return (
-                <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
+                <div className="flex flex-wrap gap-3 justify-center overflow-y-auto max-h-full">
                   {followedStreams?.map((stream) => (
                     <Stream
                       onClick={() => addNewStream(stream.userLogin)}
@@ -169,7 +172,8 @@ function BrowseCategories({ setCategory }) {
 
   const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery(
     "topGames",
-    ({ pageParam = 0 }) => getTopGames({ first: 30, after: pageParam }),
+    ({ pageParam }) =>
+      getTopGames({ first: pageParam ? undefined : 50, after: pageParam }),
     {
       enabled: !query,
       getNextPageParam: (lastPage) => lastPage.pagination.cursor,
@@ -181,7 +185,7 @@ function BrowseCategories({ setCategory }) {
 
   return (
     <>
-      <div className="flex justify-center">
+      <div className="flex justify-center" style={{ height: "2.75rem" }}>
         <input
           type="search"
           className="bg-black mt-1 mb-3 border border-gray-400 px-1"
@@ -190,7 +194,10 @@ function BrowseCategories({ setCategory }) {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
+      <div
+        className="flex flex-wrap gap-3 justify-center overflow-y-auto"
+        style={{ maxHeight: "calc(100% - 2.75rem)" }}
+      >
         {data?.pages?.map((page) => (
           <>
             {page.data.map((category) => (
@@ -200,7 +207,7 @@ function BrowseCategories({ setCategory }) {
         ))}
         <Waypoint
           onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
-          bottomOffset="20%"
+          key={data?.pages?.length}
         />
       </div>
     </>
@@ -265,14 +272,17 @@ function ShowCategory({
 
   return (
     <>
-      <div className="p-4 flex justify-between">
+      <div className="p-4 flex justify-between" style={{ height: "4rem" }}>
         <button onClick={back} className="mr-3 font-semibold text-lg">
           <FontAwesomeIcon icon={faArrowLeft} />{" "}
           <span className="underline">Back</span>
         </button>
         <div className="text-2xl">{category.name}</div>
       </div>
-      <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
+      <div
+        className="flex flex-wrap gap-3 justify-center overflow-y-auto"
+        style={{ maxHeight: "calc(100% - 4rem)" }}
+      >
         {data?.pages.map((page) => (
           <>
             {page.data.map((stream) => (
@@ -283,7 +293,7 @@ function ShowCategory({
             ))}
           </>
         ))}
-        <Waypoint onEnter={() => fetchNextPage()} bottomOffset="20%" />
+        <Waypoint onEnter={() => fetchNextPage()} key={data?.pages?.length} />
       </div>
     </>
   );
@@ -336,7 +346,7 @@ function Channels({
 
   return (
     <>
-      <div className="flex justify-center">
+      <div className="flex justify-center" style={{ height: "2.75rem" }}>
         <input
           type="search"
           className="bg-black mt-1 mb-3 border border-gray-400 px-1"
@@ -345,7 +355,10 @@ function Channels({
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className="flex flex-wrap gap-3 justify-center overflow-y-auto modal-scroll">
+      <div
+        className="flex flex-wrap gap-3 justify-center overflow-y-auto"
+        style={{ maxHeight: "calc(100% - 2.75rem)" }}
+      >
         {data?.pages.map((page: PaginatedResponse<StreamData>) => (
           <>
             {page.data.map((stream) => (
@@ -358,7 +371,7 @@ function Channels({
         ))}
         <Waypoint
           onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
-          bottomOffset="20%"
+          key={data?.pages?.length}
         />
       </div>
     </>

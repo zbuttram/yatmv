@@ -213,7 +213,12 @@ export default function App() {
         </div>
       </main>
       {/* Modal Container */}
-      <div className="fixed top-0 z-30 w-full pointer-events-none flex justify-center pt-16">
+      <div
+        className={classNames(
+          "fixed top-0 z-30 w-full h-screen flex justify-center pt-16",
+          modalOpen === null ? "pointer-events-none" : "bg-neutral-500/50"
+        )}
+      >
         <SettingsModal
           isOpen={modalOpen === "settings"}
           close={() => setModalOpen(null)}

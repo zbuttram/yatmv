@@ -232,7 +232,7 @@ export default function TwitchStream({
       <div
         id={divId}
         style={style || { height: 0 }}
-        className="transition-all twitch-stream-container"
+        className="transition-all"
       />
       {overlay ? (
         <div

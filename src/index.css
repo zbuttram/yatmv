@@ -88,10 +88,10 @@ body {
   aspect-ratio: 16 / 9;
 }
 
-.modal-scroll {
-  max-height: 800px;
+.modal {
+  max-height: 80vh;
 }
 
-iframe, .twitch-stream-container {
-  outline: none;
+iframe {
+  outline: none !important;
 }

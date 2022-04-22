@@ -638,6 +638,14 @@ Ensure the default browser behavior of the `hidden` attribute.
   height: 100%;
 }
 
+.h-screen {
+  height: 100vh;
+}
+
+.max-h-full {
+  max-height: 100%;
+}
+
 .w-4\/5 {
   width: 80%;
 }
@@ -901,6 +909,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 .bg-gray-900 {
   --tw-bg-opacity: 1;
   background-color: rgb(17 24 39 / var(--tw-bg-opacity));
+}
+
+.bg-neutral-500\/50 {
+  background-color: rgb(115 115 115 / 0.5);
 }
 
 .bg-neutral-900 {
@@ -1266,12 +1278,12 @@ body {
   aspect-ratio: 16 / 9;
 }
 
-.modal-scroll {
-  max-height: 800px;
+.modal {
+  max-height: 80vh;
 }
 
-iframe, .twitch-stream-container {
-  outline: none;
+iframe {
+  outline: none !important;
 }
 
 .hover\:bg-gray-400:hover {
