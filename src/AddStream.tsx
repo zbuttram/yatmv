@@ -96,79 +96,81 @@ export default function AddStream({
   }
 
   return (
-    <form
-      onSubmit={submitNewStream}
-      className={"flex flex-col h-full" + className}
-    >
-      <div className="flex mb-1">
-        {checkTwitchAuth() ? (
-          <button
-            title="Browse Twitch"
-            className="bg-purple-700 px-2 mr-1 border border-white"
-            onClick={() => setModalOpen("twitch-browser")}
-          >
-            <FontAwesomeIcon icon={faTwitch} />
-          </button>
-        ) : null}
-        <input
-          type={checkTwitchAuth() ? "search" : "text"}
-          placeholder="Channel"
-          className="w-4/5 bg-black border border-gray-400 focus:outline-none focus:border-white"
-          onKeyDown={(e) => {
-            if (
-              e.key === "Escape" ||
-              e.key === "ArrowUp" ||
-              e.key === "ArrowDown" ||
-              (e.key === "Tab" && newStream)
-            ) {
-              e.preventDefault();
-            }
-          }}
-          onKeyUp={(e) => {
-            if (e.key === "Escape" && newStream.length > 0) {
-              setNewStream("");
-            }
-            if (e.key === "ArrowUp") {
-              setSelectedSearchResult((sel) => Math.max(-1, sel - 1));
-            } else if (e.key === "ArrowDown") {
-              setSelectedSearchResult((sel) =>
-                Math.min(searchResults.length - 1, sel + 1)
-              );
-            } else {
-              setSelectedSearchResult(-1);
-            }
-          }}
-          value={selectedSearchResult?.displayName ?? newStream}
-          onChange={(e) => setNewStream(e.target.value)}
-        />
-        <input
-          type="submit"
-          value="Add"
-          className="ml-1 mb-auto px-1 bg-black border cursor-pointer"
-        />
-      </div>
-      {newStream &&
-        (isFetching || newStream !== searchQuery ? (
-          <div>Searching...</div>
-        ) : (
-          <div className="overflow-y-auto overflow-x-hidden overflow-ellipsis scrollbar-width-thin">
-            {searchResults.map((result) => (
-              <SearchResult
-                key={result.displayName}
-                result={result}
-                isSelected={result === selectedSearchResult}
-                onClick={() => {
-                  addNewStream(result.displayName);
-                  setNewStream("");
-                }}
-                prefetchStreamData={() =>
-                  prefetchStreamData(result.broadcasterLogin)
-                }
-              />
-            ))}
-          </div>
-        ))}
-    </form>
+    <div className="flex mb-1">
+      {checkTwitchAuth() ? (
+        <button
+          title="Browse Twitch"
+          className="bg-purple-700 px-2 mr-1 border border-white"
+          onClick={() => setModalOpen("twitch-browser")}
+        >
+          <FontAwesomeIcon icon={faTwitch} />
+        </button>
+      ) : null}
+      <form
+        onSubmit={submitNewStream}
+        className={"flex flex-col h-full" + className}
+      >
+        <div className="flex">
+          <input
+            type={checkTwitchAuth() ? "search" : "text"}
+            placeholder="Channel"
+            className="w-4/5 bg-black border border-gray-400 focus:outline-none focus:border-white"
+            onKeyDown={(e) => {
+              if (
+                e.key === "Escape" ||
+                e.key === "ArrowUp" ||
+                e.key === "ArrowDown" ||
+                (e.key === "Tab" && newStream)
+              ) {
+                e.preventDefault();
+              }
+            }}
+            onKeyUp={(e) => {
+              if (e.key === "Escape" && newStream.length > 0) {
+                setNewStream("");
+              }
+              if (e.key === "ArrowUp") {
+                setSelectedSearchResult((sel) => Math.max(-1, sel - 1));
+              } else if (e.key === "ArrowDown") {
+                setSelectedSearchResult((sel) =>
+                  Math.min(searchResults.length - 1, sel + 1)
+                );
+              } else {
+                setSelectedSearchResult(-1);
+              }
+            }}
+            value={selectedSearchResult?.displayName ?? newStream}
+            onChange={(e) => setNewStream(e.target.value)}
+          />
+          <input
+            type="submit"
+            value="Add"
+            className="ml-1 mb-auto px-1 bg-black border cursor-pointer"
+          />
+        </div>
+        {newStream &&
+          (isFetching || newStream !== searchQuery ? (
+            <div>Searching...</div>
+          ) : (
+            <div className="overflow-y-auto overflow-x-hidden overflow-ellipsis scrollbar-width-thin">
+              {searchResults.map((result) => (
+                <SearchResult
+                  key={result.displayName}
+                  result={result}
+                  isSelected={result === selectedSearchResult}
+                  onClick={() => {
+                    addNewStream(result.displayName);
+                    setNewStream("");
+                  }}
+                  prefetchStreamData={() =>
+                    prefetchStreamData(result.broadcasterLogin)
+                  }
+                />
+              ))}
+            </div>
+          ))}
+      </form>
+    </div>
   );
 }
 
