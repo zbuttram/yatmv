@@ -66,9 +66,7 @@
       "last 1 safari version"
     ]
   },
-  "resolutions": {
-    "react-error-overlay": "6.0.9"
-  },
+  "resolutions": {},
   "devDependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -79,7 +77,6 @@
     "postcss": "^8.4.12",
     "prettier": "^2.3.0",
     "puppeteer": "^10.1.0",
-    "react-error-overlay": "6.0.9",
     "tailwindcss": "^3.0.23"
   }
 }

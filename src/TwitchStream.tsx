@@ -120,6 +120,14 @@ export default function TwitchStream({
   useEffect(() => {
     if (!player.current) {
       loadWithScript(() => {
+        if (player.current) {
+          /*
+           * Sometimes in React 18 (concurrent mode), by the time we load the script, loadWithScript has been fired again already.
+           * This leads to two players getting created, so we bail check again and bail out here if the player is already created.
+           */
+          return;
+        }
+
         player.current = new Twitch.Player(divId, {
           channel,
           muted: !isFirstSlot,
