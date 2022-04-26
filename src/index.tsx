@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import { QueryClientProvider, QueryClient } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 
-import "./build.css";
+import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { ErrorBoundary } from "react-error-boundary";

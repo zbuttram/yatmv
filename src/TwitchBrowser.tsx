@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { ReactNode, useState } from "react";
+import { Fragment, ReactNode, useState } from "react";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useInfiniteQuery } from "react-query";
@@ -33,8 +33,9 @@ export default function TwitchBrowser({
   followedStreams: StreamData[] | undefined;
   addNewStream: (name: string) => void;
 }) {
-  const [tab, setTab] =
-    useState<"followed" | "categories" | "channels">("followed");
+  const [tab, setTab] = useState<"followed" | "categories" | "channels">(
+    "followed"
+  );
 
   return (
     <Modal isOpen={isOpen} close={close}>
@@ -68,6 +69,7 @@ export default function TwitchBrowser({
                 <div className="flex flex-wrap gap-3 justify-center overflow-y-auto max-h-full">
                   {followedStreams?.map((stream) => (
                     <Stream
+                      key={stream.userLogin}
                       onClick={() => addNewStream(stream.userLogin)}
                       stream={stream}
                     />
@@ -198,12 +200,16 @@ function BrowseCategories({ setCategory }) {
         className="flex flex-wrap gap-3 justify-center overflow-y-auto"
         style={{ maxHeight: "calc(100% - 2.75rem)" }}
       >
-        {data?.pages?.map((page) => (
-          <>
+        {data?.pages?.map((page, pageIdx) => (
+          <Fragment key={pageIdx}>
             {page.data.map((category) => (
-              <CategoryListing category={category} setCategory={setCategory} />
+              <CategoryListing
+                key={category.id}
+                category={category}
+                setCategory={setCategory}
+              />
             ))}
-          </>
+          </Fragment>
         ))}
         <Waypoint
           onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
@@ -283,15 +289,16 @@ function ShowCategory({
         className="flex flex-wrap gap-3 justify-center overflow-y-auto"
         style={{ maxHeight: "calc(100% - 4rem)" }}
       >
-        {data?.pages.map((page) => (
-          <>
+        {data?.pages.map((page, pageIdx) => (
+          <Fragment key={pageIdx}>
             {page.data.map((stream) => (
               <Stream
+                key={stream.userLogin}
                 onClick={() => addNewStream(stream.userLogin)}
                 stream={stream}
               />
             ))}
-          </>
+          </Fragment>
         ))}
         <Waypoint onEnter={() => fetchNextPage()} key={data?.pages?.length} />
       </div>
@@ -359,15 +366,16 @@ function Channels({
         className="flex flex-wrap gap-3 justify-center overflow-y-auto"
         style={{ maxHeight: "calc(100% - 2.75rem)" }}
       >
-        {data?.pages.map((page: PaginatedResponse<StreamData>) => (
-          <>
+        {data?.pages.map((page: PaginatedResponse<StreamData>, pageIdx) => (
+          <Fragment key={pageIdx}>
             {page.data.map((stream) => (
               <Stream
+                key={stream.userLogin}
                 onClick={() => addNewStream(stream.userLogin)}
                 stream={stream}
               />
             ))}
-          </>
+          </Fragment>
         ))}
         <Waypoint
           onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
