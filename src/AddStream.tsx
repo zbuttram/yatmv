@@ -100,7 +100,7 @@ export default function AddStream({
       {checkTwitchAuth() ? (
         <button
           title="Browse Twitch"
-          className="bg-purple-700 px-2 mr-1 border border-white"
+          className="bg-purple-700 px-2 mr-1 mb-auto border border-white"
           onClick={() => setModalOpen("twitch-browser")}
         >
           <FontAwesomeIcon icon={faTwitch} />
