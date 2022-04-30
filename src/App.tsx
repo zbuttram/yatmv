@@ -24,6 +24,7 @@ import useFollowedStreams from "./useFollowedStreams";
 import useHostsMap from "./useHostsMap";
 import { SettingsModal } from "./SettingsModal";
 import TwitchBrowser from "./TwitchBrowser";
+import { ModalName } from "./Modal";
 
 export default function App() {
   const [settings, setSettings] = useSettings();
@@ -62,8 +63,7 @@ export default function App() {
 
   const hostsMap = useHostsMap({ streams });
 
-  const [modalOpen, setModalOpen] =
-    useState<null | "settings" | "twitch-browser">(null);
+  const [modalOpen, setModalOpen] = useState<ModalName>(null);
   const closeModal = () => setModalOpen(null);
 
   //region AppReturn
@@ -104,7 +104,7 @@ export default function App() {
             addStream={addNewStream}
             setLayout={setLayout}
             rotatePrimary={rotatePrimary}
-            showSettingsModal={() => setModalOpen("settings")}
+            setModal={setModalOpen}
           />
           <div
             id="primary-stream-container"

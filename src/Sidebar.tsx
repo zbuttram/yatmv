@@ -13,9 +13,9 @@ import {
   faSliders,
 } from "@fortawesome/free-solid-svg-icons";
 import LinesEllipsis from "react-lines-ellipsis";
-import { faGithub, faTwitch } from "@fortawesome/free-brands-svg-icons";
+import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 
-import { PROJECT_URL, TWITCH_AUTH_URL } from "./const";
+import { TWITCH_AUTH_URL } from "./const";
 import { Settings } from "./useSettings";
 import { checkTwitchAuth, StreamData, useTwitchUser } from "./twitch";
 import useBounding from "./useBounding";
@@ -23,6 +23,7 @@ import { simplifyViewerCount } from "./utils";
 import { useClickAway } from "react-use";
 import { range } from "lodash";
 import { Layout, MAX_LAYOUT } from "./layout";
+import { SetModalFunc } from "./Modal";
 
 export function Sidebar({
   className,
@@ -34,7 +35,7 @@ export function Sidebar({
   addStream,
   rotatePrimary,
   setLayout,
-  showSettingsModal,
+  setModal,
 }: {
   className?: string;
   settings: Settings;
@@ -45,7 +46,7 @@ export function Sidebar({
   addStream: (streamName: string) => void;
   rotatePrimary: (reverse?: boolean) => void;
   setLayout: (layout: Layout) => void;
-  showSettingsModal: () => void;
+  setModal: SetModalFunc;
 }) {
   const { boostMode, fullHeightPlayer, sidebarOpen } = settings;
 
@@ -125,27 +126,13 @@ export function Sidebar({
           </div>
         }
       />
-      {/*<SidebarButton*/}
-      {/*  title="Settings"*/}
-      {/*  onClick={showSettingsModal}*/}
-      {/*  icon={<FontAwesomeIcon icon={faSliders} fixedWidth />}*/}
-      {/*/>*/}
       <SidebarButton
-        title={fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
-        onClick={() =>
-          setSettings(({ fullHeightPlayer, ...state }) => ({
-            ...state,
-            fullHeightPlayer: !fullHeightPlayer,
-          }))
-        }
-        icon={
-          fullHeightPlayer ? (
-            <FontAwesomeIcon icon={faCompressArrowsAlt} fixedWidth />
-          ) : (
-            <FontAwesomeIcon icon={faExpandArrowsAlt} fixedWidth />
-          )
-        }
+        title="Settings"
+        onClick={() => setModal("settings")}
+        icon={<FontAwesomeIcon icon={faSliders} fixedWidth />}
+        className="hidden"
       />
+
       <ChangeLayoutButton setLayout={setLayout} />
       {primaryStreams.length > 1 && (
         <SidebarButton
@@ -165,21 +152,22 @@ export function Sidebar({
           icon={<FontAwesomeIcon fixedWidth icon={faSyncAlt} />}
         />
       )}
-      <div className="flex-grow" />
-      <div className="mb-3 mt-2">
-        <label>
-          <a
-            title="GitHub"
-            href={PROJECT_URL}
-            target="_blank"
-            className="btn-sidebar bg-black"
-            rel="noreferrer"
-          >
-            <FontAwesomeIcon icon={faGithub} fixedWidth />
-          </a>
-          <span className="btn-txt">GitHub</span>
-        </label>
-      </div>
+      <SidebarButton
+        title={fullHeightPlayer ? "Shrink Player" : "Full-Height Player"}
+        onClick={() =>
+          setSettings(({ fullHeightPlayer, ...state }) => ({
+            ...state,
+            fullHeightPlayer: !fullHeightPlayer,
+          }))
+        }
+        icon={
+          fullHeightPlayer ? (
+            <FontAwesomeIcon icon={faCompressArrowsAlt} fixedWidth />
+          ) : (
+            <FontAwesomeIcon icon={faExpandArrowsAlt} fixedWidth />
+          )
+        }
+      />
     </div>
   );
 }

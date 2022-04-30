@@ -2,6 +2,9 @@ import { ReactNode, useRef } from "react";
 import classNames from "classnames";
 import { useClickAway } from "react-use";
 
+export type ModalName = null | "settings" | "twitch-browser";
+export type SetModalFunc = (name: ModalName) => void;
+
 export type BaseModalProps = {
   children?: ReactNode;
   isOpen: boolean;
