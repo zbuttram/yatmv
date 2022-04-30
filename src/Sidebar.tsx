@@ -12,7 +12,6 @@ import {
   faSyncAlt,
   faSliders,
 } from "@fortawesome/free-solid-svg-icons";
-import LinesEllipsis from "react-lines-ellipsis";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 
 import { TWITCH_AUTH_URL } from "./const";
@@ -283,8 +282,8 @@ function FollowedStream({
   }
 
   const streamTitle = (
-    <div className={classNames(sidebarExpanded ? "max-w-40" : "w-0 flex-grow")}>
-      <LinesEllipsis maxLine={2} text={stream.title} />
+    <div className={classNames("max-h-24 overflow-ellipsis")}>
+      {stream.title}
     </div>
   );
 
@@ -342,12 +341,12 @@ function FollowedStream({
         {sidebarExpanded ? (
           streamTitle
         ) : (
-          <div className="flex flex-col text-sm min-w-32">
+          <div className="flex flex-col text-sm max-w-xs">
             <div className="text-purple-500">
               {stream.userName}
               {stream.gameName && <> &#183; {stream.gameName}</>}
             </div>
-            <div className="flex">{streamTitle}</div>
+            {streamTitle}
             <div className="ml-auto text-red-400">
               {simplifyViewerCount(stream.viewerCount)}{" "}
               <FontAwesomeIcon icon={faUsers} />
