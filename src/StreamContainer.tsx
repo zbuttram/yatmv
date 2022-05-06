@@ -9,10 +9,10 @@ import {
 import classNames from "classnames";
 import { useQuery } from "react-query";
 
+import { range } from "lodash";
 import { FETCH_OPEN_STREAMS_INTERVAL } from "./const";
 import { checkTwitchAuth, getStream } from "./twitch";
 import TwitchStream from "./TwitchStream";
-import { range } from "lodash";
 import { Layout } from "./layout";
 import { simplifyViewerCount } from "./utils";
 
@@ -58,8 +58,9 @@ export function StreamContainer({
   const { title, userName, viewerCount } = streamData ?? {};
 
   const [isRemoving, setIsRemoving] = useState(false);
-  const removeConfirmTimeout =
-    useRef<ReturnType<typeof setTimeout> | undefined>();
+  const removeConfirmTimeout = useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >();
   const onClickRemove = useCallback(
     function onClickRemove() {
       if (!isRemoving) {

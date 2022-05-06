@@ -1,7 +1,7 @@
-import { removeTwitchAuth } from "./twitch";
 import React from "react";
+import { removeTwitchAuth } from "./twitch";
 
-export default function GlobalErrorBoundary({ error }) {
+export default function AppErrorBoundary({ error }) {
   return (
     <div className="mx-auto p-8 mt-16 mb-8 bg-gray-900 rounded-md text-center">
       <h1 className="text-4xl mb-8">An Error Has Occurred</h1>

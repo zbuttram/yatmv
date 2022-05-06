@@ -25,6 +25,7 @@ import useHostsMap from "./useHostsMap";
 import { SettingsModal } from "./SettingsModal";
 import TwitchBrowser from "./TwitchBrowser";
 import { ModalName } from "./Modal";
+import { onAddStreamRequest, setupAsRemoteLeader } from "./remoteChannel";
 
 export default function App() {
   const [settings, setSettings] = useSettings();
@@ -44,6 +45,11 @@ export default function App() {
     setLayout,
     replaceStream,
   } = streamActions;
+
+  useEffect(() => {
+    setupAsRemoteLeader();
+    return onAddStreamRequest(addNewStream);
+  }, [addNewStream]);
 
   const primaryContainerRect = useBounding("primary-stream-container");
   const referenceStreamContainerRect = useBounding(
