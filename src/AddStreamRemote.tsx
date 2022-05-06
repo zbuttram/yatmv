@@ -12,13 +12,15 @@ export default function AddStreamRemote() {
     if (!stream) {
       setState("failed");
     }
-    try {
-      addRemoteStream(stream);
-      setState("complete");
-      window.close(); // only works if the page was opened by a script into a new tab
-    } catch (e) {
-      setState("failed");
-    }
+    (async () => {
+      try {
+        await addRemoteStream(stream);
+        setState("complete");
+        window.close(); // only works if the page was opened by a script into a new tab
+      } catch (e) {
+        setState("failed");
+      }
+    })();
   }, []);
 
   return <>{state}</>;
