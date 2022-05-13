@@ -28,7 +28,7 @@ body {
 }
 
 .btn-txt {
-  cursor: pointer;
+  @apply ml-3 cursor-pointer self-center whitespace-nowrap;
 }
 
 .sidebar-stream-name {
@@ -37,7 +37,7 @@ body {
 }
 
 .sidebar-stream-game {
-  @apply text-xs text-gray-500 overflow-ellipsis overflow-hidden whitespace-nowrap;
+  @apply text-xs text-gray-400 overflow-ellipsis overflow-hidden whitespace-nowrap;
   max-width: theme('spacing.36');
 }
 

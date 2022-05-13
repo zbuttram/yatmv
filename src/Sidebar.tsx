@@ -13,14 +13,14 @@ import {
   faSliders,
 } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
+import { useClickAway } from "react-use";
+import { range } from "lodash";
 
 import { TWITCH_AUTH_URL } from "./const";
 import { Settings } from "./useSettings";
 import { checkTwitchAuth, StreamData, useTwitchUser } from "./twitch";
 import useBounding from "./useBounding";
 import { simplifyViewerCount } from "./utils";
-import { useClickAway } from "react-use";
-import { range } from "lodash";
 import { Layout, MAX_LAYOUT } from "./layout";
 import { SetModalFunc } from "./Modal";
 
@@ -240,7 +240,7 @@ const SidebarButton = forwardRef<HTMLDivElement, SidebarButtonProps>(
   ) {
     return (
       <div className={className} ref={ref}>
-        <label>
+        <label className="flex flex-row-reverse">
           <button
             title={title}
             className={classNames("btn-sidebar", bgColorClass ?? "bg-black")}
@@ -250,7 +250,7 @@ const SidebarButton = forwardRef<HTMLDivElement, SidebarButtonProps>(
           >
             {icon}
           </button>
-          <span className="btn-txt">{title}</span>
+          <div className="btn-txt">{title}</div>
         </label>
         {append}
       </div>
