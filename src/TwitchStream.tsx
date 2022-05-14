@@ -196,9 +196,6 @@ export default function TwitchStream({
           Log("player-quality-update", channel, desiredQuality);
         }
       }
-      if (prevBoostMode && !boostMode) {
-        player.current.setQuality("auto");
-      }
     }
     updateQuality();
 
