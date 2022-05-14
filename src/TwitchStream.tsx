@@ -1,10 +1,10 @@
 import { ReactNode, useContext, useEffect, useMemo, useRef } from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash";
+import { usePrevious } from "react-use";
 
 import useBounding from "./useBounding";
 import Log from "./log";
-import { usePrevious } from "react-use";
 import { AppContext } from "./appContext";
 import { TWITCH_PLAYER_URL } from "./const";
 import { getPrimarySubRect, Layout } from "./layout";
@@ -212,14 +212,13 @@ export default function TwitchStream({
     return () => {
       player.current?.removeEventListener(Twitch.Player.PLAYING, onPlay);
     };
-  }, [
-    channel,
-    boostMode,
-    prevBoostMode,
-    primaryPosition,
-    isPrimary,
-    isFirstSlot,
-  ]);
+  }, [channel, boostMode, primaryPosition, isPrimary, isFirstSlot]);
+
+  useEffect(() => {
+    if (prevBoostMode && !boostMode) {
+      player.current?.setQuality("auto");
+    }
+  }, [boostMode, prevBoostMode]);
 
   const prevReloadCounter = usePrevious(reloadCounter);
   useEffect(() => {
