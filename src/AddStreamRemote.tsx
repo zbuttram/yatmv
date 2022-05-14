@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { addRemoteStream } from "./remoteChannel";
 
 export default function AddStreamRemote() {
@@ -6,9 +7,10 @@ export default function AddStreamRemote() {
     "working"
   );
 
+  const [searchParams] = useSearchParams();
+  const stream = searchParams.get("stream");
+
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const stream = url.searchParams.get("stream");
     if (!stream) {
       setState("failed");
     }
@@ -21,7 +23,33 @@ export default function AddStreamRemote() {
         setState("failed");
       }
     })();
-  }, []);
+  }, [stream]);
 
-  return <>{state}</>;
+  return (
+    <div className="flex flex-col align-middle">
+      <div>
+        {(() => {
+          switch (state) {
+            case "working":
+              return "Waiting on main tab...";
+            case "complete":
+              return "Stream added, you may close the tab.";
+            case "failed":
+              return "No existing tab found.";
+            default:
+              return null;
+          }
+        })()}
+      </div>
+      <button
+        onClick={() => {
+          window.location.href =
+            window.location.origin + `/?streams=${stream}&primary=${stream}`;
+        }}
+        className="underline"
+      >
+        Open {stream} in This Tab
+      </button>
+    </div>
+  );
 }
