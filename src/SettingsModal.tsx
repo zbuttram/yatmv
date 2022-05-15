@@ -1,6 +1,6 @@
+import { Dispatch, SetStateAction } from "react";
 import { Modal, ModalProps } from "./Modal";
 import { Settings } from "./useSettings";
-import { Dispatch, SetStateAction } from "react";
 
 export function SettingsModal({
   isOpen,
@@ -11,23 +11,50 @@ export function SettingsModal({
   settings: Settings;
   setSettings: Dispatch<SetStateAction<Settings>>;
 }) {
+  function updateSettingFunc(name: keyof Settings) {
+    return (value) => setSettings((state) => ({ ...state, [name]: value }));
+  }
+
   return (
-    <Modal isOpen={isOpen} close={close}>
-      <h3 className="text-2xl font-semibold">Settings</h3>
-      <div className="flex">
-        <div>
-          <div>Boost Mode</div>
-          <div>When enabled, forces primary streams into highest quality.</div>
-        </div>
-        <RadioToggle
-          id="boost-mode-toggle"
-          state={settings.boostMode}
-          update={(newState) =>
-            setSettings((state) => ({ ...state, boostMode: newState }))
+    <Modal isOpen={isOpen} close={close} className="p-8 w-fit h-fit">
+      <h3 className="text-2xl font-semibold mb-5 underline">Settings</h3>
+      <table className="table-auto">
+        <Setting
+          name="Boost Mode"
+          description="When enabled, forces primary streams into highest quality."
+          control={
+            <RadioToggle
+              id="boost-mode-toggle"
+              state={settings.boostMode}
+              update={updateSettingFunc("boostMode")}
+            />
           }
         />
-      </div>
+        <Setting
+          name="Pause Hidden Players"
+          description="Automatically pauses players that are below the viewport after a time. They will unpause on scroll."
+          control={
+            <RadioToggle
+              id="pause-hidden-players"
+              state={settings.pauseHiddenPlayers}
+              update={updateSettingFunc("pauseHiddenPlayers")}
+            />
+          }
+        />
+      </table>
     </Modal>
+  );
+}
+
+function Setting({ name, description, control }) {
+  return (
+    <tr>
+      <td className="pr-5">{control}</td>
+      <td className="pb-3">
+        <div className="">{name}</div>
+        <div className="text-gray-400">{description}</div>
+      </td>
+    </tr>
   );
 }
 

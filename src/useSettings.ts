@@ -5,6 +5,7 @@ const INITIAL_SETTINGS = {
   showChat: true,
   fullHeightPlayer: false,
   sidebarOpen: true,
+  pauseHiddenPlayers: true,
 };
 
 export type Settings = typeof INITIAL_SETTINGS;

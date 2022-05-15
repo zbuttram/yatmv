@@ -8,6 +8,7 @@ import Log from "./log";
 import { AppContext } from "./appContext";
 import { TWITCH_PLAYER_URL } from "./const";
 import { getPrimarySubRect, Layout } from "./layout";
+import { useDebounce } from "./useDebounce";
 
 let scriptElement: HTMLScriptElement | null = null;
 let scriptLoaded = false;
@@ -51,6 +52,9 @@ type TwitchPlayer = {
   setQuality(name: string): void;
   getQuality(): string;
   getQualities(): any[];
+  isPaused(): boolean;
+  play(): void;
+  pause(): void;
   _iframe: HTMLIFrameElement;
   addEventListener(event: string, callback: () => void): void;
   removeEventListener(event: string, callback: () => void): void;
@@ -85,8 +89,12 @@ export default function TwitchStream({
   const channelRect = useBounding(posDivId);
 
   const { settings } = useContext(AppContext);
-  const { boostMode } = settings ?? {};
-  const prevBoostMode = usePrevious(boostMode);
+  const { boostMode, pauseHiddenPlayers } = settings ?? {};
+  const prevSettings = usePrevious(settings);
+  const {
+    boostMode: prevBoostMode,
+    pauseHiddenPlayers: prevPauseHiddenPlayers,
+  } = prevSettings ?? {};
 
   const style = useMemo(():
     | {
@@ -159,6 +167,34 @@ export default function TwitchStream({
     // this shouldn't ever really happen, but its here anyway /shrug
     player?.current?.setChannel(channel);
   }, [channel]);
+
+  const belowViewport =
+    channelRect.top && channelRect.top > window.innerHeight + window.scrollY;
+
+  const shouldPause = !isPrimary && belowViewport;
+  const debouncedShouldPause = useDebounce(shouldPause, 1000);
+
+  useEffect(() => {
+    if (!player.current) {
+      return;
+    }
+
+    if (pauseHiddenPlayers) {
+      const paused = player.current?.isPaused();
+      if (debouncedShouldPause && !paused) {
+        player.current.pause();
+      } else if (paused && !shouldPause) {
+        player.current.play();
+      }
+    } else if (prevPauseHiddenPlayers) {
+      player.current.play();
+    }
+  }, [
+    shouldPause,
+    debouncedShouldPause,
+    pauseHiddenPlayers,
+    prevPauseHiddenPlayers,
+  ]);
 
   useEffect(() => {
     if (!player.current) {

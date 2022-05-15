@@ -5,8 +5,6 @@ import {
   faArrowLeft,
   faCompressArrowsAlt,
   faExpandArrowsAlt,
-  faRocket,
-  faTachometerAlt,
   faTh,
   faUsers,
   faSyncAlt,
@@ -47,7 +45,7 @@ export function Sidebar({
   setLayout: (layout: Layout) => void;
   setModal: SetModalFunc;
 }) {
-  const { boostMode, fullHeightPlayer, sidebarOpen } = settings;
+  const { fullHeightPlayer, sidebarOpen } = settings;
 
   return (
     <div
@@ -112,24 +110,9 @@ export function Sidebar({
         />
       )}
       <SidebarButton
-        title={(boostMode ? "Disable" : "Enable") + " Boost Mode"}
-        onClick={() =>
-          setSettings(({ boostMode, ...state }) => ({
-            ...state,
-            boostMode: !boostMode,
-          }))
-        }
-        icon={
-          <div className="fa-layers fa-fw">
-            <FontAwesomeIcon icon={boostMode ? faTachometerAlt : faRocket} />
-          </div>
-        }
-      />
-      <SidebarButton
         title="Settings"
         onClick={() => setModal("settings")}
         icon={<FontAwesomeIcon icon={faSliders} fixedWidth />}
-        className="hidden"
       />
 
       <ChangeLayoutButton setLayout={setLayout} />
