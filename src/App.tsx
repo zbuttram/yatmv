@@ -218,26 +218,19 @@ export default function App() {
           </div>
         </div>
       </main>
-      {/* Modal Container */}
-      <div
-        className={classNames(
-          "fixed top-0 z-30 w-full h-screen flex justify-center pt-16",
-          modalOpen === null ? "pointer-events-none" : "bg-neutral-500/50"
-        )}
-      >
-        <SettingsModal
-          isOpen={modalOpen === "settings"}
-          close={() => setModalOpen(null)}
-          settings={settings}
-          setSettings={setSettings}
-        />
-        <TwitchBrowser
-          isOpen={modalOpen === "twitch-browser"}
-          close={closeModal}
-          followedStreams={followedStreams}
-          addNewStream={addNewStream}
-        />
-      </div>
+      {/* MODALS */}
+      <SettingsModal
+        isOpen={modalOpen === "settings"}
+        close={() => setModalOpen(null)}
+        settings={settings}
+        setSettings={setSettings}
+      />
+      <TwitchBrowser
+        isOpen={modalOpen === "twitch-browser"}
+        close={closeModal}
+        followedStreams={followedStreams}
+        addNewStream={addNewStream}
+      />
     </AppProvider>
   );
 }
