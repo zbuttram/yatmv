@@ -114,7 +114,7 @@ export default function AddStream({
           <input
             type={checkTwitchAuth() ? "search" : "text"}
             placeholder="Channel"
-            className="w-4/5 bg-black border border-gray-400 focus:outline-none focus:border-white"
+            className="w-4/5 bg-black border border-gray-400 focus:outline-none focus:border-white pl-px"
             onKeyDown={(e) => {
               if (
                 e.key === "Escape" ||
