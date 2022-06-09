@@ -165,12 +165,15 @@ export default function AddStream({
             className="ml-1 mb-auto px-1 bg-black border cursor-pointer"
           />
         </div>
-        {newStream &&
-          (isFetching || (newStream !== searchQuery && !isTwitchURL) ? (
-            <div>Searching...</div>
-          ) : (
-            <div className="overflow-y-auto overflow-x-hidden overflow-ellipsis scrollbar-width-thin">
-              {searchResults.map((result) => (
+        {newStream && (
+          <div
+            className="overflow-y-auto overflow-x-hidden overflow-ellipsis scrollbar-width-thin"
+            style={{ height: "calc(100% - 3.5rem)" }}
+          >
+            {isFetching || (newStream !== searchQuery && !isTwitchURL) ? (
+              <>Searching...</>
+            ) : (
+              searchResults.map((result) => (
                 <SearchResult
                   key={result.displayName}
                   result={result}
@@ -183,9 +186,10 @@ export default function AddStream({
                     prefetchStreamData(result.broadcasterLogin)
                   }
                 />
-              ))}
-            </div>
-          ))}
+              ))
+            )}
+          </div>
+        )}
       </form>
     </div>
   );
