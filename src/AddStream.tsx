@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import classNames from "classnames";
 import scrollIntoView from "scroll-into-view-if-needed";
 import { useQuery, useQueryClient } from "react-query";
@@ -78,8 +85,8 @@ export default function AddStream({
     }
   }, [prefetchStreamData, selectedSearchResult]);
 
-  function submitNewStream(e) {
-    e.preventDefault();
+  function submitNewStream(e?: FormEvent<HTMLFormElement>) {
+    e?.preventDefault();
     let streamToSubmit;
     if (selectedSearchResult) {
       streamToSubmit = selectedSearchResult.displayName;
@@ -107,7 +114,12 @@ export default function AddStream({
     return false;
   }
 
-  console.log({ isFetching, isTwitchURL, newStream, searchQuery });
+  useEffect(() => {
+    if (isTwitchURL) {
+      submitNewStream();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTwitchURL]);
 
   return (
     <div className="flex mb-1">
