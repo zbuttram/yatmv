@@ -18,3 +18,4 @@ export const TWITCH_SCOPES = ["user:read:follows"];
 export const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(
   window.location.origin
 )}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
+export const TWITCH_URL_REGEX = /^https:\/\/(www\.)?twitch\.tv\/([^/?]*)/;

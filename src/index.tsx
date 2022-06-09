@@ -10,7 +10,6 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import AppErrorBoundary from "./AppErrorBoundary";
-import AddStreamRemote from "./AddStreamRemote";
 
 const queryClient = new QueryClient();
 const container = document.getElementById("root");
@@ -30,7 +29,6 @@ root.render(
               </ErrorBoundary>
             }
           />
-          <Route path="/add-stream" element={<AddStreamRemote />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

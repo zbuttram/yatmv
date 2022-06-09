@@ -6,8 +6,10 @@ import { usePrevious } from "react-use";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 
+import { toast } from "react-hot-toast";
 import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
 import { useDebounce } from "./useDebounce";
+import { TWITCH_URL_REGEX } from "./const";
 
 export default function AddStream({
   addNewStream,
@@ -20,6 +22,9 @@ export default function AddStream({
 }) {
   const queryClient = useQueryClient();
   const [newStream, setNewStream] = useState("");
+
+  const isTwitchURL = TWITCH_URL_REGEX.test(newStream);
+
   const searchQuery = useDebounce(newStream, 1000);
   const {
     data: searchResultData,
@@ -29,7 +34,8 @@ export default function AddStream({
     ["searchChannels", searchQuery],
     ({ queryKey: [_key, query] }) => searchChannels(query),
     {
-      enabled: checkTwitchAuth() && !!newStream && !!searchQuery,
+      enabled:
+        checkTwitchAuth() && !!newStream && !!searchQuery && !isTwitchURL,
       staleTime: 5000,
     }
   );
@@ -76,24 +82,34 @@ export default function AddStream({
 
   function submitNewStream(e) {
     e.preventDefault();
-
     let streamToSubmit;
     if (selectedSearchResult) {
       streamToSubmit = selectedSearchResult.displayName;
     } else if (newStream && newStream !== "") {
-      const found = searchResults.find(
-        (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
-      );
-      streamToSubmit = found ?? newStream;
+      if (TWITCH_URL_REGEX.test(newStream)) {
+        const result = TWITCH_URL_REGEX.exec(newStream);
+        if (result && result[2]) {
+          streamToSubmit = result[2];
+        }
+      } else {
+        const found = searchResults.find(
+          (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
+        );
+        streamToSubmit = found ?? newStream;
+      }
     }
 
     if (streamToSubmit) {
       addNewStream(streamToSubmit);
       setNewStream("");
       removeQuery();
+    } else {
+      toast.error("Unable to add stream.");
     }
     return false;
   }
+
+  console.log({ isFetching, isTwitchURL, newStream, searchQuery });
 
   return (
     <div className="flex mb-1">
@@ -149,7 +165,7 @@ export default function AddStream({
           />
         </div>
         {newStream &&
-          (isFetching || newStream !== searchQuery ? (
+          (isFetching || (newStream !== searchQuery && !isTwitchURL) ? (
             <div>Searching...</div>
           ) : (
             <div className="overflow-y-auto overflow-x-hidden overflow-ellipsis scrollbar-width-thin">
