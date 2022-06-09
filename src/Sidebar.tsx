@@ -101,7 +101,14 @@ export function Sidebar({
           <hr className="mb-2" />
         </>
       ) : null}
-      {!checkTwitchAuth() && (
+      {checkTwitchAuth() ? (
+        <SidebarButton
+          title="Browse Twitch"
+          bgColorClass="bg-purple-700"
+          onClick={() => setModal("twitch-browser")}
+          icon={<FontAwesomeIcon icon={faTwitch} fixedWidth />}
+        />
+      ) : (
         <SidebarButton
           title="Connect to Twitch"
           bgColorClass="bg-purple-700"

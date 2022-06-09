@@ -3,8 +3,6 @@ import classNames from "classnames";
 import scrollIntoView from "scroll-into-view-if-needed";
 import { useQuery, useQueryClient } from "react-query";
 import { usePrevious } from "react-use";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 
 import { toast } from "react-hot-toast";
 import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
@@ -113,15 +111,6 @@ export default function AddStream({
 
   return (
     <div className="flex mb-1">
-      {checkTwitchAuth() ? (
-        <button
-          title="Browse Twitch"
-          className="bg-purple-700 px-2 mr-1 mb-auto border border-white"
-          onClick={() => setModalOpen("twitch-browser")}
-        >
-          <FontAwesomeIcon icon={faTwitch} />
-        </button>
-      ) : null}
       <form
         onSubmit={submitNewStream}
         className={"flex flex-col h-full" + className}
