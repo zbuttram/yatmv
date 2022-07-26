@@ -13,6 +13,7 @@ export type StreamState = {
   streams: string[];
   primaryStreams: string[];
   layout: Layout;
+  selectedChat: string;
 };
 
 function getInitialStreamState(): StreamState {
@@ -37,10 +38,19 @@ function getInitialStreamState(): StreamState {
   let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
     handleTwitchAuthCallback();
 
+  const layout = reloadFromAuthLayout || parsedUrlLayout || 0;
+  let primaryStreams = uniq(reloadFromAuthPrimary || parsedUrlPrimary || []);
+
+  const maxPrimary = layout + 1;
+  if (primaryStreams.length > maxPrimary) {
+    primaryStreams = primaryStreams.slice(0, layout + 1);
+  }
+
   return {
     streams: uniq(reloadFromAuthStreams || parsedUrlStreams || []),
-    primaryStreams: uniq(reloadFromAuthPrimary || parsedUrlPrimary || []),
-    layout: reloadFromAuthLayout || parsedUrlLayout || 0,
+    primaryStreams,
+    layout,
+    selectedChat: primaryStreams[0],
   };
 }
 
@@ -51,7 +61,8 @@ type StreamAction =
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
   | { type: "SET_LAYOUT"; payload: { layout: Layout } }
   | { type: "ROTATE_PRIMARY"; payload: { reverse: boolean } }
-  | { type: "REPLACE_STREAM"; payload: { replace: string; with: string } };
+  | { type: "REPLACE_STREAM"; payload: { replace: string; with: string } }
+  | { type: "SET_SELECTED_CHAT"; payload: { chat: string } };
 
 const streamsReducer = produce(function produceStreams(
   draft: StreamState,
@@ -78,6 +89,7 @@ const streamsReducer = produce(function produceStreams(
       break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
+      draft.selectedChat = draft.primaryStreams[0];
       break;
     case "ADD_STREAM":
       if (
@@ -106,6 +118,10 @@ const streamsReducer = produce(function produceStreams(
       break;
     case "SET_LAYOUT":
       draft.layout = action.payload.layout;
+      const maxPrimary = draft.layout + 1;
+      if (draft.primaryStreams.length > maxPrimary) {
+        draft.primaryStreams = draft.primaryStreams.slice(0, draft.layout + 1);
+      }
       break;
     case "ROTATE_PRIMARY":
       if (draft.primaryStreams.length > 0) {
@@ -116,6 +132,7 @@ const streamsReducer = produce(function produceStreams(
         action.payload.reverse
           ? draft.primaryStreams.push(element)
           : draft.primaryStreams.unshift(element);
+        draft.selectedChat = draft.primaryStreams[0];
       }
       break;
     case "REPLACE_STREAM":
@@ -136,29 +153,18 @@ const streamsReducer = produce(function produceStreams(
         );
       }
       break;
+    case "SET_SELECTED_CHAT":
+      draft.selectedChat = action.payload.chat;
+      break;
     default:
       throw new Error("Unknown action type in useStreams reducer");
-  }
-
-  const maxPrimary = draft.layout + 1;
-  const unusedPrimarySlots = maxPrimary - draft.primaryStreams.length;
-
-  if (draft.primaryStreams.length > maxPrimary) {
-    draft.primaryStreams = draft.primaryStreams.slice(0, draft.layout + 1);
-  } else if (unusedPrimarySlots > 0) {
-    const unusedStreams = draft.streams.filter(
-      (s) => !primaryStreams.includes(s)
-    );
-    if (unusedStreams.length) {
-      primaryStreams.push(...unusedStreams.slice(0, unusedPrimarySlots));
-    }
   }
 });
 
 export default function useStreams() {
   const [state, dispatch] = useReducer(
     streamsReducer,
-    { streams: [], primaryStreams: [], layout: 0 },
+    { streams: [], primaryStreams: [], layout: 0, selectedChat: "" },
     (state) => streamsReducer(state, { type: "INIT" })
   );
   const prevState = usePrevious(state);
@@ -216,6 +222,12 @@ export default function useStreams() {
         dispatch({
           type: "REPLACE_STREAM",
           payload: { replace, with: replacement },
+        });
+      },
+      setSelectedChat(chat: string) {
+        dispatch({
+          type: "SET_SELECTED_CHAT",
+          payload: { chat },
         });
       },
     },

@@ -17,7 +17,7 @@ export default function TwitchChat({
     <div
       className={classNames(
         className,
-        isDisplayed ? "chat-standard-width" : "w-0",
+        isDisplayed ? "chat-standard-width h-full" : "w-0 h-0",
         "transition-all"
       )}
     >

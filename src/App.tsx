@@ -35,7 +35,7 @@ export default function App() {
     prevState: prevStreamState,
     actions: streamActions,
   } = useStreams();
-  const { streams, primaryStreams, layout } = streamState;
+  const { streams, primaryStreams, layout, selectedChat } = streamState;
   const {
     addStream: addNewStream,
     removeStream,
@@ -43,6 +43,7 @@ export default function App() {
     rotatePrimary,
     setLayout,
     replaceStream,
+    setSelectedChat,
   } = streamActions;
 
   const primaryContainerRect = useBounding("primary-stream-container");
@@ -50,7 +51,11 @@ export default function App() {
     "stream-container-reference"
   );
   const scrollY = useScroll();
-  const loadedChats = useLazyLoadingChats({ streamState, prevStreamState });
+  const loadedChats = useLazyLoadingChats({
+    streamState,
+    prevStreamState,
+    selectedChat,
+  });
   const followedStreams = useFollowedStreams({ addNewStream });
 
   const [forceShowMainPane, setForceShowMainPane] = useState(false);
@@ -111,11 +116,14 @@ export default function App() {
             className="flex-grow self-end"
             style={{ height: scrollY ? `calc(100% - ${scrollY}px)` : "100%" }}
           />
-          <div id="chats-container" className="flex relative transition-all">
+          <div
+            id="chats-container"
+            className="flex flex-col h-full relative transition-all"
+          >
             {loadedChats.length > 0 && (
               <div
                 className={classNames(
-                  "cursor-pointer opacity-40 hover:opacity-75 absolute top-2 z-10 transition-all",
+                  "cursor-pointer opacity-40 hover:opacity-75 absolute top-1 z-10 transition-all",
                   showChat ? "left-2" : "-left-12"
                 )}
                 onClick={() =>
@@ -133,15 +141,31 @@ export default function App() {
                 />
               </div>
             )}
-            {loadedChats.map(({ channel }) => (
-              <TwitchChat
-                key={channel}
-                channel={channel}
-                replaceStream={replaceStream}
-                hostTarget={hostsMap[channel]}
-                isDisplayed={channel === primaryStreams[0] && showChat}
-              />
-            ))}
+            <div className="p-2 flex justify-center">
+              <select
+                className={classNames(
+                  "bg-black cursor-pointer",
+                  showChat ? "" : "w-0"
+                )}
+                onChange={(e) => setSelectedChat(e.target.value)}
+                value={selectedChat}
+              >
+                {streams.map((stream) => (
+                  <option value={stream}>{stream}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ height: "calc(100% - 2.3rem)" }}>
+              {loadedChats.map(({ channel }) => (
+                <TwitchChat
+                  key={channel}
+                  channel={channel}
+                  replaceStream={replaceStream}
+                  hostTarget={hostsMap[channel]}
+                  isDisplayed={channel === selectedChat && showChat}
+                />
+              ))}
+            </div>
           </div>
         </div>
         <div

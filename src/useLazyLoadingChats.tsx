@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import produce from "immer";
-import { without } from "lodash";
+import { uniq, without } from "lodash";
+
 import { StreamState } from "./useStreams";
 import { epoch } from "./utils";
 import { CHAT_EVICT_SEC } from "./const";
@@ -8,11 +9,17 @@ import { CHAT_EVICT_SEC } from "./const";
 export function useLazyLoadingChats({
   streamState,
   prevStreamState,
+  selectedChat,
 }: {
   streamState: StreamState;
   prevStreamState: StreamState | undefined;
+  selectedChat: string;
 }) {
-  const { primaryStreams, streams } = streamState;
+  const { streams } = streamState;
+  const primaryStreams = uniq([
+    ...streamState.primaryStreams.slice(),
+    selectedChat,
+  ]);
 
   const [loadedChats, setLoadedChats] = useState<
     Array<{
@@ -105,5 +112,7 @@ export function useLazyLoadingChats({
     return () => clearInterval(interval);
   }, [primaryStreams, loadedChats, setLoadedChats, streams, prevStreamState]);
 
-  return loadedChats;
+  return loadedChats.filter(
+    ({ channel }) => channel !== "" && channel !== undefined && channel !== null
+  );
 }
