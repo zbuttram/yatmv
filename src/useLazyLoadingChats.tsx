@@ -9,17 +9,12 @@ import { CHAT_EVICT_SEC } from "./const";
 export function useLazyLoadingChats({
   streamState,
   prevStreamState,
-  selectedChat,
 }: {
   streamState: StreamState;
   prevStreamState: StreamState | undefined;
-  selectedChat: string;
 }) {
-  const { streams } = streamState;
-  const primaryStreams = uniq([
-    ...streamState.primaryStreams.slice(),
-    selectedChat,
-  ]);
+  const { streams, selectedChat } = streamState;
+  const primaryStreams = uniq([...streamState.primaryStreams, selectedChat]);
 
   const [loadedChats, setLoadedChats] = useState<
     Array<{
@@ -61,7 +56,7 @@ export function useLazyLoadingChats({
 
     if (prevStreamState) {
       const closedStreams = without(
-        prevStreamState.primaryStreams,
+        uniq([...prevStreamState.primaryStreams, prevStreamState.selectedChat]),
         ...primaryStreams
       );
       setLoadedChats(

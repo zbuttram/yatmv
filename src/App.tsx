@@ -54,7 +54,6 @@ export default function App() {
   const loadedChats = useLazyLoadingChats({
     streamState,
     prevStreamState,
-    selectedChat,
   });
   const followedStreams = useFollowedStreams({ addNewStream });
 
