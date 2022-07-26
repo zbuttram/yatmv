@@ -162,11 +162,7 @@ const streamsReducer = produce(function produceStreams(
 });
 
 export default function useStreams() {
-  const [state, dispatch] = useReducer(
-    streamsReducer,
-    { streams: [], primaryStreams: [], layout: 0, selectedChat: "" },
-    (state) => streamsReducer(state, { type: "INIT" })
-  );
+  const [state, dispatch] = useReducer(streamsReducer, getInitialStreamState());
   const prevState = usePrevious(state);
   const { streams, primaryStreams, layout } = state;
 

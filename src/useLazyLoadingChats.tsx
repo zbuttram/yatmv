@@ -13,6 +13,53 @@ export function useLazyLoadingChats({
   streamState: StreamState;
   prevStreamState: StreamState | undefined;
 }) {
+  const { selectedChat } = streamState;
+  const [loadedChats, setLoadedChats] = useState<
+    Array<{ channel: string; lastOpened: number }>
+  >([{ channel: selectedChat, lastOpened: epoch() }]);
+
+  useEffect(() => {
+    setLoadedChats((state) => {
+      if (!state.some(({ channel }) => channel === selectedChat)) {
+        return [...state, { channel: selectedChat, lastOpened: epoch() }];
+      } else {
+        return state;
+      }
+    });
+  }, [selectedChat]);
+
+  useEffect(() => {
+    function evictOldChats() {
+      if (
+        loadedChats.length > 4 &&
+        loadedChats.some(
+          ({ lastOpened }) => lastOpened < epoch(-CHAT_EVICT_SEC)
+        )
+      ) {
+        setLoadedChats((state) =>
+          state.filter(
+            ({ lastOpened, channel }) =>
+              channel === selectedChat || lastOpened > epoch(-CHAT_EVICT_SEC)
+          )
+        );
+      }
+    }
+
+    return () => clearInterval(setInterval(evictOldChats, 10000));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return loadedChats;
+}
+
+// kept for reference, delete when the new version is working nicely
+function useLazyLoadingChats__OLD({
+  streamState,
+  prevStreamState,
+}: {
+  streamState: StreamState;
+  prevStreamState: StreamState | undefined;
+}) {
   const { streams, selectedChat } = streamState;
   const primaryStreams = uniq([...streamState.primaryStreams, selectedChat]);
 
