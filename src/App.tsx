@@ -25,6 +25,43 @@ import useHostsMap from "./useHostsMap";
 import { SettingsModal } from "./SettingsModal";
 import TwitchBrowser from "./TwitchBrowser";
 import { ModalName } from "./Modal";
+import Log from "./log";
+
+function getScrollSnapPoint(element: HTMLElement | null): number | null {
+  if (!element) {
+    return null;
+  }
+  const rect = element.getBoundingClientRect();
+  return rect.height;
+}
+
+function closeTo(a: number, b: number, margin: number) {
+  return a <= b + margin && a >= b - margin;
+}
+
+let scrollTimer: NodeJS.Timeout | null = null;
+window.onscroll = function onScroll() {
+  if (scrollTimer !== null) {
+    clearTimeout(scrollTimer);
+  }
+  scrollTimer = setTimeout(() => {
+    let scrollSnapPoints = [
+      getScrollSnapPoint(document.getElementById("streams-outer-container")),
+    ];
+
+    const windowScrollBottom = window.scrollY;
+    const margin = 300;
+
+    scrollSnapPoints.some((snap) => {
+      Log("scroll-snap", { windowScrollBottom, snap });
+      if (snap && closeTo(windowScrollBottom, snap, margin)) {
+        window.scrollTo({ top: snap, behavior: "smooth" });
+        return true;
+      }
+      return false;
+    });
+  }, 150);
+};
 
 export default function App() {
   const [settings, setSettings] = useSettings();
