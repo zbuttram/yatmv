@@ -9,6 +9,7 @@ import { Layout } from "./layout";
 import { CHAT_EVICT_SEC, STREAM_STATE_COOKIE } from "./const";
 import { handleTwitchAuthCallback } from "./twitch";
 import { epoch } from "./utils";
+import Log from "./log";
 
 type LoadedChat = { channel: string; lastOpened: number };
 
@@ -109,6 +110,7 @@ const streamsReducer = produce(function produceStreams(
       Object.assign(draft, getInitialStreamState());
       break;
     case "EVICT_OLD_CHATS":
+      Log("chat-evict-start", { loadedChats });
       if (
         loadedChats.length > 4 &&
         loadedChats.some(
@@ -120,6 +122,7 @@ const streamsReducer = produce(function produceStreams(
             channel === selectedChat || lastOpened > epoch(-CHAT_EVICT_SEC)
         );
       }
+      Log("chat-evict-done", { loadedChats: draft.loadedChats });
       break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
