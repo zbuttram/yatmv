@@ -126,7 +126,9 @@ const streamsReducer = produce(function produceStreams(
       break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
-      setSelectedChat(draft.primaryStreams[0]);
+      if (action.payload.position === 0) {
+        setSelectedChat(action.payload.stream);
+      }
       break;
     case "ADD_STREAM":
       if (

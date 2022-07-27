@@ -29,11 +29,7 @@ export default function App() {
   const [settings, setSettings] = useSettings();
   const { showChat, fullHeightPlayer } = settings;
 
-  const {
-    state: streamState,
-    // prevState: prevStreamState,
-    actions: streamActions,
-  } = useStreams();
+  const { state: streamState, actions: streamActions } = useStreams();
   const { streams, primaryStreams, layout, selectedChat, loadedChats } =
     streamState;
   const {
