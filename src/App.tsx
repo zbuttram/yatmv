@@ -18,7 +18,6 @@ import { AppProvider } from "./appContext";
 import { Sidebar } from "./Sidebar";
 import { StreamContainer } from "./StreamContainer";
 import useStreams from "./useStreams";
-import { useLazyLoadingChats } from "./useLazyLoadingChats";
 import useScroll from "./useScroll";
 import useFollowedStreams from "./useFollowedStreams";
 import useHostsMap from "./useHostsMap";
@@ -32,10 +31,11 @@ export default function App() {
 
   const {
     state: streamState,
-    prevState: prevStreamState,
+    // prevState: prevStreamState,
     actions: streamActions,
   } = useStreams();
-  const { streams, primaryStreams, layout, selectedChat } = streamState;
+  const { streams, primaryStreams, layout, selectedChat, loadedChats } =
+    streamState;
   const {
     addStream: addNewStream,
     removeStream,
@@ -51,10 +51,6 @@ export default function App() {
     "stream-container-reference"
   );
   const scrollY = useScroll();
-  const loadedChats = useLazyLoadingChats({
-    streamState,
-    prevStreamState,
-  });
   const followedStreams = useFollowedStreams({ addNewStream });
 
   const [forceShowMainPane, setForceShowMainPane] = useState(false);

@@ -3,17 +3,21 @@ import { useEffect, useReducer } from "react";
 import { usePrevious } from "react-use";
 import invariant from "tiny-invariant";
 import Cookies from "js-cookie";
-import { uniq } from "lodash";
+import { map, uniq } from "lodash";
 
 import { Layout } from "./layout";
-import { STREAM_STATE_COOKIE } from "./const";
+import { CHAT_EVICT_SEC, STREAM_STATE_COOKIE } from "./const";
 import { handleTwitchAuthCallback } from "./twitch";
+import { epoch } from "./utils";
+
+type LoadedChat = { channel: string; lastOpened: number };
 
 export type StreamState = {
   streams: string[];
   primaryStreams: string[];
   layout: Layout;
-  selectedChat: string;
+  selectedChat?: string;
+  loadedChats: LoadedChat[];
 };
 
 function getInitialStreamState(): StreamState {
@@ -51,11 +55,15 @@ function getInitialStreamState(): StreamState {
     primaryStreams,
     layout,
     selectedChat: primaryStreams[0],
+    loadedChats: primaryStreams[0]
+      ? [{ channel: primaryStreams[0], lastOpened: epoch() }]
+      : [],
   };
 }
 
 type StreamAction =
   | { type: "INIT" }
+  | { type: "EVICT_OLD_CHATS" }
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
@@ -68,7 +76,7 @@ const streamsReducer = produce(function produceStreams(
   draft: StreamState,
   action: StreamAction
 ) {
-  const { streams, primaryStreams, layout } = draft;
+  const { streams, primaryStreams, layout, loadedChats, selectedChat } = draft;
 
   function setPrimaryStream(stream, position = 0) {
     const streamLower = stream.toLowerCase();
@@ -83,13 +91,39 @@ const streamsReducer = produce(function produceStreams(
     }
   }
 
+  function setSelectedChat(stream) {
+    draft.selectedChat = stream;
+    if (!map(loadedChats, "channel").includes(stream)) {
+      draft.loadedChats = [
+        ...draft.loadedChats,
+        { channel: stream, lastOpened: epoch() },
+      ];
+    } else {
+      const idx = loadedChats.findIndex(({ channel }) => channel === stream);
+      draft.loadedChats[idx].lastOpened = epoch();
+    }
+  }
+
   switch (action.type) {
     case "INIT":
       Object.assign(draft, getInitialStreamState());
       break;
+    case "EVICT_OLD_CHATS":
+      if (
+        loadedChats.length > 4 &&
+        loadedChats.some(
+          ({ lastOpened }) => lastOpened < epoch(-CHAT_EVICT_SEC)
+        )
+      ) {
+        draft.loadedChats = loadedChats.filter(
+          ({ lastOpened, channel }) =>
+            channel === selectedChat || lastOpened > epoch(-CHAT_EVICT_SEC)
+        );
+      }
+      break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
-      draft.selectedChat = draft.primaryStreams[0];
+      setSelectedChat(draft.primaryStreams[0]);
       break;
     case "ADD_STREAM":
       if (
@@ -101,6 +135,7 @@ const streamsReducer = produce(function produceStreams(
       } else {
         if (streams.length < 1) {
           setPrimaryStream(action.payload);
+          setSelectedChat(action.payload);
         }
         draft.streams.unshift(action.payload.toLowerCase());
       }
@@ -115,6 +150,9 @@ const streamsReducer = produce(function produceStreams(
       if (draft.primaryStreams.length === 0 && streams.length) {
         draft.primaryStreams = [streams[0]];
       }
+      draft.loadedChats = draft.loadedChats.filter(
+        ({ channel }) => channel === removing
+      );
       break;
     case "SET_LAYOUT":
       draft.layout = action.payload.layout;
@@ -132,7 +170,7 @@ const streamsReducer = produce(function produceStreams(
         action.payload.reverse
           ? draft.primaryStreams.push(element)
           : draft.primaryStreams.unshift(element);
-        draft.selectedChat = draft.primaryStreams[0];
+        setSelectedChat(draft.primaryStreams[0]);
       }
       break;
     case "REPLACE_STREAM":
@@ -154,7 +192,7 @@ const streamsReducer = produce(function produceStreams(
       }
       break;
     case "SET_SELECTED_CHAT":
-      draft.selectedChat = action.payload.chat;
+      setSelectedChat(action.payload.chat);
       break;
     default:
       throw new Error("Unknown action type in useStreams reducer");
@@ -193,6 +231,13 @@ export default function useStreams() {
       );
     });
   }, [streams, primaryStreams, layout]);
+
+  useEffect(() => {
+    return () =>
+      clearInterval(
+        setInterval(() => dispatch({ type: "EVICT_OLD_CHATS" }), 10000)
+      );
+  }, []);
 
   return {
     state,

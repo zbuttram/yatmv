@@ -1,6 +1,10 @@
+// @ts-nocheck
+
+// This file is only kept for reference. Implementation has moved into the main reducer in useStreams.
+
 import { useEffect, useState } from "react";
 import produce from "immer";
-import { uniq, without } from "lodash";
+import { map, uniq, without } from "lodash";
 
 import { StreamState } from "./useStreams";
 import { epoch } from "./utils";
