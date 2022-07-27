@@ -136,7 +136,7 @@ export default function App() {
               <select
                 className={classNames(
                   "bg-black cursor-pointer",
-                  showChat ? "" : "w-0"
+                  selectedChat && showChat ? "" : "w-0"
                 )}
                 onChange={(e) => setSelectedChat(e.target.value)}
                 value={selectedChat}
