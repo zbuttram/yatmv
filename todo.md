@@ -5,6 +5,5 @@
     * Reordering array items in react state results in at least one iframe reload
 * save stream "lists"
 * shareable "rooms"
-* chat selector
 * ask if user wants to reopen last open streams when returning
   * check for offline streams?
