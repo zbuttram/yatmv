@@ -257,10 +257,11 @@ export default function useStreams() {
   }, [streams, primaryStreams, layout]);
 
   useEffect(() => {
-    return () =>
-      clearInterval(
-        setInterval(() => dispatch({ type: "EVICT_OLD_CHATS" }), 10000)
-      );
+    const interval = setInterval(
+      () => dispatch({ type: "EVICT_OLD_CHATS" }),
+      30000
+    );
+    return () => clearInterval(interval);
   }, []);
 
   return {
