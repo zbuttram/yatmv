@@ -51,8 +51,18 @@ function getInitialStreamState(): StreamState {
     primaryStreams = primaryStreams.slice(0, layout + 1);
   }
 
+  let streams = uniq(reloadFromAuthStreams || parsedUrlStreams || []);
+  /**
+   * something else is causing the streams to sometimes have a # in front of them on reload
+   * (maybe only in dev? on hot reload?)
+   * this is a dumb workaround
+   */
+  if (streams.every((stream) => stream.startsWith("#"))) {
+    streams = streams.map((stream) => stream.slice(1));
+  }
+
   return {
-    streams: uniq(reloadFromAuthStreams || parsedUrlStreams || []),
+    streams,
     primaryStreams,
     layout,
     selectedChat: primaryStreams[0],
@@ -77,7 +87,16 @@ const streamsReducer = produce(function produceStreams(
   draft: StreamState,
   action: StreamAction
 ) {
-  const { streams, primaryStreams, layout, loadedChats, selectedChat } = draft;
+  let { streams, primaryStreams, layout, loadedChats, selectedChat } = draft;
+
+  /**
+   * something else is causing the streams to sometimes have a # in front of them on reload
+   * (maybe only in dev? on hot reload?)
+   * this is a dumb workaround
+   */
+  if (streams.every((stream) => stream.startsWith("#"))) {
+    draft.streams = streams = streams.map((stream) => stream.slice(1));
+  }
 
   function setPrimaryStream(stream, position = 0) {
     const streamLower = stream.toLowerCase();

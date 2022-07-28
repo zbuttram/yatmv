@@ -24,6 +24,7 @@ import useHostsMap from "./useHostsMap";
 import { SettingsModal } from "./SettingsModal";
 import TwitchBrowser from "./TwitchBrowser";
 import { ModalName } from "./Modal";
+import CommandBar from "./CommandBar";
 
 export default function App() {
   const [settings, setSettings] = useSettings();
@@ -239,6 +240,11 @@ export default function App() {
         close={closeModal}
         followedStreams={followedStreams}
         addNewStream={addNewStream}
+      />
+      <CommandBar
+        open={() => setModalOpen("command-bar")}
+        close={closeModal}
+        isOpen={modalOpen === "command-bar"}
       />
     </AppProvider>
   );
