@@ -27,6 +27,7 @@ function getInitialStreamState(): StreamState {
   const urlStreams = pageURL.searchParams.get("streams");
   if (urlStreams) {
     parsedUrlStreams = urlStreams.split(",");
+    Log("Loading URL streams:", { urlStreams, parsedUrlStreams });
   }
   let parsedUrlPrimary: string[] = [];
   const urlPrimary = pageURL.searchParams.get("primary");
@@ -57,9 +58,11 @@ function getInitialStreamState(): StreamState {
    * (maybe only in dev? on hot reload? update: nope, happening on preview site)
    * this is a dumb workaround
    */
+  Log("Init streams pre-clean:", streams);
   if (streams.every((stream) => stream.startsWith("#"))) {
     streams = streams.map((stream) => stream.slice(1));
   }
+  Log("Init streams post-clean:", streams);
 
   return {
     streams,

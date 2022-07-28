@@ -1,4 +1,6 @@
-let shouldLog = process.env.NODE_ENV === "development";
+let shouldLog =
+  process.env.NODE_ENV === "development" ||
+  localStorage.getItem("yatmv-should-log") === "true";
 
 export default function Log(...args) {
   if (!shouldLog) return;
@@ -11,4 +13,5 @@ export function setLog(bool: boolean | null = null) {
   } else {
     shouldLog = bool;
   }
+  localStorage.setItem("yatmv-should-log", shouldLog ? "true" : "false");
 }
