@@ -2,6 +2,7 @@ import Cookies from "js-cookie";
 import { camelCase } from "lodash";
 import mapKeysDeep from "map-keys-deep-lodash";
 
+import { useQuery } from "react-query";
 import {
   STREAM_STATE_COOKIE,
   TWITCH_ACCESS_TOKEN_COOKIE,
@@ -10,9 +11,9 @@ import {
   TWITCH_SCOPE_COOKIE,
   TWITCH_SCOPES,
 } from "./const";
-import { useQuery } from "react-query";
 import { Layout } from "./layout";
 import { Params, paramsToString, ParamValue } from "./utils";
+import Log from "./log";
 
 if (!TWITCH_CLIENT_ID) {
   throw new Error(
@@ -43,6 +44,7 @@ export function handleTwitchAuthCallback() {
     hasTwitchAuth: boolean = !!accessToken;
 
   if (document.location.hash) {
+    Log("Twitch auth hash detected:", document.location.hash);
     const hashParams = new URLSearchParams(document.location.hash.slice(1));
     const accessTokenParam = hashParams.get("access_token");
     if (accessTokenParam) {

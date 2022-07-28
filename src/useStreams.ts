@@ -54,7 +54,7 @@ function getInitialStreamState(): StreamState {
   let streams = uniq(reloadFromAuthStreams || parsedUrlStreams || []);
   /**
    * something else is causing the streams to sometimes have a # in front of them on reload
-   * (maybe only in dev? on hot reload?)
+   * (maybe only in dev? on hot reload? update: nope, happening on preview site)
    * this is a dumb workaround
    */
   if (streams.every((stream) => stream.startsWith("#"))) {
@@ -91,7 +91,7 @@ const streamsReducer = produce(function produceStreams(
 
   /**
    * something else is causing the streams to sometimes have a # in front of them on reload
-   * (maybe only in dev? on hot reload?)
+   * (maybe only in dev? on hot reload? update: nope, happening on preview site)
    * this is a dumb workaround
    */
   if (streams.every((stream) => stream.startsWith("#"))) {

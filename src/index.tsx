@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { QueryClientProvider, QueryClient } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 import invariant from "tiny-invariant";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "react-error-boundary";
 
 import "./index.css";
@@ -19,18 +18,9 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools />
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ErrorBoundary FallbackComponent={AppErrorBoundary}>
-                <App />
-              </ErrorBoundary>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
+      <ErrorBoundary FallbackComponent={AppErrorBoundary}>
+        <App />
+      </ErrorBoundary>
     </QueryClientProvider>
   </React.StrictMode>
 );
