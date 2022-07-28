@@ -27,7 +27,6 @@ function getInitialStreamState(): StreamState {
   const urlStreams = pageURL.searchParams.get("streams");
   if (urlStreams) {
     parsedUrlStreams = urlStreams.split(",");
-    Log("Loading URL streams:", { urlStreams, parsedUrlStreams });
   }
   let parsedUrlPrimary: string[] = [];
   const urlPrimary = pageURL.searchParams.get("primary");
@@ -52,7 +51,7 @@ function getInitialStreamState(): StreamState {
     primaryStreams = primaryStreams.slice(0, layout + 1);
   }
 
-  let streams = uniq(reloadFromAuthStreams || parsedUrlStreams || []);
+  const streams = uniq(reloadFromAuthStreams || parsedUrlStreams || []);
 
   return {
     streams,
@@ -212,23 +211,10 @@ const streamsReducer = produce(function produceStreams(
 });
 
 // init this outside of the hook to prevent it being called over and over
-let initialStreamState = getInitialStreamState();
-Log("Initial stream state pre-clean:", initialStreamState);
-/**
- * something else is causing the streams to sometimes have a # in front of them on reload
- * this is a dumb workaround
- */
-if (initialStreamState.streams.every((stream) => stream.startsWith("#"))) {
-  Log("Doing stream clean");
-  initialStreamState.streams = initialStreamState.streams.map((stream) =>
-    stream.slice(1)
-  );
-}
-Log("Initial stream state post-clean:", initialStreamState);
+const initialStreamState = getInitialStreamState();
 
 export default function useStreams() {
   const [state, dispatch] = useReducer(streamsReducer, initialStreamState);
-  const prevState = usePrevious(state);
   const { streams, primaryStreams, layout } = state;
 
   // set URL params
@@ -269,7 +255,6 @@ export default function useStreams() {
 
   return {
     state,
-    prevState,
     dispatch,
     actions: {
       addStream(name: string) {
