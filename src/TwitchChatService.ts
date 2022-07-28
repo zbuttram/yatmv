@@ -39,7 +39,8 @@ class TwitchChatService {
 
   constructor(streams: string[]) {
     this.client = new tmi.Client({
-      channels: streams,
+      // need to copy the array here or the client will modify the original by reference
+      channels: streams.slice(),
     });
     this.client.connect().then(() => (this.connected = true));
     this.emitter = mitt();

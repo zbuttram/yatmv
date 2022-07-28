@@ -1,9 +1,8 @@
 import classNames from "classnames";
 import { Fragment, ReactNode, useState } from "react";
-import { faUsers } from "@fortawesome/free-solid-svg-icons";
+import { faUsers, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useInfiniteQuery } from "react-query";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { Waypoint } from "react-waypoint";
 
