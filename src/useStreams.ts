@@ -226,8 +226,11 @@ const streamsReducer = produce(function produceStreams(
   }
 });
 
+// init this outside of the hook to prevent it being called over and over
+const initialStreamState = getInitialStreamState();
+
 export default function useStreams() {
-  const [state, dispatch] = useReducer(streamsReducer, getInitialStreamState());
+  const [state, dispatch] = useReducer(streamsReducer, initialStreamState);
   const prevState = usePrevious(state);
   const { streams, primaryStreams, layout } = state;
 
