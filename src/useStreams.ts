@@ -212,13 +212,14 @@ const streamsReducer = produce(function produceStreams(
 });
 
 // init this outside of the hook to prevent it being called over and over
-const initialStreamState = getInitialStreamState();
+let initialStreamState = getInitialStreamState();
 Log("Initial stream state pre-clean:", initialStreamState);
 /**
  * something else is causing the streams to sometimes have a # in front of them on reload
  * this is a dumb workaround
  */
 if (initialStreamState.streams.every((stream) => stream.startsWith("#"))) {
+  Log("Doing stream clean");
   initialStreamState.streams = initialStreamState.streams.map((stream) =>
     stream.slice(1)
   );
