@@ -91,6 +91,7 @@ const streamsReducer = produce(function produceStreams(
   action: StreamAction
 ) {
   let { streams, primaryStreams, layout, loadedChats, selectedChat } = draft;
+  Log("useStreams reducer start", Object.assign({}, draft));
 
   /**
    * something else is causing the streams to sometimes have a # in front of them on reload
@@ -132,7 +133,7 @@ const streamsReducer = produce(function produceStreams(
       Object.assign(draft, getInitialStreamState());
       break;
     case "EVICT_OLD_CHATS":
-      Log("chat-evict-start", { loadedChats });
+      Log("chat-evict-start", { loadedChats: loadedChats.slice() });
       if (
         loadedChats.length > 4 &&
         loadedChats.some(
@@ -144,7 +145,7 @@ const streamsReducer = produce(function produceStreams(
             channel === selectedChat || lastOpened > epoch(-CHAT_EVICT_SEC)
         );
       }
-      Log("chat-evict-done", { loadedChats: draft.loadedChats });
+      Log("chat-evict-done", { loadedChats: draft.loadedChats.slice() });
       break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
@@ -224,10 +225,13 @@ const streamsReducer = produce(function produceStreams(
     default:
       throw new Error("Unknown action type in useStreams reducer");
   }
+
+  Log("useStreams reducer end", Object.assign({}, draft));
 });
 
 // init this outside of the hook to prevent it being called over and over
 const initialStreamState = getInitialStreamState();
+Log("Initial stream state:", initialStreamState);
 
 export default function useStreams() {
   const [state, dispatch] = useReducer(streamsReducer, initialStreamState);
