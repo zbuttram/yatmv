@@ -53,16 +53,6 @@ function getInitialStreamState(): StreamState {
   }
 
   let streams = uniq(reloadFromAuthStreams || parsedUrlStreams || []);
-  /**
-   * something else is causing the streams to sometimes have a # in front of them on reload
-   * (maybe only in dev? on hot reload? update: nope, happening on preview site)
-   * this is a dumb workaround
-   */
-  Log("Init streams pre-clean:", streams);
-  if (streams.every((stream) => stream.startsWith("#"))) {
-    streams = streams.map((stream) => stream.slice(1));
-  }
-  Log("Init streams post-clean:", streams);
 
   return {
     streams,
@@ -91,16 +81,6 @@ const streamsReducer = produce(function produceStreams(
   action: StreamAction
 ) {
   let { streams, primaryStreams, layout, loadedChats, selectedChat } = draft;
-  Log("useStreams reducer start", Object.assign({}, draft));
-
-  /**
-   * something else is causing the streams to sometimes have a # in front of them on reload
-   * (maybe only in dev? on hot reload? update: nope, happening on preview site)
-   * this is a dumb workaround
-   */
-  if (streams.every((stream) => stream.startsWith("#"))) {
-    draft.streams = streams = streams.map((stream) => stream.slice(1));
-  }
 
   function setPrimaryStream(stream, position = 0) {
     const streamLower = stream.toLowerCase();
@@ -133,7 +113,9 @@ const streamsReducer = produce(function produceStreams(
       Object.assign(draft, getInitialStreamState());
       break;
     case "EVICT_OLD_CHATS":
-      Log("chat-evict-start", { loadedChats: loadedChats.slice() });
+      Log("chat-evict-start", {
+        loadedChats: loadedChats.slice().map((c) => Object.assign({}, c)),
+      });
       if (
         loadedChats.length > 4 &&
         loadedChats.some(
@@ -145,7 +127,9 @@ const streamsReducer = produce(function produceStreams(
             channel === selectedChat || lastOpened > epoch(-CHAT_EVICT_SEC)
         );
       }
-      Log("chat-evict-done", { loadedChats: draft.loadedChats.slice() });
+      Log("chat-evict-done", {
+        loadedChats: draft.loadedChats.slice().map((c) => Object.assign({}, c)),
+      });
       break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
@@ -225,13 +209,21 @@ const streamsReducer = produce(function produceStreams(
     default:
       throw new Error("Unknown action type in useStreams reducer");
   }
-
-  Log("useStreams reducer end", Object.assign({}, draft));
 });
 
 // init this outside of the hook to prevent it being called over and over
 const initialStreamState = getInitialStreamState();
-Log("Initial stream state:", initialStreamState);
+Log("Initial stream state pre-clean:", initialStreamState);
+/**
+ * something else is causing the streams to sometimes have a # in front of them on reload
+ * this is a dumb workaround
+ */
+if (initialStreamState.streams.every((stream) => stream.startsWith("#"))) {
+  initialStreamState.streams = initialStreamState.streams.map((stream) =>
+    stream.slice(1)
+  );
+}
+Log("Initial stream state post-clean:", initialStreamState);
 
 export default function useStreams() {
   const [state, dispatch] = useReducer(streamsReducer, initialStreamState);
