@@ -175,7 +175,7 @@ const streamsReducer = produce(function produceStreams(
         draft.primaryStreams = [streams[0]];
       }
       draft.loadedChats = draft.loadedChats.filter(
-        ({ channel }) => channel === removing
+        ({ channel }) => channel !== removing
       );
       break;
     case "SET_LAYOUT":
