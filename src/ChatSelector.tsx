@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock, faLockOpen } from "@fortawesome/free-solid-svg-icons";
 
@@ -15,10 +14,7 @@ export default function ChatSelector(props: {
   return (
     <div className="p-2 flex justify-center">
       <select
-        className={classNames(
-          "bg-black cursor-pointer",
-          props.selectedChat && props.showChat ? "" : "w-0"
-        )}
+        className="bg-black cursor-pointer"
         onChange={props.onChange}
         value={props.selectedChat}
       >
@@ -37,5 +33,6 @@ export default function ChatSelector(props: {
 
 function Option({ stream }: { stream: string }) {
   const { data: user } = useTwitchUser(stream.toLowerCase());
+
   return <option value={stream}>{user?.displayName ?? stream}</option>;
 }

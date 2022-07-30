@@ -118,7 +118,10 @@ export default function App() {
           />
           <div
             id="chats-container"
-            className="flex flex-col h-full relative transition-all"
+            className={classNames(
+              "flex flex-col h-full relative transition-all",
+              selectedChat && showChat ? "" : "w-0"
+            )}
           >
             {loadedChats.length > 0 && (
               <div
