@@ -91,7 +91,7 @@ const streamsReducer = produce(function produceStreams(
     },
   ]);
 
-  function setPrimaryStream(stream, position = 0) {
+  function setPrimaryStream(stream: string, position = 0) {
     const streamLower = stream.toLowerCase();
     if (layout === 0) {
       draft.primaryStreams = [streamLower];

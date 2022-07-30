@@ -145,12 +145,9 @@ export default function App() {
               </div>
             )}
             <ChatSelector
-              selectedChat={selectedChat}
-              showChat={showChat}
-              onChange={(e) => setSelectedChat(e.target.value)}
-              streams={streams}
-              onClick={toggleChatLock}
-              chatLocked={chatLocked}
+              streamState={streamState}
+              setSelectedChat={setSelectedChat}
+              toggleChatLock={toggleChatLock}
             />
             <div style={{ height: "calc(100% - 2.3rem)" }}>
               {loadedChats.map(({ channel }) => (
