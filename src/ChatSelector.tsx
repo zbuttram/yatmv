@@ -2,13 +2,15 @@ import classNames from "classnames";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock, faLockOpen } from "@fortawesome/free-solid-svg-icons";
 
+import { useTwitchUser } from "./twitch";
+
 export default function ChatSelector(props: {
-  selectedChat: any;
+  selectedChat?: string;
   showChat: boolean;
   onChange: (e) => void;
-  streams: any;
+  streams: string[];
   onClick: () => void;
-  chatLocked: any;
+  chatLocked: boolean;
 }) {
   return (
     <div className="p-2 flex justify-center">
@@ -21,7 +23,7 @@ export default function ChatSelector(props: {
         value={props.selectedChat}
       >
         {props.streams.map((stream) => (
-          <option value={stream}>{stream}</option>
+          <Option key={stream} stream={stream} />
         ))}
       </select>
       <div className="ml-2">
@@ -31,4 +33,9 @@ export default function ChatSelector(props: {
       </div>
     </div>
   );
+}
+
+function Option({ stream }: { stream: string }) {
+  const { data: user } = useTwitchUser(stream.toLowerCase());
+  return <option value={stream}>{user?.displayName ?? stream}</option>;
 }
