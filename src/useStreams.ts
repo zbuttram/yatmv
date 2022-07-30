@@ -2,13 +2,13 @@ import produce from "immer";
 import { useEffect, useReducer } from "react";
 import invariant from "tiny-invariant";
 import Cookies from "js-cookie";
-import { map, uniq } from "lodash";
+import { get, map, uniq } from "lodash";
 
 import { Layout } from "./layout";
 import { CHAT_EVICT_SEC, STREAM_STATE_COOKIE } from "./const";
 import { handleTwitchAuthCallback } from "./twitch";
 import { epoch } from "./utils";
-import Log from "./log";
+import Log, { ifLog } from "./log";
 
 type LoadedChat = { channel: string; lastOpened: number };
 
@@ -79,6 +79,14 @@ const streamsReducer = produce(function produceStreams(
   action: StreamAction
 ) {
   let { streams, primaryStreams, layout, loadedChats, selectedChat } = draft;
+
+  ifLog(() => [
+    `Main Reducer ${action.type} START:`,
+    {
+      draft: Object.assign({}, draft),
+      payload: get(action, "payload", null),
+    },
+  ]);
 
   function setPrimaryStream(stream, position = 0) {
     const streamLower = stream.toLowerCase();
@@ -207,6 +215,14 @@ const streamsReducer = produce(function produceStreams(
     default:
       throw new Error("Unknown action type in useStreams reducer");
   }
+
+  ifLog(() => [
+    `Main Reducer ${action.type} END:`,
+    {
+      draft: Object.assign({}, draft),
+      payload: get(action, "payload", null),
+    },
+  ]);
 });
 
 // init this outside of the hook to prevent it being called over and over

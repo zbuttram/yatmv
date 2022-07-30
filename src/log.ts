@@ -15,3 +15,9 @@ export function setLog(bool: boolean | null = null) {
   }
   localStorage.setItem("yatmv-should-log", shouldLog ? "true" : "false");
 }
+
+export function ifLog(cb: () => any[]) {
+  if (shouldLog) {
+    Log(cb());
+  }
+}

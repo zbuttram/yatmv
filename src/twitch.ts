@@ -44,7 +44,6 @@ export function handleTwitchAuthCallback() {
     hasTwitchAuth: boolean = !!accessToken;
 
   if (document.location.hash) {
-    Log("Twitch auth hash detected:", document.location.hash);
     const hashParams = new URLSearchParams(document.location.hash.slice(1));
     const accessTokenParam = hashParams.get("access_token");
     if (accessTokenParam) {

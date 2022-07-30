@@ -1,5 +1,4 @@
 import { useState, useLayoutEffect } from "react";
-import Log from "./log";
 
 function setRect(
   id: string,
@@ -27,7 +26,6 @@ function setRect(
     rect.height !== newRect.height
   ) {
     _setRect(newRect);
-    Log("set-rect", id, newRect);
   }
 }
 
