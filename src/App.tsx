@@ -32,14 +32,8 @@ export default function App() {
   const { showChat, fullHeightPlayer } = settings;
 
   const { state: streamState, actions: streamActions } = useStreams();
-  const {
-    streams,
-    primaryStreams,
-    layout,
-    selectedChat,
-    loadedChats,
-    chatLocked,
-  } = streamState;
+  const { streams, primaryStreams, layout, selectedChat, loadedChats } =
+    streamState;
   const {
     addStream: addNewStream,
     removeStream,
@@ -49,6 +43,7 @@ export default function App() {
     replaceStream,
     setSelectedChat,
     toggleChatLock,
+    resetSelectedChat,
   } = streamActions;
 
   const primaryContainerRect = useBounding("primary-stream-container");
@@ -148,6 +143,7 @@ export default function App() {
               streamState={streamState}
               setSelectedChat={setSelectedChat}
               toggleChatLock={toggleChatLock}
+              resetSelectedChat={resetSelectedChat}
             />
             <div style={{ height: "calc(100% - 2.3rem)" }}>
               {loadedChats.map(({ channel }) => (

@@ -69,6 +69,7 @@ type StreamAction =
   | { type: "INIT" }
   | { type: "EVICT_OLD_CHATS" }
   | { type: "TOGGLE_CHAT_LOCK" }
+  | { type: "RESET_SELECTED_CHAT" }
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
@@ -216,6 +217,10 @@ const streamsReducer = produce(function produceStreams(
     case "SET_SELECTED_CHAT":
       setSelectedChat(action.payload.chat);
       break;
+    case "RESET_SELECTED_CHAT":
+      draft.chatLocked = false;
+      setSelectedChat(draft.primaryStreams[0]);
+      break;
     case "TOGGLE_CHAT_LOCK":
       draft.chatLocked = !draft.chatLocked;
       break;
@@ -305,6 +310,9 @@ export default function useStreams() {
           type: "SET_SELECTED_CHAT",
           payload: { chat },
         });
+      },
+      resetSelectedChat() {
+        dispatch({ type: "RESET_SELECTED_CHAT" });
       },
       toggleChatLock() {
         dispatch({ type: "TOGGLE_CHAT_LOCK" });

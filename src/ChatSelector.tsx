@@ -9,10 +9,12 @@ export default function ChatSelector({
   streamState,
   setSelectedChat,
   toggleChatLock,
+  resetSelectedChat,
 }: {
   streamState: StreamState;
   setSelectedChat: (chat: string) => void;
   toggleChatLock: () => void;
+  resetSelectedChat: () => void;
 }) {
   const { selectedChat, streams, chatLocked, primaryStreams } = streamState;
 
@@ -20,13 +22,11 @@ export default function ChatSelector({
 
   return (
     <div className="p-2 flex justify-center">
-      <div className={classNames("mr-2", notOnDefaultChat ? "" : "invisible")}>
+      <div
+        className={classNames("mr-2 pl-1", notOnDefaultChat ? "" : "invisible")}
+      >
         <button
-          onClick={() => {
-            if (notOnDefaultChat) {
-              setSelectedChat(primaryStreams[0]);
-            }
-          }}
+          onClick={() => notOnDefaultChat && resetSelectedChat()}
           title="Reset to Default Chat"
         >
           <FontAwesomeIcon fixedWidth icon={faEye} />
