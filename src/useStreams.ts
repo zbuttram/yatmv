@@ -1,4 +1,4 @@
-import produce from "immer";
+import produce, { current } from "immer";
 import { useEffect, useReducer } from "react";
 import invariant from "tiny-invariant";
 import Cookies from "js-cookie";
@@ -83,7 +83,7 @@ const streamsReducer = produce(function produceStreams(
   ifLog(() => [
     `Main Reducer ${action.type} START:`,
     {
-      draft: Object.assign({}, draft),
+      draft: current(draft),
       payload: get(action, "payload", null),
     },
   ]);
@@ -219,7 +219,7 @@ const streamsReducer = produce(function produceStreams(
   ifLog(() => [
     `Main Reducer ${action.type} END:`,
     {
-      draft: Object.assign({}, draft),
+      draft: current(draft),
       payload: get(action, "payload", null),
     },
   ]);

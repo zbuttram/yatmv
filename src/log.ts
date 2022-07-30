@@ -18,6 +18,6 @@ export function setLog(bool: boolean | null = null) {
 
 export function ifLog(cb: () => any[]) {
   if (shouldLog) {
-    Log(cb());
+    Log(...cb());
   }
 }
