@@ -119,9 +119,6 @@ const streamsReducer = produce(function produceStreams(
       Object.assign(draft, getInitialStreamState());
       break;
     case "EVICT_OLD_CHATS":
-      Log("chat-evict-start", {
-        loadedChats: loadedChats.slice().map((c) => Object.assign({}, c)),
-      });
       if (
         loadedChats.length > 4 &&
         loadedChats.some(
@@ -133,9 +130,6 @@ const streamsReducer = produce(function produceStreams(
             channel === selectedChat || lastOpened > epoch(-CHAT_EVICT_SEC)
         );
       }
-      Log("chat-evict-done", {
-        loadedChats: draft.loadedChats.slice().map((c) => Object.assign({}, c)),
-      });
       break;
     case "SET_PRIMARY":
       setPrimaryStream(action.payload.stream, action.payload.position);
@@ -167,6 +161,9 @@ const streamsReducer = produce(function produceStreams(
       draft.streams.splice(action.payload, 1);
       if (draft.primaryStreams.length === 0 && streams.length) {
         draft.primaryStreams = [streams[0]];
+      }
+      if (removing === selectedChat) {
+        setSelectedChat(draft.primaryStreams[0]);
       }
       draft.loadedChats = draft.loadedChats.filter(
         ({ channel }) => channel !== removing
