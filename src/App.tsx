@@ -120,7 +120,7 @@ export default function App() {
             id="chats-container"
             className={classNames(
               "flex flex-col h-full relative transition-all",
-              selectedChat && showChat ? "" : "w-0"
+              selectedChat && showChat ? "chat-standard-width" : "w-0"
             )}
           >
             {loadedChats.length > 0 && (
