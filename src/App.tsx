@@ -25,14 +25,21 @@ import { SettingsModal } from "./SettingsModal";
 import TwitchBrowser from "./TwitchBrowser";
 import { ModalName } from "./Modal";
 import CommandBar from "./CommandBar";
+import ChatSelector from "./ChatSelector";
 
 export default function App() {
   const [settings, setSettings] = useSettings();
   const { showChat, fullHeightPlayer } = settings;
 
   const { state: streamState, actions: streamActions } = useStreams();
-  const { streams, primaryStreams, layout, selectedChat, loadedChats } =
-    streamState;
+  const {
+    streams,
+    primaryStreams,
+    layout,
+    selectedChat,
+    loadedChats,
+    chatLocked,
+  } = streamState;
   const {
     addStream: addNewStream,
     removeStream,
@@ -41,6 +48,7 @@ export default function App() {
     setLayout,
     replaceStream,
     setSelectedChat,
+    toggleChatLock,
   } = streamActions;
 
   const primaryContainerRect = useBounding("primary-stream-container");
@@ -133,20 +141,14 @@ export default function App() {
                 />
               </div>
             )}
-            <div className="p-2 flex justify-center">
-              <select
-                className={classNames(
-                  "bg-black cursor-pointer",
-                  selectedChat && showChat ? "" : "w-0"
-                )}
-                onChange={(e) => setSelectedChat(e.target.value)}
-                value={selectedChat}
-              >
-                {streams.map((stream) => (
-                  <option value={stream}>{stream}</option>
-                ))}
-              </select>
-            </div>
+            <ChatSelector
+              selectedChat={selectedChat}
+              showChat={showChat}
+              onChange={(e) => setSelectedChat(e.target.value)}
+              streams={streams}
+              onClick={toggleChatLock}
+              chatLocked={chatLocked}
+            />
             <div style={{ height: "calc(100% - 2.3rem)" }}>
               {loadedChats.map(({ channel }) => (
                 <TwitchChat

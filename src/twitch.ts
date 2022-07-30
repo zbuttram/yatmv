@@ -13,7 +13,6 @@ import {
 } from "./const";
 import { Layout } from "./layout";
 import { Params, paramsToString, ParamValue } from "./utils";
-import Log from "./log";
 
 if (!TWITCH_CLIENT_ID) {
   throw new Error(

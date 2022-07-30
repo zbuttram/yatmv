@@ -8,7 +8,7 @@ import { Layout } from "./layout";
 import { CHAT_EVICT_SEC, STREAM_STATE_COOKIE } from "./const";
 import { handleTwitchAuthCallback } from "./twitch";
 import { epoch } from "./utils";
-import Log, { ifLog } from "./log";
+import { ifLog } from "./log";
 
 type LoadedChat = { channel: string; lastOpened: number };
 
@@ -17,6 +17,7 @@ export type StreamState = {
   primaryStreams: string[];
   layout: Layout;
   selectedChat?: string;
+  chatLocked: boolean;
   loadedChats: LoadedChat[];
 };
 
@@ -56,6 +57,7 @@ function getInitialStreamState(): StreamState {
     streams,
     primaryStreams,
     layout,
+    chatLocked: false,
     selectedChat: primaryStreams[0],
     loadedChats: primaryStreams[0]
       ? [{ channel: primaryStreams[0], lastOpened: epoch() }]
@@ -66,6 +68,7 @@ function getInitialStreamState(): StreamState {
 type StreamAction =
   | { type: "INIT" }
   | { type: "EVICT_OLD_CHATS" }
+  | { type: "TOGGLE_CHAT_LOCK" }
   | { type: "ADD_STREAM"; payload: string }
   | { type: "REMOVE_STREAM"; payload: number }
   | { type: "SET_PRIMARY"; payload: { stream: string; position: number } }
@@ -101,7 +104,10 @@ const streamsReducer = produce(function produceStreams(
     }
   }
 
-  function setSelectedChat(stream) {
+  function setSelectedChat(stream: string) {
+    if (draft.chatLocked) {
+      return;
+    }
     draft.selectedChat = stream;
     if (!map(loadedChats, "channel").includes(stream)) {
       draft.loadedChats = [
@@ -163,6 +169,7 @@ const streamsReducer = produce(function produceStreams(
         draft.primaryStreams = [streams[0]];
       }
       if (removing === selectedChat) {
+        draft.chatLocked = false;
         setSelectedChat(draft.primaryStreams[0]);
       }
       draft.loadedChats = draft.loadedChats.filter(
@@ -208,6 +215,9 @@ const streamsReducer = produce(function produceStreams(
       break;
     case "SET_SELECTED_CHAT":
       setSelectedChat(action.payload.chat);
+      break;
+    case "TOGGLE_CHAT_LOCK":
+      draft.chatLocked = !draft.chatLocked;
       break;
     default:
       throw new Error("Unknown action type in useStreams reducer");
@@ -295,6 +305,9 @@ export default function useStreams() {
           type: "SET_SELECTED_CHAT",
           payload: { chat },
         });
+      },
+      toggleChatLock() {
+        dispatch({ type: "TOGGLE_CHAT_LOCK" });
       },
     },
   };
