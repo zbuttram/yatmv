@@ -295,7 +295,7 @@ function FollowedStream({
               "btn-sidebar-followed w-8 flex-shrink-0",
               sidebarExpanded ? "mr-2" : "mr-4"
             )}
-            onClick={() => addStream(stream.userName)}
+            onClick={() => addStream(stream.userLogin.toLowerCase())}
           >
             <img
               className={classNames("rounded-full")}

@@ -109,14 +109,17 @@ const streamsReducer = produce(function produceStreams(
     if (draft.chatLocked) {
       return;
     }
-    draft.selectedChat = stream;
-    if (!map(loadedChats, "channel").includes(stream)) {
+    const streamLower = stream.toLowerCase();
+    draft.selectedChat = streamLower;
+    if (!map(loadedChats, "channel").includes(streamLower)) {
       draft.loadedChats = [
         ...draft.loadedChats,
-        { channel: stream, lastOpened: epoch() },
+        { channel: streamLower, lastOpened: epoch() },
       ];
     } else {
-      const idx = loadedChats.findIndex(({ channel }) => channel === stream);
+      const idx = loadedChats.findIndex(
+        ({ channel }) => channel === streamLower
+      );
       draft.loadedChats[idx].lastOpened = epoch();
     }
   }
