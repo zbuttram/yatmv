@@ -145,18 +145,17 @@ const streamsReducer = produce(function produceStreams(
       }
       break;
     case "ADD_STREAM":
-      if (
-        streams
-          .map((s) => s.toLowerCase())
-          .includes(action.payload.toLowerCase())
-      ) {
-        setPrimaryStream(action.payload);
-      } else {
-        if (streams.length < 1) {
-          setPrimaryStream(action.payload);
-          setSelectedChat(action.payload);
-        }
+      const alreadyAdded = streams
+        .map((s) => s.toLowerCase())
+        .includes(action.payload.toLowerCase());
+
+      if (!alreadyAdded) {
         draft.streams.unshift(action.payload.toLowerCase());
+      }
+
+      if (alreadyAdded || streams.length < 1) {
+        setPrimaryStream(action.payload);
+        setSelectedChat(action.payload);
       }
       break;
     case "REMOVE_STREAM":
