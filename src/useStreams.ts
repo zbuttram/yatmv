@@ -241,13 +241,12 @@ const initialStreamState = getInitialStreamState();
 
 export default function useStreams() {
   const [state, dispatch] = useReducer(streamsReducer, initialStreamState);
+  const { streams, primaryStreams, layout } = state;
 
   // set URL params
   useEffect(() => {
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
-
-    const { streams, primaryStreams, layout } = state;
 
     streams && streams.length
       ? params.set("streams", streams.filter(Boolean).toString())
@@ -270,7 +269,7 @@ export default function useStreams() {
         })
       );
     });
-  }, [state]);
+  }, [streams, primaryStreams, layout]);
 
   useEffect(() => {
     const interval = setInterval(

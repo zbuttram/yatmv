@@ -3,24 +3,21 @@ import { faEye, faLock, faLockOpen } from "@fortawesome/free-solid-svg-icons";
 import classNames from "classnames";
 
 import { useTwitchUser } from "./twitch";
+import { StreamState } from "./useStreams";
 
 export default function ChatSelector({
+  streamState,
   setSelectedChat,
   toggleChatLock,
   resetSelectedChat,
-  selectedChat,
-  chatLocked,
-  streams,
-  primaryStreams,
 }: {
-  selectedChat?: string;
-  chatLocked: boolean;
-  streams: string[];
-  primaryStreams: string[];
+  streamState: StreamState;
   setSelectedChat: (chat: string) => void;
   toggleChatLock: () => void;
   resetSelectedChat: () => void;
 }) {
+  const { selectedChat, streams, chatLocked, primaryStreams } = streamState;
+
   const notOnDefaultChat = selectedChat !== primaryStreams[0];
 
   return (

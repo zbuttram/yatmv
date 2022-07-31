@@ -32,14 +32,8 @@ export default function App() {
   const { showChat, fullHeightPlayer } = settings;
 
   const { state: streamState, actions: streamActions } = useStreams();
-  const {
-    streams,
-    primaryStreams,
-    layout,
-    selectedChat,
-    chatLocked,
-    loadedChats,
-  } = streamState;
+  const { streams, primaryStreams, layout, selectedChat, loadedChats } =
+    streamState;
   const {
     addStream: addNewStream,
     removeStream,
@@ -146,10 +140,7 @@ export default function App() {
               </div>
             )}
             <ChatSelector
-              selectedChat={selectedChat}
-              chatLocked={chatLocked}
-              streams={streams}
-              primaryStreams={primaryStreams}
+              streamState={streamState}
               setSelectedChat={setSelectedChat}
               toggleChatLock={toggleChatLock}
               resetSelectedChat={resetSelectedChat}
