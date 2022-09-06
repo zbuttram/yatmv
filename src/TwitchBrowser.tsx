@@ -261,6 +261,7 @@ function ShowCategory({
     ({ queryKey: [_, gameId], pageParam }) =>
       getStreams({
         gameId,
+        language: "en",
         after: pageParam,
         first: pageParam ? undefined : 50,
       }),
@@ -340,7 +341,11 @@ function Channels({
   const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery(
     ["getTopStreams"],
     ({ pageParam }) =>
-      getStreams({ after: pageParam, first: pageParam ? undefined : 50 }),
+      getStreams({
+        language: "en",
+        after: pageParam,
+        first: pageParam ? undefined : 50,
+      }),
     {
       enabled: isOpen && !query,
       refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,

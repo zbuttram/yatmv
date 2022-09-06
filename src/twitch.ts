@@ -186,6 +186,7 @@ type StreamQueryParams = {
   gameId: ParamValue;
   userId: ParamValue;
   userLogin: ParamValue;
+  language: ParamValue;
 };
 
 export function getStreams({
@@ -194,9 +195,10 @@ export function getStreams({
   userId,
   userLogin,
   after,
+  language,
 }: Partial<PaginationParams & StreamQueryParams> = {}) {
   return callTwitch<PaginatedResponse<StreamData>>("/streams", {
-    params: { first, after, gameId, userId, userLogin },
+    params: { first, after, gameId, userId, userLogin, language },
   });
 }
 
