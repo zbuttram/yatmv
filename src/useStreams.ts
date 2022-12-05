@@ -105,8 +105,12 @@ const streamsReducer = produce(function produceStreams(
     }
   }
 
-  function setSelectedChat(stream: string) {
+  function setSelectedChat(stream?: string) {
     if (draft.chatLocked) {
+      return;
+    }
+    if (!stream) {
+      draft.selectedChat = undefined;
       return;
     }
     const streamLower = stream.toLowerCase();
