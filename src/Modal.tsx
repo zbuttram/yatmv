@@ -35,7 +35,7 @@ export function Modal({
   });
 
   const styles = useSpring({
-    top: isOpen ? "0" : "-100%",
+    top: isOpen ? "0" : "-100vh",
     config: {
       mass: 0.6,
       tension: 250,
