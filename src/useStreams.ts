@@ -1,8 +1,8 @@
-import produce, { current } from "immer";
+import { current, produce } from "immer";
 import { useEffect, useReducer } from "react";
 import invariant from "tiny-invariant";
 import Cookies from "js-cookie";
-import { get, map, uniq } from "lodash";
+import { get, map, uniq } from "lodash-es";
 
 import { Layout } from "./layout";
 import { CHAT_EVICT_SEC, STREAM_STATE_COOKIE } from "./const";

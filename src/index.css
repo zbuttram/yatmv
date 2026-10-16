@@ -1,6 +1,52 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --animate-toast-enter: toast-enter 200ms ease-out;
+  --animate-toast-leave: toast-leave 150ms ease-in forwards;
+
+  @keyframes toast-enter {
+    0% {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes toast-leave {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+  }
+}
+
+/*
+  Tailwind v3 compatibility: v4 changed the default border color to
+  currentcolor, the default ring color to currentcolor, and dropped
+  cursor: pointer on buttons.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+    --tw-ring-color: rgb(59 130 246 / 0.5);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 body {
   background-color: black;
@@ -16,11 +62,11 @@ body {
 }
 
 .btn {
-  @apply focus:ring-2 outline-none border-2 rounded-sm;
+  @apply focus:ring-2 outline-hidden border-2 rounded-xs;
 }
 
 .btn-sidebar {
-  @apply btn px-2 py-1 mx-3 my-1;
+  @apply focus:ring-2 outline-hidden border-2 rounded-xs px-2 py-1 mx-3 my-1;
 }
 
 .btn-sidebar-followed {
@@ -32,13 +78,13 @@ body {
 }
 
 .sidebar-stream-name {
-  @apply mr-2 text-sm overflow-ellipsis overflow-hidden flex-shrink;
+  @apply mr-2 text-sm text-ellipsis overflow-hidden shrink;
   max-width: 6.5rem;
 }
 
 .sidebar-stream-game {
-  @apply text-xs text-gray-400 overflow-ellipsis overflow-hidden whitespace-nowrap;
-  max-width: theme('spacing.36');
+  @apply text-xs text-gray-400 text-ellipsis overflow-hidden whitespace-nowrap;
+  max-width: --spacing(36);
 }
 
 .sidebar .btn-txt {
@@ -61,11 +107,11 @@ body {
 
 .scrollbar-width-thin::-webkit-scrollbar {
   width: 0.5rem;
-  background-color: theme('colors.gray.900');
+  background-color: var(--color-gray-900);
 }
 
 .scrollbar-width-thin::-webkit-scrollbar-thumb {
-  background-color: theme('colors.gray.600');
+  background-color: var(--color-gray-600);
 }
 
 .explainer p {
@@ -73,19 +119,7 @@ body {
 }
 
 .followed-stream-tooltip {
-  @apply absolute bg-gray-900 drop-shadow-md filter rounded py-1 px-3 text-sm align-middle;
-}
-
-.max-w-40 {
-  max-width: theme('spacing.40');
-}
-
-.min-w-32 {
-  min-width: theme('spacing.32');
-}
-
-.aspect-video {
-  aspect-ratio: 16 / 9;
+  @apply absolute bg-gray-900 drop-shadow-md filter rounded-sm py-1 px-3 text-sm align-middle;
 }
 
 .modal {

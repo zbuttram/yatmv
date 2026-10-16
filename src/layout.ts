@@ -1,5 +1,5 @@
 import invariant from "tiny-invariant";
-import { memoize } from "lodash";
+import { memoize } from "lodash-es";
 
 export type Layout = number;
 

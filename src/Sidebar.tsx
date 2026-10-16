@@ -12,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { useClickAway } from "react-use";
-import { range } from "lodash";
+import { range } from "lodash-es";
 
 import { TWITCH_AUTH_URL } from "./const";
 import { Settings } from "./useSettings";
@@ -177,7 +177,7 @@ function ChangeLayoutButton({ setLayout }) {
         <div
           style={{ top: "50%", left: "50%" }}
           className={classNames(
-            "absolute rounded bg-gray-900 z-20 border border-slate-400 overflow-y-auto",
+            "absolute rounded-sm bg-gray-900 z-20 border border-slate-400 overflow-y-auto",
             dropdownOpen ? "" : "hidden"
           )}
         >
@@ -272,7 +272,7 @@ function FollowedStream({
   }
 
   const streamTitle = (
-    <div className={classNames("max-h-24 overflow-ellipsis")}>
+    <div className={classNames("max-h-24 text-ellipsis")}>
       {stream.title}
     </div>
   );
@@ -292,7 +292,7 @@ function FollowedStream({
         <label className="flex">
           <button
             className={classNames(
-              "btn-sidebar-followed w-8 flex-shrink-0",
+              "btn-sidebar-followed w-8 shrink-0",
               sidebarExpanded ? "mr-2" : "mr-4"
             )}
             onClick={() => addStream(stream.userLogin.toLowerCase())}
@@ -303,7 +303,7 @@ function FollowedStream({
               alt={stream.userName}
             />
           </button>
-          <div className="btn-txt flex-grow flex flex-col">
+          <div className="btn-txt grow flex flex-col">
             <div className="flex mt-1">
               <div className="sidebar-stream-name" title={stream.userName}>
                 {stream.userName}

@@ -1,7 +1,7 @@
 import { ReactNode, useRef } from "react";
 import classNames from "classnames";
 import { useClickAway } from "react-use";
-import { useSpring, animated } from "react-spring";
+import { useSpring, animated } from "@react-spring/web";
 
 export type ModalName = null | "settings" | "twitch-browser" | "command-bar";
 export type SetModalFunc = (name: ModalName) => void;

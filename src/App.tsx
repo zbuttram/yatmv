@@ -70,10 +70,10 @@ export default function App() {
   return (
     <AppProvider value={{ settings }}>
       <Toaster />
-      <main id="main" className="flex flex-col ring-white ring-opacity-60">
+      <main id="main" className="flex flex-col ring-white/60">
         {!showMainPane && (
           <button
-            className="fixed top-4 left-4 rounded px-4 py-3 bg-gray-500"
+            className="fixed top-4 left-4 rounded-sm px-4 py-3 bg-gray-500"
             onClick={() => setForceShowMainPane(true)}
           >
             <FontAwesomeIcon icon={faArrowDown} />
@@ -108,7 +108,7 @@ export default function App() {
           />
           <div
             id="primary-stream-container"
-            className="flex-grow self-end"
+            className="grow self-end"
             style={{ height: scrollY ? `calc(100% - ${scrollY}px)` : "100%" }}
           />
           <div

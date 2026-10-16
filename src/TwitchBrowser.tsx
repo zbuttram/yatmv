@@ -2,9 +2,9 @@ import classNames from "classnames";
 import { Fragment, ReactNode, useState } from "react";
 import { faUsers, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useInfiniteQuery } from "react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
-import { Waypoint } from "react-waypoint";
+import { InView } from "react-intersection-observer";
 
 import { Modal, ModalProps } from "./Modal";
 import {
@@ -125,7 +125,7 @@ function Stream(props: { onClick: () => void; stream: StreamData }) {
       />
       <div className="flex">
         <h3 className="font-semibold">{props.stream.userName}</h3>
-        <div className="flex-grow" />
+        <div className="grow" />
         <div className="text-sm text-right my-auto mr-1 text-red-400 whitespace-nowrap">
           {simplifyViewerCount(props.stream.viewerCount)}{" "}
           <FontAwesomeIcon icon={faUsers} />
@@ -159,28 +159,25 @@ function Categories({ addNewStream, isOpen }) {
 function BrowseCategories({ setCategory }) {
   const [query, setQuery] = useState("");
 
-  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery(
-    ["searchCategories", query],
-    ({ queryKey: [_, q], pageParam }) =>
-      searchCategories({ query: q, after: pageParam }),
-    {
-      enabled: !!query,
-      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-      refetchInterval: TWITCH_CATEGORY_REFETCH,
-      staleTime: 5000,
-    }
-  );
+  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery({
+    queryKey: ["searchCategories", query],
+    queryFn: ({ pageParam }) => searchCategories({ query, after: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    enabled: !!query,
+    getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+    refetchInterval: TWITCH_CATEGORY_REFETCH,
+    staleTime: 5000,
+  });
 
-  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery(
-    "topGames",
-    ({ pageParam }) =>
+  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery({
+    queryKey: ["topGames"],
+    queryFn: ({ pageParam }) =>
       getTopGames({ first: pageParam ? undefined : 50, after: pageParam }),
-    {
-      enabled: !query,
-      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-      refetchInterval: TWITCH_CATEGORY_REFETCH,
-    }
-  );
+    initialPageParam: undefined as string | undefined,
+    enabled: !query,
+    getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+    refetchInterval: TWITCH_CATEGORY_REFETCH,
+  });
 
   const data = query ? queryData : topData;
 
@@ -210,8 +207,11 @@ function BrowseCategories({ setCategory }) {
             ))}
           </Fragment>
         ))}
-        <Waypoint
-          onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
+        <InView
+          as="span"
+          onChange={(inView) =>
+            inView && (query ? fetchNextQuery() : fetchNextTop())
+          }
           key={data?.pages?.length}
         />
       </div>
@@ -256,21 +256,20 @@ function ShowCategory({
   addNewStream: (name: string) => void;
   isOpen: boolean;
 }) {
-  const { data, fetchNextPage } = useInfiniteQuery(
-    ["getStreamsByGameId", category?.id],
-    ({ queryKey: [_, gameId], pageParam }) =>
+  const { data, fetchNextPage } = useInfiniteQuery({
+    queryKey: ["getStreamsByGameId", category?.id],
+    queryFn: ({ pageParam }) =>
       getStreams({
-        gameId,
+        gameId: category?.id,
         language: "en",
         after: pageParam,
         first: pageParam ? undefined : 50,
       }),
-    {
-      enabled: !!category && isOpen,
-      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-      refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
-    }
-  );
+    initialPageParam: undefined as string | undefined,
+    enabled: !!category && isOpen,
+    getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+    refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
+  });
 
   if (!category) {
     return null;
@@ -300,7 +299,11 @@ function ShowCategory({
             ))}
           </Fragment>
         ))}
-        <Waypoint onEnter={() => fetchNextPage()} key={data?.pages?.length} />
+        <InView
+          as="span"
+          onChange={(inView) => inView && fetchNextPage()}
+          key={data?.pages?.length}
+        />
       </div>
     </>
   );
@@ -316,10 +319,10 @@ function Channels({
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 1000);
 
-  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery(
-    ["searchStreams", debouncedQuery],
-    async ({ queryKey: [_key, query], pageParam }) => {
-      const channels = await searchChannels(query, {
+  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery({
+    queryKey: ["searchStreams", debouncedQuery],
+    queryFn: async ({ pageParam }) => {
+      const channels = await searchChannels(debouncedQuery, {
         first: pageParam ? undefined : 50,
         after: pageParam,
       });
@@ -331,27 +334,25 @@ function Channels({
         pagination: channels.pagination,
       };
     },
-    {
-      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-      staleTime: 5000,
-      refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
-      enabled: isOpen && !!debouncedQuery,
-    }
-  );
-  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery(
-    ["getTopStreams"],
-    ({ pageParam }) =>
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+    staleTime: 5000,
+    refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
+    enabled: isOpen && !!debouncedQuery,
+  });
+  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery({
+    queryKey: ["getTopStreams"],
+    queryFn: ({ pageParam }) =>
       getStreams({
         language: "en",
         after: pageParam,
         first: pageParam ? undefined : 50,
       }),
-    {
-      enabled: isOpen && !query,
-      refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
-      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-    }
-  );
+    initialPageParam: undefined as string | undefined,
+    enabled: isOpen && !query,
+    refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
+    getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+  });
 
   const data = query ? queryData : topData;
 
@@ -381,8 +382,11 @@ function Channels({
             ))}
           </Fragment>
         ))}
-        <Waypoint
-          onEnter={() => (query ? fetchNextQuery() : fetchNextTop())}
+        <InView
+          as="span"
+          onChange={(inView) =>
+            inView && (query ? fetchNextQuery() : fetchNextTop())
+          }
           key={data?.pages?.length}
         />
       </div>
