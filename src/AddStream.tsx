@@ -8,7 +8,7 @@ import {
 } from "react";
 import classNames from "classnames";
 import scrollIntoView from "scroll-into-view-if-needed";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePrevious } from "react-use";
 
 import { toast } from "react-hot-toast";
@@ -31,19 +31,15 @@ export default function AddStream({
   const isTwitchURL = TWITCH_URL_REGEX.test(newStream);
 
   const searchQuery = useDebounce(newStream, 1000);
-  const {
-    data: searchResultData,
-    remove: removeQuery,
-    isFetching,
-  } = useQuery(
-    ["searchChannels", searchQuery],
-    ({ queryKey: [_key, query] }) => searchChannels(query),
-    {
-      enabled:
-        checkTwitchAuth() && !!newStream && !!searchQuery && !isTwitchURL,
-      staleTime: 5000,
-    }
-  );
+  const searchQueryKey = ["searchChannels", searchQuery];
+  const { data: searchResultData, isFetching } = useQuery({
+    queryKey: searchQueryKey,
+    queryFn: () => searchChannels(searchQuery),
+    enabled: checkTwitchAuth() && !!newStream && !!searchQuery && !isTwitchURL,
+    staleTime: 5000,
+  });
+  const removeQuery = () =>
+    queryClient.removeQueries({ queryKey: searchQueryKey, exact: true });
   const searchResults = useMemo(
     () =>
       searchResultData?.data.sort(({ displayName }) =>
@@ -70,11 +66,11 @@ export default function AddStream({
 
   const prefetchStreamData = useCallback(
     function prefetchStreamData(name: string) {
-      queryClient.prefetchQuery(
-        ["stream", name.toLowerCase()],
-        ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
-        { staleTime: 5000 }
-      );
+      queryClient.prefetchQuery({
+        queryKey: ["stream", name.toLowerCase()],
+        queryFn: () => getStream({ userLogin: name.toLowerCase() }),
+        staleTime: 5000,
+      });
     },
     [queryClient]
   );
@@ -131,7 +127,7 @@ export default function AddStream({
           <input
             type={checkTwitchAuth() ? "search" : "text"}
             placeholder="Channel"
-            className="w-4/5 bg-black border border-gray-400 focus:outline-none focus:border-white pl-px"
+            className="w-4/5 bg-black border border-gray-400 focus:outline-hidden focus:border-white pl-px"
             onKeyDown={(e) => {
               if (
                 e.key === "Escape" ||
@@ -167,7 +163,7 @@ export default function AddStream({
         </div>
         {newStream && (
           <div
-            className="overflow-y-auto overflow-x-hidden overflow-ellipsis scrollbar-width-thin"
+            className="overflow-y-auto overflow-x-hidden text-ellipsis scrollbar-width-thin"
             style={{ height: "calc(100% - 3.5rem)" }}
           >
             {isFetching || (newStream !== searchQuery && !isTwitchURL) ? (

@@ -7,9 +7,9 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import classNames from "classnames";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import { range } from "lodash";
+import { range } from "lodash-es";
 import { FETCH_OPEN_STREAMS_INTERVAL } from "./const";
 import { checkTwitchAuth, getStream } from "./twitch";
 import TwitchStream from "./TwitchStream";
@@ -45,22 +45,20 @@ export function StreamContainer({
     data: streamData,
     failureCount: streamFetchFailCount,
     refetch: refetchStreamData,
-  } = useQuery(
-    ["stream", stream.toLowerCase()],
-    ({ queryKey: [_key, userLogin] }) => getStream({ userLogin }),
-    {
-      enabled: checkTwitchAuth(),
-      refetchInterval: FETCH_OPEN_STREAMS_INTERVAL,
-      retry: true,
-    }
-  );
+  } = useQuery({
+    queryKey: ["stream", stream.toLowerCase()],
+    queryFn: () => getStream({ userLogin: stream.toLowerCase() }),
+    enabled: checkTwitchAuth(),
+    refetchInterval: FETCH_OPEN_STREAMS_INTERVAL,
+    retry: true,
+  });
   const streamOffline = streamFetchFailCount > 1;
   const { title, userName, viewerCount } = streamData ?? {};
 
   const [isRemoving, setIsRemoving] = useState(false);
   const removeConfirmTimeout = useRef<
     ReturnType<typeof setTimeout> | undefined
-  >();
+  >(undefined);
   const onClickRemove = useCallback(
     function onClickRemove() {
       if (!isRemoving) {
@@ -110,7 +108,7 @@ export function StreamContainer({
         <div className="pt-3 pb-1">
           <div className="flex">
             <div className="font-bold">{userName ?? stream}</div>
-            <div className="flex-grow" />
+            <div className="grow" />
             {!!viewerCount && !streamOffline && (
               <div className="text-sm text-right my-auto mr-1 text-red-400 whitespace-nowrap">
                 {simplifyViewerCount(viewerCount)}

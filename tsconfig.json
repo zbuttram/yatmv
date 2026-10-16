@@ -1,27 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "verbatimModuleSyntax": false,
     "noEmit": true,
-    "jsx": "react-jsx",
     "strict": true,
     "noImplicitAny": false
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src", "e2e", "vite.config.ts", "playwright.config.ts"]
 }

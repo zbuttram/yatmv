@@ -1,5 +1,5 @@
 let shouldLog =
-  process.env.NODE_ENV === "development" ||
+  import.meta.env.DEV ||
   localStorage.getItem("yatmv-should-log") === "true";
 
 export default function Log(...args) {

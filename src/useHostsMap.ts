@@ -1,6 +1,6 @@
 import { useImmer } from "use-immer";
 import { useEffect, useRef } from "react";
-import { without } from "lodash";
+import { without } from "lodash-es";
 
 import { getChatService } from "./TwitchChatService";
 

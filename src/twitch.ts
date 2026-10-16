@@ -1,8 +1,7 @@
 import Cookies from "js-cookie";
-import { camelCase } from "lodash";
-import mapKeysDeep from "map-keys-deep-lodash";
+import { camelCase, isPlainObject, mapKeys, mapValues } from "lodash-es";
 
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   STREAM_STATE_COOKIE,
   TWITCH_ACCESS_TOKEN_COOKIE,
@@ -139,7 +138,20 @@ async function callTwitch<T = any>(
     );
   }
   const parsed = await response.json();
-  return mapKeysDeep(parsed, (_, key) => camelCase(key));
+  return camelCaseKeysDeep(parsed);
+}
+
+function camelCaseKeysDeep(value: any): any {
+  if (Array.isArray(value)) {
+    return value.map(camelCaseKeysDeep);
+  }
+  if (isPlainObject(value)) {
+    return mapValues(
+      mapKeys(value, (_, key) => camelCase(key)),
+      camelCaseKeysDeep
+    );
+  }
+  return value;
 }
 
 export type ChannelData = {
@@ -262,11 +274,11 @@ export async function getAuthedUser(): Promise<TwitchUser> {
 }
 
 export function useTwitchUser(login) {
-  return useQuery(
-    ["twitchUser", login],
-    ({ queryKey: [_key, login] }) => getUser({ login }),
-    { enabled: checkTwitchAuth() && !!login }
-  );
+  return useQuery({
+    queryKey: ["twitchUser", login],
+    queryFn: () => getUser({ login }),
+    enabled: checkTwitchAuth() && !!login,
+  });
 }
 
 export async function getFollowedStreams({

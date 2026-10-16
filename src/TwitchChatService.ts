@@ -5,25 +5,6 @@ import Log from "./log";
 // needs better defining
 type TmiTags = Record<string, any>;
 
-type TmiClient = {
-  connect(): Promise<void>;
-  on(
-    event: "message",
-    callback: (channel: string, tags: TmiTags, message: string) => void
-  );
-  on(
-    event: "notice",
-    callback: (channel: string, msgid: string, message: string) => void
-  );
-  on(
-    event: "hosting",
-    callback: (channel: string, target: string, viewers: number) => void
-  );
-  join(channel: string): Promise<void>;
-  part(channel: string): Promise<void>;
-  getChannels(): string[];
-};
-
 type ChatEvents = {
   message: { channel: string; tags: TmiTags; message: string };
   notice: { channel: string; msgid: string; message: string };
@@ -33,7 +14,7 @@ type ChatEvents = {
 type ChatEventEmitter = Emitter<ChatEvents>;
 
 class TwitchChatService {
-  client: TmiClient;
+  client: tmi.Client;
   connected: boolean = false;
   emitter: ChatEventEmitter;
 
@@ -123,7 +104,7 @@ export function getChatService(streams: string[]) {
   return ChatService;
 }
 
-if (process.env.NODE_ENV === "development") {
+if (import.meta.env.DEV) {
   // @ts-ignore
   window._setHost = (hoster, hostee) => {
     ChatService.emitter.emit("hosting", {

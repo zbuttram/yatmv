@@ -4,5 +4,7 @@
   "assets": {
     "directory": "build",
     "not_found_handling": "single-page-application"
-  }
+  },
+  // required by `wrangler preview` for non-production branch builds
+  "previews": {}
 }

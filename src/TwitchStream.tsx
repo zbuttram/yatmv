@@ -1,6 +1,6 @@
 import { ReactNode, useContext, useEffect, useMemo, useRef } from "react";
 import classNames from "classnames";
-import { mapValues } from "lodash";
+import { mapValues } from "lodash-es";
 import { usePrevious } from "react-use";
 
 import useBounding from "./useBounding";
@@ -123,7 +123,7 @@ export default function TwitchStream({
     }
   }, [isPrimary, primaryContainerRect, channelRect, primaryPosition, layout]);
 
-  const player = useRef<TwitchPlayer>();
+  const player = useRef<TwitchPlayer>(undefined);
 
   useEffect(() => {
     if (!player.current) {
