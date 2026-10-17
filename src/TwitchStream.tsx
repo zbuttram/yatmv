@@ -132,9 +132,12 @@ export default function TwitchStream({
   }, [isPrimary, primaryContainerRect, channelRect, primaryPosition, layout]);
 
   const player = useRef<TwitchPlayer>(undefined);
-  // set on the player's READY event; the embed drops API calls made before it,
-  // so effects that talk to the player re-run on this
-  const [playerReady, setPlayerReady] = useState(false);
+  // bumped on each READY event, including after an iframe reload. Before READY,
+  // commands posted to the iframe are lost and getters (isPaused/getVolume/
+  // getQuality) return placeholder defaults, so the pause and mute/quality
+  // effects re-run on this
+  const [readyCount, setReadyCount] = useState(0);
+  const lastReadyCount = useRef(0);
 
   useEffect(() => {
     if (!player.current) {
@@ -170,7 +173,7 @@ export default function TwitchStream({
             }
           }
 
-          setPlayerReady(true);
+          setReadyCount((count) => count + 1);
         });
       });
     }
@@ -208,7 +211,7 @@ export default function TwitchStream({
     debouncedShouldPause,
     pauseHiddenPlayers,
     prevPauseHiddenPlayers,
-    playerReady,
+    readyCount,
   ]);
 
   useEffect(() => {
@@ -224,12 +227,17 @@ export default function TwitchStream({
     });
 
     player.current.setMuted(!isFirstSlot);
-    const currentVolume = player.current.getVolume();
-    currentVolume &&
-      localStorage.setItem(
-        getChannelVolumeKey(channel),
-        currentVolume.toString()
-      );
+    // on a run caused by READY, getVolume() still reports the volume from
+    // before the saved one was restored, so saving it would overwrite it
+    if (lastReadyCount.current === readyCount) {
+      const currentVolume = player.current.getVolume();
+      currentVolume &&
+        localStorage.setItem(
+          getChannelVolumeKey(channel),
+          currentVolume.toString()
+        );
+    }
+    lastReadyCount.current = readyCount;
 
     function updateQuality() {
       if (!player.current) {
@@ -260,14 +268,7 @@ export default function TwitchStream({
     return () => {
       player.current?.removeEventListener(Twitch.Player.PLAYING, onPlay);
     };
-  }, [
-    channel,
-    boostMode,
-    primaryPosition,
-    isPrimary,
-    isFirstSlot,
-    playerReady,
-  ]);
+  }, [channel, boostMode, primaryPosition, isPrimary, isFirstSlot, readyCount]);
 
   useEffect(() => {
     if (prevBoostMode && !boostMode) {

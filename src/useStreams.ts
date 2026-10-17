@@ -107,7 +107,7 @@ const streamsReducer = produce(function produceStreams(
         draft.primaryStreams[prevPosition] = displaced;
       } else {
         // target slot is past the end: move it to the last slot (primaryStreams
-        // never has gaps) instead of splicing in a duplicate
+        // never has gaps); a splice here would leave it listed twice
         draft.primaryStreams.splice(prevPosition, 1);
         draft.primaryStreams.push(streamLower);
       }
