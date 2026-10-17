@@ -207,8 +207,9 @@ export default function TwitchStream({
       player.current.play();
     }
 
-    // a player that loads below the viewport reports paused (not started yet)
-    // above, then autoplays; pause it as soon as it starts playing
+    // isPaused() is true while the embed is still idle, so the check above
+    // doesn't pause a player that loaded hidden; it then autoplays. While it
+    // should stay hidden, pause it whenever it starts playing
     if (pauseHiddenPlayers && debouncedShouldPause && shouldPause) {
       const hiddenPlayer = player.current;
       const pauseOnPlay = () => hiddenPlayer.pause();

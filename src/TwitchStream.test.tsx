@@ -83,6 +83,8 @@ beforeEach(() => {
 afterEach(() => {
   cleanup(); // unmount while the Twitch global still exists
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 test("restores the saved volume and mutes non-first slots on READY", async () => {
@@ -116,7 +118,18 @@ test("re-applies mute when READY fires again after a reload", async () => {
   expect(player.setMuted).toHaveBeenLastCalledWith(true);
 });
 
-test("a hidden player that starts playing below the viewport gets paused", async () => {
+function placeSlotAt(top: number) {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    top,
+    left: 0,
+    right: 100,
+    bottom: top + 56,
+    width: 100,
+    height: 56,
+  } as DOMRect);
+}
+
+async function renderWithPauseHidden(slotTop: number) {
   vi.useFakeTimers({
     toFake: [
       "setTimeout",
@@ -126,25 +139,48 @@ test("a hidden player that starts playing below the viewport gets paused", async
     ],
   });
   settings = { boostMode: false, pauseHiddenPlayers: true } as Settings;
-  // place the (non-primary) player's slot below the viewport
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
-    top: window.innerHeight + 500,
-    left: 0,
-    right: 100,
-    bottom: window.innerHeight + 556,
-    width: 100,
-    height: 56,
-  } as DOMRect);
-  const { player } = await renderStream(-1);
-  // let useBounding measure the slot, then the 1s pause debounce elapse
+  placeSlotAt(slotTop);
+  // not primary, so it may be paused when hidden
+  const rendered = await renderStream(-1);
+  settle();
+  rendered.player.fire("ready");
+  return rendered;
+}
+
+/** Let useBounding re-measure the slot, then the 1s pause debounce elapse. */
+function settle() {
   act(() => vi.advanceTimersByTime(100));
   act(() => vi.advanceTimersByTime(1100));
-  player.fire("ready");
+}
+
+const BELOW_VIEWPORT = window.innerHeight + 500;
+
+test("a hidden player that starts playing below the viewport gets paused", async () => {
+  const { player } = await renderWithPauseHidden(BELOW_VIEWPORT);
   // before it starts, the embed reports paused, so nothing is paused yet
   expect(player.pause).not.toHaveBeenCalled();
 
   player.fire("playing");
 
   expect(player.pause).toHaveBeenCalled();
-  vi.useRealTimers();
+});
+
+test("a visible player isn't paused when it starts playing", async () => {
+  const { player } = await renderWithPauseHidden(0);
+  player.fire("playing");
+  expect(player.pause).not.toHaveBeenCalled();
+});
+
+test("a hidden player scrolled back into view plays and stays playing", async () => {
+  const { player } = await renderWithPauseHidden(BELOW_VIEWPORT);
+  player.fire("playing");
+  expect(player.pause).toHaveBeenCalledTimes(1);
+
+  placeSlotAt(0);
+  settle();
+
+  expect(player.play).toHaveBeenCalled();
+  // play() makes it fire PLAYING again; that must not pause it
+  player.fire("playing");
+  expect(player.pause).toHaveBeenCalledTimes(1);
 });

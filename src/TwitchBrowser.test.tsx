@@ -12,7 +12,17 @@ import TwitchBrowser from "./TwitchBrowser";
 import { getStreams, searchChannels } from "./twitch";
 
 vi.mock("./twitch", () => ({
-  getStreams: vi.fn(async () => ({ data: [], pagination: {} })),
+  // one live stream per requested login
+  getStreams: vi.fn(async ({ userLogin = [] }) => ({
+    data: userLogin.map((login) => ({
+      userLogin: login,
+      userName: login,
+      title: `${login} stream`,
+      viewerCount: 1,
+      thumbnailUrl: "https://example.com/{width}x{height}.jpg",
+    })),
+    pagination: {},
+  })),
   getTopGames: vi.fn(async () => ({ data: [], pagination: {} })),
   searchCategories: vi.fn(async () => ({ data: [], pagination: {} })),
   searchChannels: vi.fn(),
@@ -39,12 +49,14 @@ function searchStreams(query: string) {
   fireEvent.change(screen.getByPlaceholderText("Search"), {
     target: { value: query },
   });
+  return queryClient;
 }
 
 const searchedStreams = () =>
   vi.mocked(getStreams).mock.calls.filter(([params]) => params?.userLogin);
 
 beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
   vi.mocked(getStreams).mockClear();
   vi.mocked(searchChannels).mockReset();
 });
@@ -56,17 +68,35 @@ test("a search with no matching channels doesn't fetch streams or keep paging", 
     pagination: { cursor: "next" },
   } as any);
   searchStreams("zzqqxx");
-  expect(await screen.findByText("No live channels found.")).toBeVisible();
+  expect(
+    await screen.findByText(/No matches in the next few pages/)
+  ).toBeVisible();
   // the first page plus 3 pages of lookahead
   expect(searchChannels).toHaveBeenCalledTimes(4);
 
-  // the scroll sentinel would stay on screen since nothing rendered above it
+  // the page is marked stalled, so there's no scroll sentinel to keep paging
   for (let i = 0; i < 3; i++) {
     await act(async () => mockAllIsIntersecting(true));
   }
-
   expect(searchChannels).toHaveBeenCalledTimes(4);
   expect(searchedStreams()).toEqual([]);
+
+  // but the user can ask for more
+  fireEvent.click(screen.getByText("Load more"));
+  await waitFor(() => expect(searchChannels).toHaveBeenCalledTimes(8));
+  expect(vi.mocked(searchChannels).mock.calls[4][1]).toMatchObject({
+    after: "next",
+  });
+});
+
+test("a search with no matches and no cursor says nothing was found", async () => {
+  vi.mocked(searchChannels).mockResolvedValue({
+    data: [],
+    pagination: {},
+  } as any);
+  searchStreams("zzqqxx");
+  expect(await screen.findByText("No live channels found.")).toBeVisible();
+  expect(searchChannels).toHaveBeenCalledTimes(1);
 });
 
 test("a search looks past empty pages that still have a cursor", async () => {
@@ -106,3 +136,71 @@ test("a search asks /streams for one result per matching channel", async () => {
     first: 2,
   });
 });
+
+test("a failed next page can be retried, then the list ends", async () => {
+  vi.mocked(searchChannels)
+    .mockResolvedValueOnce({
+      data: [{ broadcasterLogin: "a" }],
+      pagination: { cursor: "p2" },
+    } as any)
+    .mockRejectedValueOnce(new Error("Twitch API response not OK: (500)"))
+    .mockResolvedValueOnce({
+      data: [{ broadcasterLogin: "b" }],
+      pagination: {},
+    } as any);
+  searchStreams("ab");
+  await waitFor(() => expect(searchedStreams()).toHaveLength(1));
+
+  await act(async () => mockAllIsIntersecting(true));
+  fireEvent.click(await screen.findByText("Retry"));
+
+  expect(await screen.findByText("End of results.")).toBeVisible();
+  expect(vi.mocked(searchChannels).mock.calls.at(-1)![1]).toMatchObject({
+    after: "p2",
+  });
+  expect(searchedStreams().at(-1)![0]).toMatchObject({ userLogin: ["b"] });
+});
+
+test("a failed background refetch keeps the list and paging", async () => {
+  vi.mocked(searchChannels)
+    .mockResolvedValueOnce({
+      data: [{ broadcasterLogin: "a" }],
+      pagination: { cursor: "p2" },
+    } as any)
+    .mockRejectedValueOnce(new Error("Twitch API response not OK: (503)"));
+  const queryClient = searchStreams("a");
+  await waitFor(() => expect(searchedStreams()).toHaveLength(1));
+
+  await act(() =>
+    queryClient.refetchQueries({ queryKey: ["searchStreams", "a"] })
+  );
+
+  // let the list re-render with the failed refetch before checking it
+  await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+  expect(screen.getByText("a stream")).toBeVisible();
+  expect(screen.queryByText(/Couldn't load/)).toBeNull();
+  // the sentinel is still there, so scrolling loads the next page
+  vi.mocked(searchChannels).mockResolvedValueOnce({
+    data: [{ broadcasterLogin: "b" }],
+    pagination: {},
+  } as any);
+  await act(async () => mockAllIsIntersecting(true));
+  expect(await screen.findByText("End of results.")).toBeVisible();
+});
+
+test("the Categories tab says when there are no categories", async () => {
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <TwitchBrowser
+        isOpen
+        close={() => {}}
+        followedStreams={[]}
+        addNewStream={() => {}}
+      />
+    </QueryClientProvider>
+  );
+  fireEvent.click(screen.getByText("Categories"));
+  expect(await screen.findByText("No categories found.")).toBeVisible();
+});
+
+afterEach(() => vi.restoreAllMocks());

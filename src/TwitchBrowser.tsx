@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { Fragment, ReactNode, useState } from "react";
+import { Fragment, ReactNode, useEffect, useState } from "react";
 import { faUsers, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -338,9 +338,14 @@ function Channels({
       }
       if (!channels.data.length) {
         // an empty user_login filter would return Twitch's top streams
-        // instead. drop the cursor too: an empty page leaves the scroll
-        // sentinel on screen, so it would keep paging
-        return { data: [] as StreamData[], pagination: {} };
+        // instead. if Twitch still has a cursor, keep it but mark the page
+        // stalled: ListEnd then offers a manual "Load more" rather than
+        // letting the on-screen sentinel page through empty results forever
+        return {
+          data: [] as StreamData[],
+          pagination: channels.pagination,
+          stalled: true,
+        };
       }
       const streams = await getStreams({
         userLogin: channels.data.map((c) => c.broadcasterLogin),
@@ -417,7 +422,7 @@ function ListEnd({
   query,
   emptyText,
 }: {
-  query: UseInfiniteQueryResult<InfiniteData<PaginatedResponse<unknown>>>;
+  query: UseInfiniteQueryResult<InfiniteData<ListPage>>;
   emptyText: string;
 }) {
   const {
@@ -432,17 +437,37 @@ function ListEnd({
   } = query;
   const pages = data?.pages ?? [];
   const isEmpty = pages.every((page) => !page.data.length);
+  // a failed background refetch keeps the data already on screen, so only
+  // report errors that left the list without what it asked for
+  const failed = !!error && (!data || isFetchNextPageError);
+  const stalled = !!pages.at(-1)?.stalled;
+
+  useEffect(() => {
+    if (error) console.error("Twitch browser list failed to load", error);
+  }, [error]);
 
   let message: ReactNode = null;
-  if (error) {
-    message = (
+  if (failed) {
+    message = isFetching ? (
+      "Retrying…"
+    ) : (
       <>
-        Couldn't load {isFetchNextPageError ? "more " : ""}results.{" "}
+        Couldn't load {isFetchNextPageError ? "more " : ""}results (
+        {error.message}).{" "}
         <button
           className="underline"
           onClick={() => (isFetchNextPageError ? fetchNextPage() : refetch())}
         >
           Retry
+        </button>
+      </>
+    );
+  } else if (stalled && hasNextPage && !isFetching) {
+    message = (
+      <>
+        No {isEmpty ? "" : "more "}matches in the next few pages.{" "}
+        <button className="underline" onClick={() => fetchNextPage()}>
+          Load more
         </button>
       </>
     );
@@ -452,7 +477,7 @@ function ListEnd({
 
   return (
     <>
-      {hasNextPage && !error && (
+      {hasNextPage && !failed && !stalled && (
         <InView
           as="span"
           // remount after each page so a sentinel still on screen fires again
@@ -468,3 +493,6 @@ function ListEnd({
     </>
   );
 }
+
+/** A list page; `stalled` marks a search page that gave up on empty results. */
+type ListPage = PaginatedResponse<unknown> & { stalled?: boolean };

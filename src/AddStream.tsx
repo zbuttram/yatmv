@@ -28,11 +28,16 @@ export default function AddStream({
   const queryClient = useQueryClient();
   const [newStream, setNewStream] = useState("");
 
-  const isTwitchURL = TWITCH_URL_REGEX.test(newStream);
+  const trimmedStream = newStream.trim();
+  const isTwitchURL = TWITCH_URL_REGEX.test(trimmedStream);
 
   const searchQuery = useDebounce(newStream, 1000);
   const searchQueryKey = ["searchChannels", searchQuery];
-  const { data: searchResultData, isFetching } = useQuery({
+  const {
+    data: searchResultData,
+    isFetching,
+    isError: searchFailed,
+  } = useQuery({
     queryKey: searchQueryKey,
     queryFn: () => searchChannels(searchQuery),
     enabled: checkTwitchAuth() && !!newStream && !!searchQuery && !isTwitchURL,
@@ -86,14 +91,14 @@ export default function AddStream({
     let streamToSubmit;
     if (selectedSearchResult) {
       streamToSubmit = selectedSearchResult.broadcasterLogin;
-    } else if (newStream && newStream !== "") {
-      if (TWITCH_URL_REGEX.test(newStream)) {
-        const result = TWITCH_URL_REGEX.exec(newStream);
+    } else if (trimmedStream) {
+      if (isTwitchURL) {
+        const result = TWITCH_URL_REGEX.exec(trimmedStream);
         if (result && result[2]) {
           streamToSubmit = result[2];
         }
       } else {
-        const typed = newStream.trim();
+        const typed = trimmedStream;
         const found = searchResults.find(
           (res) => typed.toLowerCase() === res.displayName.toLowerCase()
         );
@@ -102,10 +107,9 @@ export default function AddStream({
         } else if (TWITCH_LOGIN_REGEX.test(typed)) {
           streamToSubmit = typed;
         } else {
-          // e.g. a localized display name typed before search results load
-          toast.error(
-            `"${typed}" isn't a Twitch channel name. Pick it from the search results or paste the channel URL.`
-          );
+          // not a login (e.g. a localized display name), and no search result
+          // to map it to one; say why, since adding it would load nothing
+          toast.error(unaddableNameMessage(typed));
           return false;
         }
       }
@@ -119,6 +123,19 @@ export default function AddStream({
       toast.error("Unable to add stream.");
     }
     return false;
+  }
+
+  function unaddableNameMessage(typed: string) {
+    if (!checkTwitchAuth()) {
+      return `"${typed}" isn't a Twitch channel name. Paste the channel URL instead.`;
+    }
+    if (searchFailed) {
+      return `Couldn't search Twitch for "${typed}". Paste the channel URL instead.`;
+    }
+    if (isFetching || newStream !== searchQuery) {
+      return `Still searching for "${typed}", try again in a moment.`;
+    }
+    return `"${typed}" isn't a Twitch channel name. Pick it from the search results or paste the channel URL.`;
   }
 
   useEffect(() => {

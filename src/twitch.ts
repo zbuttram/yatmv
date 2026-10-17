@@ -10,7 +10,8 @@ import {
   TWITCH_SCOPE_COOKIE,
   TWITCH_SCOPES,
 } from "./const";
-import { Layout } from "./layout";
+import { toast } from "react-hot-toast";
+import { Layout, MAX_LAYOUT } from "./layout";
 import { Params, paramsToString, ParamValue } from "./utils";
 
 if (!TWITCH_CLIENT_ID) {
@@ -55,24 +56,21 @@ export function handleTwitchAuthCallback() {
       document.location.hash = "";
       const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
       if (rawStreamState) {
-        // this runs while the app's initial state is built, so a bad cookie
-        // must not throw; fall back to the URL state instead
-        try {
-          const parsed = JSON.parse(rawStreamState);
-          const isStringArray = (value: unknown): value is string[] =>
-            Array.isArray(value) && value.every((s) => typeof s === "string");
-          if (isStringArray(parsed?.streams)) {
-            reloadFromAuthStreams = parsed.streams;
-          }
-          if (isStringArray(parsed?.primaryStreams)) {
-            reloadFromAuthPrimary = parsed.primaryStreams;
-          }
-          if (Number.isInteger(parsed?.layout) && parsed.layout >= 0) {
-            reloadFromAuthLayout = parsed.layout;
-          }
-        } catch (error) {
-          console.error("Ignoring malformed stream state cookie", error);
+        const restored = parseStreamStateCookie(rawStreamState);
+        if (restored) {
+          reloadFromAuthStreams = restored.streams;
+          reloadFromAuthPrimary = restored.primaryStreams;
+          reloadFromAuthLayout = restored.layout;
+        } else {
+          // the login redirect lands on the bare origin, so this cookie was
+          // the only copy of the user's streams; say so rather than silently
+          // starting empty. deferred because this runs while the app's
+          // initial state is built, before anything has rendered
+          console.error("Ignoring invalid stream state cookie", rawStreamState);
           Cookies.remove(STREAM_STATE_COOKIE);
+          setTimeout(() =>
+            toast.error("Couldn't restore your streams after Twitch login.")
+          );
         }
       }
     }
@@ -82,6 +80,40 @@ export function handleTwitchAuthCallback() {
     reloadFromAuthPrimary,
     reloadFromAuthLayout,
     hasTwitchAuth,
+  };
+}
+
+/** The saved stream state, or null if any part of it is missing or invalid. */
+function parseStreamStateCookie(raw: string): {
+  streams: string[];
+  primaryStreams: string[];
+  layout: Layout | undefined;
+} | null {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const isStringArray = (value: unknown): value is string[] =>
+    Array.isArray(value) && value.every((s) => typeof s === "string");
+  // layout is optional: cookies from before it was saved don't have it
+  const layoutValid =
+    parsed?.layout === undefined ||
+    (Number.isInteger(parsed.layout) &&
+      parsed.layout >= 0 &&
+      parsed.layout <= MAX_LAYOUT);
+  if (
+    !isStringArray(parsed?.streams) ||
+    !isStringArray(parsed.primaryStreams) ||
+    !layoutValid
+  ) {
+    return null;
+  }
+  return {
+    streams: parsed.streams,
+    primaryStreams: parsed.primaryStreams,
+    layout: parsed.layout,
   };
 }
 
@@ -295,9 +327,10 @@ export function useTwitchUser(login) {
 const FOLLOWED_STREAMS_MAX_PAGES = 5;
 
 /**
- * All live followed streams. The endpoint returns at most 100 per page, so
- * follow the cursor (up to 500 streams); a truncated list makes streams drop
- * in and out of it, which shows up as false "went live" toasts.
+ * All live followed streams. The endpoint returns at most 100 per page (also
+ * its default), so follow the cursor (up to 500 streams). With more live
+ * followed channels than one page holds, streams drop in and out of the list,
+ * which shows up as false "went live" toasts.
  */
 export async function getFollowedStreams({ userId }: { userId: ParamValue }) {
   const streams: StreamData[] = [];
