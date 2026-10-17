@@ -22,8 +22,11 @@ vi.mock("./twitch", () => ({
 vi.mock("./useDebounce", () => ({ useDebounce: (value) => value }));
 
 function searchStreams(query: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <TwitchBrowser
         isOpen
         close={() => {}}
@@ -53,15 +56,41 @@ test("a search with no matching channels doesn't fetch streams or keep paging", 
     pagination: { cursor: "next" },
   } as any);
   searchStreams("zzqqxx");
-  await waitFor(() => expect(searchChannels).toHaveBeenCalledTimes(1));
+  expect(await screen.findByText("No live channels found.")).toBeVisible();
+  // the first page plus 3 pages of lookahead
+  expect(searchChannels).toHaveBeenCalledTimes(4);
 
-  // the scroll sentinel stays on screen since nothing rendered above it
+  // the scroll sentinel would stay on screen since nothing rendered above it
   for (let i = 0; i < 3; i++) {
     await act(async () => mockAllIsIntersecting(true));
   }
 
-  expect(searchChannels).toHaveBeenCalledTimes(1);
+  expect(searchChannels).toHaveBeenCalledTimes(4);
   expect(searchedStreams()).toEqual([]);
+});
+
+test("a search looks past empty pages that still have a cursor", async () => {
+  vi.mocked(searchChannels)
+    .mockResolvedValueOnce({ data: [], pagination: { cursor: "p2" } } as any)
+    .mockResolvedValueOnce({
+      data: [{ broadcasterLogin: "a" }],
+      pagination: {},
+    } as any);
+  searchStreams("a");
+
+  await waitFor(() => expect(searchedStreams()).toHaveLength(1));
+  expect(vi.mocked(searchChannels).mock.calls[1][1]).toEqual({ after: "p2" });
+});
+
+test("a failed search says so and can be retried", async () => {
+  vi.mocked(searchChannels)
+    .mockRejectedValueOnce(new Error("Twitch API response not OK"))
+    .mockResolvedValue({ data: [], pagination: {} } as any);
+  searchStreams("a");
+
+  fireEvent.click(await screen.findByText("Retry"));
+
+  expect(await screen.findByText("No live channels found.")).toBeVisible();
 });
 
 test("a search asks /streams for one result per matching channel", async () => {

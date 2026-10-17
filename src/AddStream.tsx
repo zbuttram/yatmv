@@ -14,7 +14,7 @@ import { usePrevious } from "react-use";
 import { toast } from "react-hot-toast";
 import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
 import { useDebounce } from "./useDebounce";
-import { TWITCH_URL_REGEX } from "./const";
+import { TWITCH_LOGIN_REGEX, TWITCH_URL_REGEX } from "./const";
 
 export default function AddStream({
   addNewStream,
@@ -93,10 +93,21 @@ export default function AddStream({
           streamToSubmit = result[2];
         }
       } else {
+        const typed = newStream.trim();
         const found = searchResults.find(
-          (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
+          (res) => typed.toLowerCase() === res.displayName.toLowerCase()
         );
-        streamToSubmit = found?.broadcasterLogin ?? newStream;
+        if (found) {
+          streamToSubmit = found.broadcasterLogin;
+        } else if (TWITCH_LOGIN_REGEX.test(typed)) {
+          streamToSubmit = typed;
+        } else {
+          // e.g. a localized display name typed before search results load
+          toast.error(
+            `"${typed}" isn't a Twitch channel name. Pick it from the search results or paste the channel URL.`
+          );
+          return false;
+        }
       }
     }
 

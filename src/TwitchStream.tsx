@@ -206,6 +206,16 @@ export default function TwitchStream({
     } else if (prevPauseHiddenPlayers) {
       player.current.play();
     }
+
+    // a player that loads below the viewport reports paused (not started yet)
+    // above, then autoplays; pause it as soon as it starts playing
+    if (pauseHiddenPlayers && debouncedShouldPause && shouldPause) {
+      const hiddenPlayer = player.current;
+      const pauseOnPlay = () => hiddenPlayer.pause();
+      hiddenPlayer.addEventListener(Twitch.Player.PLAYING, pauseOnPlay);
+      return () =>
+        hiddenPlayer.removeEventListener(Twitch.Player.PLAYING, pauseOnPlay);
+    }
   }, [
     shouldPause,
     debouncedShouldPause,

@@ -16,4 +16,7 @@ export const TWITCH_SCOPES = ["user:read:follows"];
 export const TWITCH_AUTH_URL = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${encodeURIComponent(
   window.location.origin
 )}&response_type=token&scope=${encodeURIComponent(TWITCH_SCOPES.join(" "))}`;
+// letters, digits and underscores; current logins are 4-25 characters but
+// some older ones are shorter
+export const TWITCH_LOGIN_REGEX = /^[a-zA-Z0-9_]{1,25}$/;
 export const TWITCH_URL_REGEX = /^https:\/\/(www\.)?twitch\.tv\/([^/?]*)/;

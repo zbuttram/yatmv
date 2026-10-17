@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { toast } from "react-hot-toast";
+
 import AddStream from "./AddStream";
 
 vi.mock("./twitch", () => ({
@@ -12,10 +14,12 @@ vi.mock("./twitch", () => ({
   })),
 }));
 
+vi.mock("react-hot-toast", () => ({ toast: { error: vi.fn() } }));
+
 // skip the 1s debounce
 vi.mock("./useDebounce", () => ({ useDebounce: (value) => value }));
 
-function renderAddStream() {
+function renderAddStream(typed = "Foo") {
   const addNewStream = vi.fn();
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -23,7 +27,7 @@ function renderAddStream() {
     </QueryClientProvider>
   );
   const input = screen.getByPlaceholderText("Channel");
-  fireEvent.change(input, { target: { value: "Foo" } });
+  fireEvent.change(input, { target: { value: typed } });
   return { addNewStream, input };
 }
 
@@ -53,4 +57,20 @@ test("clicking a search result adds the login", async () => {
   fireEvent.click(await screen.findByText("Foo", { selector: "div" }));
 
   expect(addNewStream).toHaveBeenCalledWith("foo_login");
+});
+
+test("Enter with a valid login that isn't in the results adds it", () => {
+  const { addNewStream, input } = renderAddStream(" some_login ");
+  fireEvent.submit(input.closest("form")!);
+  expect(addNewStream).toHaveBeenCalledWith("some_login");
+});
+
+test("Enter with something that can't be a login shows an error", () => {
+  // e.g. a localized display name, submitted before search results load
+  const { addNewStream, input } = renderAddStream("우왁굳");
+  fireEvent.submit(input.closest("form")!);
+  expect(addNewStream).not.toHaveBeenCalled();
+  expect(toast.error).toHaveBeenCalledWith(
+    expect.stringContaining("isn't a Twitch channel name")
+  );
 });

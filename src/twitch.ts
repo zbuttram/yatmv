@@ -55,14 +55,25 @@ export function handleTwitchAuthCallback() {
       document.location.hash = "";
       const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
       if (rawStreamState) {
-        const parsedStreamState: {
-          streams: string[];
-          primaryStreams: string[];
-          layout: Layout | undefined;
-        } = JSON.parse(rawStreamState);
-        reloadFromAuthStreams = parsedStreamState.streams;
-        reloadFromAuthPrimary = parsedStreamState.primaryStreams;
-        reloadFromAuthLayout = parsedStreamState.layout;
+        // this runs while the app's initial state is built, so a bad cookie
+        // must not throw; fall back to the URL state instead
+        try {
+          const parsed = JSON.parse(rawStreamState);
+          const isStringArray = (value: unknown): value is string[] =>
+            Array.isArray(value) && value.every((s) => typeof s === "string");
+          if (isStringArray(parsed?.streams)) {
+            reloadFromAuthStreams = parsed.streams;
+          }
+          if (isStringArray(parsed?.primaryStreams)) {
+            reloadFromAuthPrimary = parsed.primaryStreams;
+          }
+          if (Number.isInteger(parsed?.layout) && parsed.layout >= 0) {
+            reloadFromAuthLayout = parsed.layout;
+          }
+        } catch (error) {
+          console.error("Ignoring malformed stream state cookie", error);
+          Cookies.remove(STREAM_STATE_COOKIE);
+        }
       }
     }
   }
@@ -281,22 +292,26 @@ export function useTwitchUser(login) {
   });
 }
 
-export async function getFollowedStreams({
-  userId,
-  first,
-  after,
-}: {
-  userId: ParamValue;
-  first?: ParamValue;
-  after?: ParamValue;
-}) {
-  const response = await callTwitch<PaginatedResponse<StreamData>>(
-    "/streams/followed",
-    {
-      params: { userId, first, after },
-    }
-  );
-  return response.data;
+const FOLLOWED_STREAMS_MAX_PAGES = 5;
+
+/**
+ * All live followed streams. The endpoint returns at most 100 per page, so
+ * follow the cursor (up to 500 streams); a truncated list makes streams drop
+ * in and out of it, which shows up as false "went live" toasts.
+ */
+export async function getFollowedStreams({ userId }: { userId: ParamValue }) {
+  const streams: StreamData[] = [];
+  let after: string | undefined;
+  for (let page = 0; page < FOLLOWED_STREAMS_MAX_PAGES; page++) {
+    const response = await callTwitch<PaginatedResponse<StreamData>>(
+      "/streams/followed",
+      { params: { userId, first: 100, after } }
+    );
+    streams.push(...response.data);
+    after = response.pagination?.cursor;
+    if (!after || !response.data.length) break;
+  }
+  return streams;
 }
 
 export type CategoryData = {

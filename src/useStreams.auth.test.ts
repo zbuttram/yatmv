@@ -31,3 +31,30 @@ test("stream state survives the Twitch auth redirect", async () => {
     reloadFromAuthLayout: 2,
   });
 });
+
+test("a malformed stream state cookie is ignored on the auth redirect", () => {
+  Cookies.set(STREAM_STATE_COOKIE, "{not json");
+  document.location.hash = "#access_token=token";
+  vi.spyOn(console, "error").mockImplementation(() => {});
+
+  expect(handleTwitchAuthCallback()).toMatchObject({
+    reloadFromAuthStreams: undefined,
+    reloadFromAuthPrimary: undefined,
+    reloadFromAuthLayout: undefined,
+  });
+  expect(Cookies.get(STREAM_STATE_COOKIE)).toBeUndefined();
+});
+
+test("wrongly typed stream state cookie fields are ignored", () => {
+  Cookies.set(
+    STREAM_STATE_COOKIE,
+    JSON.stringify({ streams: ["a", 1], primaryStreams: ["a"], layout: "2" })
+  );
+  document.location.hash = "#access_token=token";
+
+  expect(handleTwitchAuthCallback()).toMatchObject({
+    reloadFromAuthStreams: undefined,
+    reloadFromAuthPrimary: ["a"],
+    reloadFromAuthLayout: undefined,
+  });
+});

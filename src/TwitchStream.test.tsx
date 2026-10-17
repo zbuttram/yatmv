@@ -1,6 +1,5 @@
 import { act, cleanup, render } from "@testing-library/react";
 
-import { AppProvider } from "./appContext";
 import type { Settings } from "./useSettings";
 
 // stands in for the embed's Twitch.Player; getVolume() returns the embed's own
@@ -35,13 +34,15 @@ class FakePlayer {
   }
 }
 
-const settings = { boostMode: false, pauseHiddenPlayers: false } as Settings;
+let settings = { boostMode: false, pauseHiddenPlayers: false } as Settings;
 const VOLUME_KEY = "player-channel-volume-foo";
 
 async function renderStream(primaryPosition: number) {
   // the script loader keeps module-level state, so load a fresh copy per test
   vi.resetModules();
   const { default: TwitchStream } = await import("./TwitchStream");
+  // same fresh module instance as TwitchStream's, or the context won't match
+  const { AppProvider } = await import("./appContext");
   const props = {
     channel: "foo",
     primaryContainerRect: {},
@@ -72,6 +73,7 @@ async function renderStream(primaryPosition: number) {
 }
 
 beforeEach(() => {
+  settings = { boostMode: false, pauseHiddenPlayers: false } as Settings;
   vi.stubGlobal("Twitch", { Player: FakePlayer });
   FakePlayer.instances = [];
   document.querySelectorAll("script").forEach((s) => s.remove());
@@ -112,4 +114,37 @@ test("re-applies mute when READY fires again after a reload", async () => {
   player.setMuted.mockClear();
   player.fire("ready");
   expect(player.setMuted).toHaveBeenLastCalledWith(true);
+});
+
+test("a hidden player that starts playing below the viewport gets paused", async () => {
+  vi.useFakeTimers({
+    toFake: [
+      "setTimeout",
+      "clearTimeout",
+      "requestAnimationFrame",
+      "cancelAnimationFrame",
+    ],
+  });
+  settings = { boostMode: false, pauseHiddenPlayers: true } as Settings;
+  // place the (non-primary) player's slot below the viewport
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    top: window.innerHeight + 500,
+    left: 0,
+    right: 100,
+    bottom: window.innerHeight + 556,
+    width: 100,
+    height: 56,
+  } as DOMRect);
+  const { player } = await renderStream(-1);
+  // let useBounding measure the slot, then the 1s pause debounce elapse
+  act(() => vi.advanceTimersByTime(100));
+  act(() => vi.advanceTimersByTime(1100));
+  player.fire("ready");
+  // before it starts, the embed reports paused, so nothing is paused yet
+  expect(player.pause).not.toHaveBeenCalled();
+
+  player.fire("playing");
+
+  expect(player.pause).toHaveBeenCalled();
+  vi.useRealTimers();
 });
