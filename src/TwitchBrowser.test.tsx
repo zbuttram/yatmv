@@ -243,18 +243,34 @@ test("scrolling during a background refetch doesn't cancel it", async () => {
     queryClient.refetchQueries({ queryKey: ["searchStreams", "a"] });
     await new Promise((resolve) => setTimeout(resolve));
   });
+  // the sentinel is unmounted while the refetch runs, so it'll mount fresh
+  // (and report that it's on screen) once it ends
+  expect(screen.queryByTestId("list-end-sentinel")).toBeNull();
   await act(async () => mockAllIsIntersecting(true));
 
   // no next-page fetch while the refetch is in flight
   expect(
     vi.mocked(searchChannels).mock.calls.filter(([, p]) => p?.after === "p2")
   ).toEqual([]);
+  vi.mocked(searchChannels).mockResolvedValueOnce({
+    data: [{ broadcasterLogin: "b" }],
+    pagination: {},
+  } as any);
   await act(async () =>
     finishRefetch({
       data: [{ broadcasterLogin: "a" }],
       pagination: { cursor: "p2" },
     })
   );
+
+  // the sentinel is still on screen once the refetch ends, so paging resumes.
+  // a freshly mounted sentinel reports its visibility (simulated here)
+  expect(await screen.findByTestId("list-end-sentinel")).toBeInTheDocument();
+  await act(async () => mockAllIsIntersecting(true));
+  expect(await screen.findByText("End of results.")).toBeVisible();
+  expect(
+    vi.mocked(searchChannels).mock.calls.filter(([, p]) => p?.after === "p2")
+  ).toHaveLength(1);
 });
 
 test("after Load more finds results, scrolling pages again", async () => {

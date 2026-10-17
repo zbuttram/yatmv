@@ -491,14 +491,15 @@ function ListEnd({
 
   return (
     <>
-      {hasNextPage && !failed && !stalled && (
+      {/* not mounted while anything is fetching: fetchNextPage would cancel a
+          background refetch (which is also when a next-page error clears).
+          InView only reports visibility changes, so mounting it fresh after
+          each fetch is what makes a sentinel still on screen fire again */}
+      {hasNextPage && !failed && !stalled && !isFetching && (
         <InView
           as="span"
-          // remount after each page so a sentinel still on screen fires again
-          key={pages.length}
-          // not while anything is fetching: fetchNextPage would cancel a
-          // background refetch, which is also when a next-page error clears
-          onChange={(inView) => inView && !isFetching && fetchNextPage()}
+          data-testid="list-end-sentinel"
+          onChange={(inView) => inView && fetchNextPage()}
         />
       )}
       {staleNotice && (
