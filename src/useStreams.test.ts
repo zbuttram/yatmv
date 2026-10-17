@@ -34,3 +34,11 @@ test("moving a primary stream to an occupied slot swaps them", () => {
   act(() => result.current.actions.setPrimaryStream("a", 1));
   expect(result.current.state.primaryStreams).toEqual(["b", "a"]);
 });
+
+test.each(["8", "-1", "1.5", "x"])(
+  "an invalid layout in the URL (%s) falls back to 0",
+  (layout) => {
+    const { result } = renderStreams(`?streams=a&layout=${layout}`);
+    expect(result.current.state.layout).toBe(0);
+  }
+);

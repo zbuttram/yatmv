@@ -31,10 +31,13 @@ vi.mock("./twitch", () => ({
 // skip the 1s debounce
 vi.mock("./useDebounce", () => ({ useDebounce: (value) => value }));
 
+const queryClients: QueryClient[] = [];
+
 function searchStreams(query: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  queryClients.push(queryClient);
   render(
     <QueryClientProvider client={queryClient}>
       <TwitchBrowser
@@ -175,8 +178,8 @@ test("a failed background refetch keeps the list and paging", async () => {
     queryClient.refetchQueries({ queryKey: ["searchStreams", "a"] })
   );
 
-  // let the list re-render with the failed refetch before checking it
-  await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+  // the list stays, with a note that it's stale rather than an error
+  expect(await screen.findByText(/Couldn't refresh/)).toBeVisible();
   expect(screen.getByText("a stream")).toBeVisible();
   expect(screen.queryByText(/Couldn't load/)).toBeNull();
   // the sentinel is still there, so scrolling loads the next page
@@ -203,4 +206,83 @@ test("the Categories tab says when there are no categories", async () => {
   expect(await screen.findByText("No categories found.")).toBeVisible();
 });
 
-afterEach(() => vi.restoreAllMocks());
+test("a failed next page waits for Retry instead of retrying on scroll", async () => {
+  vi.mocked(searchChannels)
+    .mockResolvedValueOnce({
+      data: [{ broadcasterLogin: "a" }],
+      pagination: { cursor: "p2" },
+    } as any)
+    .mockRejectedValue(new Error("Twitch API response not OK: (500)"));
+  searchStreams("a");
+  await waitFor(() => expect(searchedStreams()).toHaveLength(1));
+  await act(async () => mockAllIsIntersecting(true));
+  await screen.findByText("Retry");
+  const calls = vi.mocked(searchChannels).mock.calls.length;
+
+  await act(async () => mockAllIsIntersecting(false));
+  await act(async () => mockAllIsIntersecting(true));
+  await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+  expect(searchChannels).toHaveBeenCalledTimes(calls);
+});
+
+test("scrolling during a background refetch doesn't cancel it", async () => {
+  vi.mocked(searchChannels).mockResolvedValueOnce({
+    data: [{ broadcasterLogin: "a" }],
+    pagination: { cursor: "p2" },
+  } as any);
+  const queryClient = searchStreams("a");
+  await waitFor(() => expect(searchedStreams()).toHaveLength(1));
+
+  let finishRefetch!: (value: unknown) => void;
+  vi.mocked(searchChannels).mockReturnValueOnce(
+    new Promise((resolve) => (finishRefetch = resolve)) as any
+  );
+  // start the refetch and let the list render it as in flight
+  await act(async () => {
+    queryClient.refetchQueries({ queryKey: ["searchStreams", "a"] });
+    await new Promise((resolve) => setTimeout(resolve));
+  });
+  await act(async () => mockAllIsIntersecting(true));
+
+  // no next-page fetch while the refetch is in flight
+  expect(
+    vi.mocked(searchChannels).mock.calls.filter(([, p]) => p?.after === "p2")
+  ).toEqual([]);
+  await act(async () =>
+    finishRefetch({
+      data: [{ broadcasterLogin: "a" }],
+      pagination: { cursor: "p2" },
+    })
+  );
+});
+
+test("after Load more finds results, scrolling pages again", async () => {
+  vi.mocked(searchChannels)
+    .mockResolvedValueOnce({ data: [], pagination: { cursor: "c1" } } as any)
+    .mockResolvedValueOnce({ data: [], pagination: { cursor: "c2" } } as any)
+    .mockResolvedValueOnce({ data: [], pagination: { cursor: "c3" } } as any)
+    .mockResolvedValueOnce({ data: [], pagination: { cursor: "c4" } } as any)
+    .mockResolvedValueOnce({
+      data: [{ broadcasterLogin: "a" }],
+      pagination: { cursor: "d" },
+    } as any)
+    .mockResolvedValueOnce({
+      data: [{ broadcasterLogin: "b" }],
+      pagination: {},
+    } as any);
+  searchStreams("ab");
+  fireEvent.click(await screen.findByText("Load more"));
+  await screen.findByText("a stream");
+
+  await act(async () => mockAllIsIntersecting(true));
+
+  expect(await screen.findByText("End of results.")).toBeVisible();
+  expect(screen.getByText("b stream")).toBeVisible();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  // stop refetchInterval timers
+  queryClients.splice(0).forEach((client) => client.clear());
+});

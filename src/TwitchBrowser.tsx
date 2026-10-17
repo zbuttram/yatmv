@@ -427,11 +427,12 @@ function ListEnd({
 }) {
   const {
     data,
+    dataUpdatedAt,
     error,
     hasNextPage,
     isFetching,
-    isFetchingNextPage,
     isFetchNextPageError,
+    isRefetchError,
     fetchNextPage,
     refetch,
   } = query;
@@ -445,6 +446,19 @@ function ListEnd({
   useEffect(() => {
     if (error) console.error("Twitch browser list failed to load", error);
   }, [error]);
+
+  // the list is kept after a failed background refetch, but say it's stale
+  const staleNotice = isRefetchError &&
+    !isFetchNextPageError &&
+    !isFetching && (
+      <>
+        Couldn't refresh ({error.message}); showing results from{" "}
+        {new Date(dataUpdatedAt).toLocaleTimeString()}.{" "}
+        <button className="underline" onClick={() => refetch()}>
+          Refresh
+        </button>
+      </>
+    );
 
   let message: ReactNode = null;
   if (failed) {
@@ -482,10 +496,15 @@ function ListEnd({
           as="span"
           // remount after each page so a sentinel still on screen fires again
           key={pages.length}
-          onChange={(inView) =>
-            inView && !isFetchingNextPage && fetchNextPage()
-          }
+          // not while anything is fetching: fetchNextPage would cancel a
+          // background refetch, which is also when a next-page error clears
+          onChange={(inView) => inView && !isFetching && fetchNextPage()}
         />
+      )}
+      {staleNotice && (
+        <div className="w-full py-4 text-center text-gray-400">
+          {staleNotice}
+        </div>
       )}
       {message && (
         <div className="w-full py-4 text-center text-gray-400">{message}</div>

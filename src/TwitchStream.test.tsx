@@ -184,3 +184,26 @@ test("a hidden player scrolled back into view plays and stays playing", async ()
   player.fire("playing");
   expect(player.pause).toHaveBeenCalledTimes(1);
 });
+
+test("scrolling back into view doesn't re-pause it during the 1s debounce", async () => {
+  const { player } = await renderWithPauseHidden(BELOW_VIEWPORT);
+  player.fire("playing");
+  expect(player.pause).toHaveBeenCalledTimes(1);
+
+  placeSlotAt(0);
+  act(() => vi.advanceTimersByTime(100)); // re-measure only, no debounce
+
+  expect(player.play).toHaveBeenCalled();
+  player.fire("playing");
+  expect(player.pause).toHaveBeenCalledTimes(1);
+});
+
+test("a player that scrolls out of view isn't paused before the 1s debounce", async () => {
+  const { player } = await renderWithPauseHidden(0);
+
+  placeSlotAt(BELOW_VIEWPORT);
+  act(() => vi.advanceTimersByTime(100)); // re-measure only, no debounce
+  player.fire("playing");
+
+  expect(player.pause).not.toHaveBeenCalled();
+});

@@ -37,6 +37,7 @@ export default function AddStream({
     data: searchResultData,
     isFetching,
     isError: searchFailed,
+    isSuccess: searchSucceeded,
   } = useQuery({
     queryKey: searchQueryKey,
     queryFn: () => searchChannels(searchQuery),
@@ -129,11 +130,16 @@ export default function AddStream({
     if (!checkTwitchAuth()) {
       return `"${typed}" isn't a Twitch channel name. Paste the channel URL instead.`;
     }
+    // until the debounce catches up, the query state is for older text
+    if (isFetching || newStream !== searchQuery) {
+      return `Still searching for "${typed}", try again in a moment.`;
+    }
     if (searchFailed) {
       return `Couldn't search Twitch for "${typed}". Paste the channel URL instead.`;
     }
-    if (isFetching || newStream !== searchQuery) {
-      return `Still searching for "${typed}", try again in a moment.`;
+    if (!searchSucceeded) {
+      // e.g. offline: the search is paused and never ran
+      return `Couldn't search Twitch for "${typed}" (are you offline?). Paste the channel URL instead.`;
     }
     return `"${typed}" isn't a Twitch channel name. Pick it from the search results or paste the channel URL.`;
   }

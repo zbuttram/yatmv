@@ -83,7 +83,11 @@ export function handleTwitchAuthCallback() {
   };
 }
 
-/** The saved stream state, or null if any part of it is missing or invalid. */
+/**
+ * The saved stream state, or null if it isn't JSON, `streams` or
+ * `primaryStreams` isn't a string array, or `layout` is outside
+ * 0..MAX_LAYOUT. `layout` may be absent (older cookies).
+ */
 function parseStreamStateCookie(raw: string): {
   streams: string[];
   primaryStreams: string[];

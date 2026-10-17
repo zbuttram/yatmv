@@ -4,7 +4,7 @@ import invariant from "tiny-invariant";
 import Cookies from "js-cookie";
 import { get, map, uniq } from "lodash-es";
 
-import { Layout } from "./layout";
+import { Layout, MAX_LAYOUT } from "./layout";
 import { CHAT_EVICT_SEC, STREAM_STATE_COOKIE } from "./const";
 import { handleTwitchAuthCallback } from "./twitch";
 import { epoch } from "./utils";
@@ -36,8 +36,11 @@ function getInitialStreamState(): StreamState {
   let parsedUrlLayout: Layout | undefined;
   const urlLayout = pageURL.searchParams.get("layout");
   if (urlLayout) {
+    // only valid layouts: this is saved to the stream state cookie, which
+    // rejects anything else when restoring after Twitch login
     const num = Number(urlLayout);
-    parsedUrlLayout = Number.isNaN(num) ? 0 : num;
+    parsedUrlLayout =
+      Number.isInteger(num) && num >= 0 && num <= MAX_LAYOUT ? num : 0;
   }
 
   let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
