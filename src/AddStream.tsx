@@ -85,7 +85,7 @@ export default function AddStream({
     e?.preventDefault();
     let streamToSubmit;
     if (selectedSearchResult) {
-      streamToSubmit = selectedSearchResult.displayName;
+      streamToSubmit = selectedSearchResult.broadcasterLogin;
     } else if (newStream && newStream !== "") {
       if (TWITCH_URL_REGEX.test(newStream)) {
         const result = TWITCH_URL_REGEX.exec(newStream);
@@ -96,7 +96,7 @@ export default function AddStream({
         const found = searchResults.find(
           (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
         );
-        streamToSubmit = found ?? newStream;
+        streamToSubmit = found?.broadcasterLogin ?? newStream;
       }
     }
 
@@ -175,7 +175,7 @@ export default function AddStream({
                   result={result}
                   isSelected={result === selectedSearchResult}
                   onClick={() => {
-                    addNewStream(result.displayName);
+                    addNewStream(result.broadcasterLogin);
                     setNewStream("");
                   }}
                   prefetchStreamData={() =>

@@ -1,4 +1,11 @@
-import { ReactNode, useContext, useEffect, useMemo, useRef } from "react";
+import {
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash-es";
 import { usePrevious } from "react-use";
@@ -124,6 +131,8 @@ export default function TwitchStream({
   }, [isPrimary, primaryContainerRect, channelRect, primaryPosition, layout]);
 
   const player = useRef<TwitchPlayer>(undefined);
+  // the player is created asynchronously, so effects that need it re-run on this
+  const [playerReady, setPlayerReady] = useState(false);
 
   useEffect(() => {
     if (!player.current) {
@@ -158,6 +167,8 @@ export default function TwitchStream({
             player.current?.setVolume(channelVolume);
           }
         }
+
+        setPlayerReady(true);
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,6 +205,7 @@ export default function TwitchStream({
     debouncedShouldPause,
     pauseHiddenPlayers,
     prevPauseHiddenPlayers,
+    playerReady,
   ]);
 
   useEffect(() => {
@@ -245,7 +257,14 @@ export default function TwitchStream({
     return () => {
       player.current?.removeEventListener(Twitch.Player.PLAYING, onPlay);
     };
-  }, [channel, boostMode, primaryPosition, isPrimary, isFirstSlot]);
+  }, [
+    channel,
+    boostMode,
+    primaryPosition,
+    isPrimary,
+    isFirstSlot,
+    playerReady,
+  ]);
 
   useEffect(() => {
     if (prevBoostMode && !boostMode) {

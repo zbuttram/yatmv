@@ -194,7 +194,7 @@ export default function App() {
         <div className="mx-auto p-8 mt-16 mb-8 bg-gray-900 rounded-md text-center">
           <h1 className="text-6xl mb-2">YATMV</h1>
           <h2 className="text-lg mb-8">Yet Another Twitch Multi-View</h2>
-          {!primaryStreams && (
+          {!streams.length && (
             <p className="mx-auto mb-8 font-bold">
               Add a channel above to start.
             </p>

@@ -57,11 +57,11 @@ export function handleTwitchAuthCallback() {
       if (rawStreamState) {
         const parsedStreamState: {
           streams: string[];
-          primary: string[];
+          primaryStreams: string[];
           layout: Layout | undefined;
         } = JSON.parse(rawStreamState);
         reloadFromAuthStreams = parsedStreamState.streams;
-        reloadFromAuthPrimary = parsedStreamState.primary;
+        reloadFromAuthPrimary = parsedStreamState.primaryStreams;
         reloadFromAuthLayout = parsedStreamState.layout;
       }
     }

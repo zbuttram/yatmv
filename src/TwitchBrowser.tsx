@@ -326,8 +326,14 @@ function Channels({
         first: pageParam ? undefined : 50,
         after: pageParam,
       });
+      if (!channels.data.length) {
+        // an empty user_login filter would return Twitch's top streams instead
+        return { data: [] as StreamData[], pagination: channels.pagination };
+      }
       const streams = await getStreams({
         userLogin: channels.data.map((c) => c.broadcasterLogin),
+        // /streams defaults to 20 results; ask for one per channel
+        first: channels.data.length,
       });
       return {
         ...streams,
@@ -349,12 +355,13 @@ function Channels({
         first: pageParam ? undefined : 50,
       }),
     initialPageParam: undefined as string | undefined,
-    enabled: isOpen && !query,
+    enabled: isOpen && !debouncedQuery,
     refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
     getNextPageParam: (lastPage) => lastPage.pagination.cursor,
   });
 
-  const data = query ? queryData : topData;
+  // key off the debounced value so we never page the disabled empty-query search
+  const data = debouncedQuery ? queryData : topData;
 
   return (
     <>
@@ -385,7 +392,7 @@ function Channels({
         <InView
           as="span"
           onChange={(inView) =>
-            inView && (query ? fetchNextQuery() : fetchNextTop())
+            inView && (debouncedQuery ? fetchNextQuery() : fetchNextTop())
           }
           key={data?.pages?.length}
         />

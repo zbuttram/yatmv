@@ -98,9 +98,17 @@ const streamsReducer = produce(function produceStreams(
       draft.primaryStreams = [streamLower];
     } else {
       const prevPosition = draft.primaryStreams.indexOf(streamLower);
-      const removed = draft.primaryStreams.splice(position, 1, streamLower);
-      if (prevPosition > -1 && removed[0]) {
-        draft.primaryStreams[prevPosition] = removed[0];
+      if (prevPosition === -1) {
+        draft.primaryStreams.splice(position, 1, streamLower);
+      } else if (position < draft.primaryStreams.length) {
+        // swap with whatever is in the target slot
+        const displaced = draft.primaryStreams[position];
+        draft.primaryStreams[position] = streamLower;
+        draft.primaryStreams[prevPosition] = displaced;
+      } else {
+        // target slot is past the end; move it there instead of duplicating it
+        draft.primaryStreams.splice(prevPosition, 1);
+        draft.primaryStreams.push(streamLower);
       }
     }
   }
@@ -155,12 +163,14 @@ const streamsReducer = produce(function produceStreams(
       const alreadyAdded = streams
         .map((s) => s.toLowerCase())
         .includes(action.payload.toLowerCase());
+      // `streams` is the draft array, so check this before unshifting into it
+      const wasEmpty = streams.length < 1;
 
       if (!alreadyAdded) {
         draft.streams.unshift(action.payload.toLowerCase());
       }
 
-      if (alreadyAdded || streams.length < 1) {
+      if (alreadyAdded || wasEmpty) {
         setPrimaryStream(action.payload);
         setSelectedChat(action.payload);
       }
@@ -273,6 +283,7 @@ export default function useStreams() {
         JSON.stringify({
           streams,
           primaryStreams,
+          layout,
         })
       );
     });
