@@ -101,12 +101,13 @@ const streamsReducer = produce(function produceStreams(
       if (prevPosition === -1) {
         draft.primaryStreams.splice(position, 1, streamLower);
       } else if (position < draft.primaryStreams.length) {
-        // swap with whatever is in the target slot
+        // already primary: swap slots so it isn't listed twice
         const displaced = draft.primaryStreams[position];
         draft.primaryStreams[position] = streamLower;
         draft.primaryStreams[prevPosition] = displaced;
       } else {
-        // target slot is past the end; move it there instead of duplicating it
+        // target slot is past the end: move it to the last slot (primaryStreams
+        // never has gaps) instead of splicing in a duplicate
         draft.primaryStreams.splice(prevPosition, 1);
         draft.primaryStreams.push(streamLower);
       }
@@ -137,6 +138,7 @@ const streamsReducer = produce(function produceStreams(
   }
 
   switch (action.type) {
+    // not dispatched by the app; tests use it to re-read state from the URL
     case "INIT":
       Object.assign(draft, getInitialStreamState());
       break;

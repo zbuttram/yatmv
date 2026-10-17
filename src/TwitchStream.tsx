@@ -66,6 +66,7 @@ type TwitchPlayer = {
   addEventListener(event: string, callback: () => void): void;
   removeEventListener(event: string, callback: () => void): void;
   PLAYING: "playing";
+  READY: "ready";
   // there are some other properties and methods in here, not all of them documented: https://dev.twitch.tv/docs/embed/video-and-clips
 };
 
@@ -131,17 +132,17 @@ export default function TwitchStream({
   }, [isPrimary, primaryContainerRect, channelRect, primaryPosition, layout]);
 
   const player = useRef<TwitchPlayer>(undefined);
-  // the player is created asynchronously, so effects that need it re-run on this
+  // set on the player's READY event; the embed drops API calls made before it,
+  // so effects that talk to the player re-run on this
   const [playerReady, setPlayerReady] = useState(false);
 
   useEffect(() => {
     if (!player.current) {
       loadWithScript(() => {
         if (player.current) {
-          /*
-           * Sometimes in React 18 (concurrent mode), by the time we load the script, loadWithScript has been fired again already.
-           * This leads to two players getting created, so we bail check again and bail out here if the player is already created.
-           */
+          // StrictMode (dev) runs this mount effect twice, so a second
+          // callback can arrive after the first created the player. Bail out
+          // to avoid creating two players.
           return;
         }
 
@@ -153,22 +154,24 @@ export default function TwitchStream({
           quality: boostMode ? (isPrimary ? "chunked" : "auto") : undefined,
         });
 
-        const channelVolumeString = localStorage.getItem(
-          getChannelVolumeKey(channel)
-        );
+        player.current.addEventListener(Twitch.Player.READY, () => {
+          const channelVolumeString = localStorage.getItem(
+            getChannelVolumeKey(channel)
+          );
 
-        if (channelVolumeString) {
-          const channelVolume = Number(channelVolumeString);
-          if (
-            channelVolume &&
-            !Number.isNaN(channelVolume) &&
-            channelVolume >= 0
-          ) {
-            player.current?.setVolume(channelVolume);
+          if (channelVolumeString) {
+            const channelVolume = Number(channelVolumeString);
+            if (
+              channelVolume &&
+              !Number.isNaN(channelVolume) &&
+              channelVolume >= 0
+            ) {
+              player.current?.setVolume(channelVolume);
+            }
           }
-        }
 
-        setPlayerReady(true);
+          setPlayerReady(true);
+        });
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

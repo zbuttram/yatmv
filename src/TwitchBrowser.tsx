@@ -159,7 +159,12 @@ function Categories({ addNewStream, isOpen }) {
 function BrowseCategories({ setCategory }) {
   const [query, setQuery] = useState("");
 
-  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery({
+  const {
+    data: queryData,
+    fetchNextPage: fetchNextQuery,
+    hasNextPage: queryHasNext,
+    isFetchingNextPage: queryFetchingNext,
+  } = useInfiniteQuery({
     queryKey: ["searchCategories", query],
     queryFn: ({ pageParam }) => searchCategories({ query, after: pageParam }),
     initialPageParam: undefined as string | undefined,
@@ -169,7 +174,12 @@ function BrowseCategories({ setCategory }) {
     staleTime: 5000,
   });
 
-  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery({
+  const {
+    data: topData,
+    fetchNextPage: fetchNextTop,
+    hasNextPage: topHasNext,
+    isFetchingNextPage: topFetchingNext,
+  } = useInfiniteQuery({
     queryKey: ["topGames"],
     queryFn: ({ pageParam }) =>
       getTopGames({ first: pageParam ? undefined : 50, after: pageParam }),
@@ -210,7 +220,10 @@ function BrowseCategories({ setCategory }) {
         <InView
           as="span"
           onChange={(inView) =>
-            inView && (query ? fetchNextQuery() : fetchNextTop())
+            inView &&
+            (query
+              ? queryHasNext && !queryFetchingNext && fetchNextQuery()
+              : topHasNext && !topFetchingNext && fetchNextTop())
           }
           key={data?.pages?.length}
         />
@@ -256,20 +269,21 @@ function ShowCategory({
   addNewStream: (name: string) => void;
   isOpen: boolean;
 }) {
-  const { data, fetchNextPage } = useInfiniteQuery({
-    queryKey: ["getStreamsByGameId", category?.id],
-    queryFn: ({ pageParam }) =>
-      getStreams({
-        gameId: category?.id,
-        language: "en",
-        after: pageParam,
-        first: pageParam ? undefined : 50,
-      }),
-    initialPageParam: undefined as string | undefined,
-    enabled: !!category && isOpen,
-    getNextPageParam: (lastPage) => lastPage.pagination.cursor,
-    refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["getStreamsByGameId", category?.id],
+      queryFn: ({ pageParam }) =>
+        getStreams({
+          gameId: category?.id,
+          language: "en",
+          after: pageParam,
+          first: pageParam ? undefined : 50,
+        }),
+      initialPageParam: undefined as string | undefined,
+      enabled: !!category && isOpen,
+      getNextPageParam: (lastPage) => lastPage.pagination.cursor,
+      refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
+    });
 
   if (!category) {
     return null;
@@ -301,7 +315,9 @@ function ShowCategory({
         ))}
         <InView
           as="span"
-          onChange={(inView) => inView && fetchNextPage()}
+          onChange={(inView) =>
+            inView && hasNextPage && !isFetchingNextPage && fetchNextPage()
+          }
           key={data?.pages?.length}
         />
       </div>
@@ -319,7 +335,12 @@ function Channels({
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 1000);
 
-  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery({
+  const {
+    data: queryData,
+    fetchNextPage: fetchNextQuery,
+    hasNextPage: queryHasNext,
+    isFetchingNextPage: queryFetchingNext,
+  } = useInfiniteQuery({
     queryKey: ["searchStreams", debouncedQuery],
     queryFn: async ({ pageParam }) => {
       const channels = await searchChannels(debouncedQuery, {
@@ -327,8 +348,10 @@ function Channels({
         after: pageParam,
       });
       if (!channels.data.length) {
-        // an empty user_login filter would return Twitch's top streams instead
-        return { data: [] as StreamData[], pagination: channels.pagination };
+        // an empty user_login filter would return Twitch's top streams instead.
+        // drop the cursor too: an empty page leaves the InView sentinel on
+        // screen, so it would keep paging
+        return { data: [] as StreamData[], pagination: {} };
       }
       const streams = await getStreams({
         userLogin: channels.data.map((c) => c.broadcasterLogin),
@@ -346,7 +369,12 @@ function Channels({
     refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
     enabled: isOpen && !!debouncedQuery,
   });
-  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery({
+  const {
+    data: topData,
+    fetchNextPage: fetchNextTop,
+    hasNextPage: topHasNext,
+    isFetchingNextPage: topFetchingNext,
+  } = useInfiniteQuery({
     queryKey: ["getTopStreams"],
     queryFn: ({ pageParam }) =>
       getStreams({
@@ -392,7 +420,10 @@ function Channels({
         <InView
           as="span"
           onChange={(inView) =>
-            inView && (debouncedQuery ? fetchNextQuery() : fetchNextTop())
+            inView &&
+            (debouncedQuery
+              ? queryHasNext && !queryFetchingNext && fetchNextQuery()
+              : topHasNext && !topFetchingNext && fetchNextTop())
           }
           key={data?.pages?.length}
         />
