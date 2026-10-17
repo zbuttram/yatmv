@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { without } from "lodash-es";
 import { toast } from "react-hot-toast";
 
 import {
@@ -23,7 +22,8 @@ export default function useFollowedStreams({
     queryFn: getAuthedUser,
     enabled: checkTwitchAuth(),
   });
-  const prevFollowedStreams = useRef<StreamData[]>([]);
+  // null until the first fetch, so streams already live on load don't toast
+  const prevFollowedStreams = useRef<StreamData[] | null>(null);
   const { data: followedStreams, dataUpdatedAt } = useQuery({
     queryKey: ["followedStreams"],
     queryFn: () => getFollowedStreams({ userId: twitchUser!.id }),
@@ -43,14 +43,11 @@ export default function useFollowedStreams({
       )
     );
 
-    if (prevFollowedStreams.current.length > 0) {
-      const newStreams = without(
-        followedStreams.map((s) => s.userName).filter(Boolean),
-        ...prevFollowedStreams.current.map((s) => s.userName).filter(Boolean)
-      );
-      if (newStreams.length) {
-        newStreams.forEach((stream) => liveToast(stream, addNewStream));
-      }
+    if (prevFollowedStreams.current) {
+      const prevLogins = prevFollowedStreams.current.map((s) => s.userLogin);
+      followedStreams
+        .filter((s) => s.userLogin && !prevLogins.includes(s.userLogin))
+        .forEach((s) => liveToast(s.userName, () => addNewStream(s.userLogin)));
     }
 
     prevFollowedStreams.current = followedStreams;
@@ -60,12 +57,12 @@ export default function useFollowedStreams({
   return followedStreams;
 }
 
-function liveToast(stream: string, add: (stream: string) => void) {
+function liveToast(stream: string, add: () => void) {
   toast.custom(
     (t) => (
       <LiveToast
         channel={stream}
-        addStream={() => add(stream)}
+        addStream={add}
         dismiss={() => toast.dismiss(t.id)}
         visible={t.visible}
       />

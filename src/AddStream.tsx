@@ -14,7 +14,7 @@ import { usePrevious } from "react-use";
 import { toast } from "react-hot-toast";
 import { checkTwitchAuth, getStream, searchChannels } from "./twitch";
 import { useDebounce } from "./useDebounce";
-import { TWITCH_URL_REGEX } from "./const";
+import { TWITCH_LOGIN_REGEX, TWITCH_URL_REGEX } from "./const";
 
 export default function AddStream({
   addNewStream,
@@ -28,11 +28,17 @@ export default function AddStream({
   const queryClient = useQueryClient();
   const [newStream, setNewStream] = useState("");
 
-  const isTwitchURL = TWITCH_URL_REGEX.test(newStream);
+  const trimmedStream = newStream.trim();
+  const isTwitchURL = TWITCH_URL_REGEX.test(trimmedStream);
 
   const searchQuery = useDebounce(newStream, 1000);
   const searchQueryKey = ["searchChannels", searchQuery];
-  const { data: searchResultData, isFetching } = useQuery({
+  const {
+    data: searchResultData,
+    isFetching,
+    isError: searchFailed,
+    isSuccess: searchSucceeded,
+  } = useQuery({
     queryKey: searchQueryKey,
     queryFn: () => searchChannels(searchQuery),
     enabled: checkTwitchAuth() && !!newStream && !!searchQuery && !isTwitchURL,
@@ -85,18 +91,28 @@ export default function AddStream({
     e?.preventDefault();
     let streamToSubmit;
     if (selectedSearchResult) {
-      streamToSubmit = selectedSearchResult.displayName;
-    } else if (newStream && newStream !== "") {
-      if (TWITCH_URL_REGEX.test(newStream)) {
-        const result = TWITCH_URL_REGEX.exec(newStream);
+      streamToSubmit = selectedSearchResult.broadcasterLogin;
+    } else if (trimmedStream) {
+      if (isTwitchURL) {
+        const result = TWITCH_URL_REGEX.exec(trimmedStream);
         if (result && result[2]) {
           streamToSubmit = result[2];
         }
       } else {
+        const typed = trimmedStream;
         const found = searchResults.find(
-          (res) => newStream.toLowerCase() === res.displayName.toLowerCase()
+          (res) => typed.toLowerCase() === res.displayName.toLowerCase()
         );
-        streamToSubmit = found ?? newStream;
+        if (found) {
+          streamToSubmit = found.broadcasterLogin;
+        } else if (TWITCH_LOGIN_REGEX.test(typed)) {
+          streamToSubmit = typed;
+        } else {
+          // not a login (e.g. a localized display name), and no search result
+          // to map it to one; say why, since adding it would load nothing
+          toast.error(unaddableNameMessage(typed));
+          return false;
+        }
       }
     }
 
@@ -108,6 +124,24 @@ export default function AddStream({
       toast.error("Unable to add stream.");
     }
     return false;
+  }
+
+  function unaddableNameMessage(typed: string) {
+    if (!checkTwitchAuth()) {
+      return `"${typed}" isn't a Twitch channel name. Paste the channel URL instead.`;
+    }
+    // until the debounce catches up, the query state is for older text
+    if (isFetching || newStream !== searchQuery) {
+      return `Still searching for "${typed}", try again in a moment.`;
+    }
+    if (searchFailed) {
+      return `Couldn't search Twitch for "${typed}". Paste the channel URL instead.`;
+    }
+    if (!searchSucceeded) {
+      // e.g. offline: the search is paused and never ran
+      return `Couldn't search Twitch for "${typed}" (are you offline?). Paste the channel URL instead.`;
+    }
+    return `"${typed}" isn't a Twitch channel name. Pick it from the search results or paste the channel URL.`;
   }
 
   useEffect(() => {
@@ -175,7 +209,7 @@ export default function AddStream({
                   result={result}
                   isSelected={result === selectedSearchResult}
                   onClick={() => {
-                    addNewStream(result.displayName);
+                    addNewStream(result.broadcasterLogin);
                     setNewStream("");
                   }}
                   prefetchStreamData={() =>

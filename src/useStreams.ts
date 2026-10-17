@@ -4,7 +4,7 @@ import invariant from "tiny-invariant";
 import Cookies from "js-cookie";
 import { get, map, uniq } from "lodash-es";
 
-import { Layout } from "./layout";
+import { Layout, MAX_LAYOUT } from "./layout";
 import { CHAT_EVICT_SEC, STREAM_STATE_COOKIE } from "./const";
 import { handleTwitchAuthCallback } from "./twitch";
 import { epoch } from "./utils";
@@ -36,8 +36,11 @@ function getInitialStreamState(): StreamState {
   let parsedUrlLayout: Layout | undefined;
   const urlLayout = pageURL.searchParams.get("layout");
   if (urlLayout) {
+    // only valid layouts: this is saved to the stream state cookie, which
+    // rejects anything else when restoring after Twitch login
     const num = Number(urlLayout);
-    parsedUrlLayout = Number.isNaN(num) ? 0 : num;
+    parsedUrlLayout =
+      Number.isInteger(num) && num >= 0 && num <= MAX_LAYOUT ? num : 0;
   }
 
   let { reloadFromAuthStreams, reloadFromAuthPrimary, reloadFromAuthLayout } =
@@ -98,9 +101,18 @@ const streamsReducer = produce(function produceStreams(
       draft.primaryStreams = [streamLower];
     } else {
       const prevPosition = draft.primaryStreams.indexOf(streamLower);
-      const removed = draft.primaryStreams.splice(position, 1, streamLower);
-      if (prevPosition > -1 && removed[0]) {
-        draft.primaryStreams[prevPosition] = removed[0];
+      if (prevPosition === -1) {
+        draft.primaryStreams.splice(position, 1, streamLower);
+      } else if (position < draft.primaryStreams.length) {
+        // already primary: swap slots so it isn't listed twice
+        const displaced = draft.primaryStreams[position];
+        draft.primaryStreams[position] = streamLower;
+        draft.primaryStreams[prevPosition] = displaced;
+      } else {
+        // target slot is past the end: move it to the last slot (primaryStreams
+        // never has gaps); a splice here would leave it listed twice
+        draft.primaryStreams.splice(prevPosition, 1);
+        draft.primaryStreams.push(streamLower);
       }
     }
   }
@@ -129,6 +141,7 @@ const streamsReducer = produce(function produceStreams(
   }
 
   switch (action.type) {
+    // not dispatched by the app; tests use it to re-read state from the URL
     case "INIT":
       Object.assign(draft, getInitialStreamState());
       break;
@@ -155,12 +168,14 @@ const streamsReducer = produce(function produceStreams(
       const alreadyAdded = streams
         .map((s) => s.toLowerCase())
         .includes(action.payload.toLowerCase());
+      // `streams` is the draft array, so check this before unshifting into it
+      const wasEmpty = streams.length < 1;
 
       if (!alreadyAdded) {
         draft.streams.unshift(action.payload.toLowerCase());
       }
 
-      if (alreadyAdded || streams.length < 1) {
+      if (alreadyAdded || wasEmpty) {
         setPrimaryStream(action.payload);
         setSelectedChat(action.payload);
       }
@@ -273,6 +288,7 @@ export default function useStreams() {
         JSON.stringify({
           streams,
           primaryStreams,
+          layout,
         })
       );
     });

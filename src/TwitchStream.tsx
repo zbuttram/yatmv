@@ -1,4 +1,11 @@
-import { ReactNode, useContext, useEffect, useMemo, useRef } from "react";
+import {
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import classNames from "classnames";
 import { mapValues } from "lodash-es";
 import { usePrevious } from "react-use";
@@ -59,6 +66,7 @@ type TwitchPlayer = {
   addEventListener(event: string, callback: () => void): void;
   removeEventListener(event: string, callback: () => void): void;
   PLAYING: "playing";
+  READY: "ready";
   // there are some other properties and methods in here, not all of them documented: https://dev.twitch.tv/docs/embed/video-and-clips
 };
 
@@ -124,15 +132,20 @@ export default function TwitchStream({
   }, [isPrimary, primaryContainerRect, channelRect, primaryPosition, layout]);
 
   const player = useRef<TwitchPlayer>(undefined);
+  // bumped on each READY event, including after an iframe reload. Before READY,
+  // commands posted to the iframe are lost and getters (isPaused/getVolume/
+  // getQuality) return placeholder defaults, so the pause and mute/quality
+  // effects re-run on this
+  const [readyCount, setReadyCount] = useState(0);
+  const lastReadyCount = useRef(0);
 
   useEffect(() => {
     if (!player.current) {
       loadWithScript(() => {
         if (player.current) {
-          /*
-           * Sometimes in React 18 (concurrent mode), by the time we load the script, loadWithScript has been fired again already.
-           * This leads to two players getting created, so we bail check again and bail out here if the player is already created.
-           */
+          // StrictMode (dev) runs this mount effect twice, so a second
+          // callback can arrive after the first created the player. Bail out
+          // to avoid creating two players.
           return;
         }
 
@@ -144,20 +157,24 @@ export default function TwitchStream({
           quality: boostMode ? (isPrimary ? "chunked" : "auto") : undefined,
         });
 
-        const channelVolumeString = localStorage.getItem(
-          getChannelVolumeKey(channel)
-        );
+        player.current.addEventListener(Twitch.Player.READY, () => {
+          const channelVolumeString = localStorage.getItem(
+            getChannelVolumeKey(channel)
+          );
 
-        if (channelVolumeString) {
-          const channelVolume = Number(channelVolumeString);
-          if (
-            channelVolume &&
-            !Number.isNaN(channelVolume) &&
-            channelVolume >= 0
-          ) {
-            player.current?.setVolume(channelVolume);
+          if (channelVolumeString) {
+            const channelVolume = Number(channelVolumeString);
+            if (
+              channelVolume &&
+              !Number.isNaN(channelVolume) &&
+              channelVolume >= 0
+            ) {
+              player.current?.setVolume(channelVolume);
+            }
           }
-        }
+
+          setReadyCount((count) => count + 1);
+        });
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,11 +206,23 @@ export default function TwitchStream({
     } else if (prevPauseHiddenPlayers) {
       player.current.play();
     }
+
+    // isPaused() is true while the embed is still idle, so the check above
+    // doesn't pause a player that loaded hidden; it then autoplays. While it
+    // should stay hidden, pause it whenever it starts playing
+    if (pauseHiddenPlayers && debouncedShouldPause && shouldPause) {
+      const hiddenPlayer = player.current;
+      const pauseOnPlay = () => hiddenPlayer.pause();
+      hiddenPlayer.addEventListener(Twitch.Player.PLAYING, pauseOnPlay);
+      return () =>
+        hiddenPlayer.removeEventListener(Twitch.Player.PLAYING, pauseOnPlay);
+    }
   }, [
     shouldPause,
     debouncedShouldPause,
     pauseHiddenPlayers,
     prevPauseHiddenPlayers,
+    readyCount,
   ]);
 
   useEffect(() => {
@@ -209,12 +238,17 @@ export default function TwitchStream({
     });
 
     player.current.setMuted(!isFirstSlot);
-    const currentVolume = player.current.getVolume();
-    currentVolume &&
-      localStorage.setItem(
-        getChannelVolumeKey(channel),
-        currentVolume.toString()
-      );
+    // on a run caused by READY, getVolume() still reports the volume from
+    // before the saved one was restored, so saving it would overwrite it
+    if (lastReadyCount.current === readyCount) {
+      const currentVolume = player.current.getVolume();
+      currentVolume &&
+        localStorage.setItem(
+          getChannelVolumeKey(channel),
+          currentVolume.toString()
+        );
+    }
+    lastReadyCount.current = readyCount;
 
     function updateQuality() {
       if (!player.current) {
@@ -245,7 +279,7 @@ export default function TwitchStream({
     return () => {
       player.current?.removeEventListener(Twitch.Player.PLAYING, onPlay);
     };
-  }, [channel, boostMode, primaryPosition, isPrimary, isFirstSlot]);
+  }, [channel, boostMode, primaryPosition, isPrimary, isFirstSlot, readyCount]);
 
   useEffect(() => {
     if (prevBoostMode && !boostMode) {

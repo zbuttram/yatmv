@@ -10,7 +10,8 @@ import {
   TWITCH_SCOPE_COOKIE,
   TWITCH_SCOPES,
 } from "./const";
-import { Layout } from "./layout";
+import { toast } from "react-hot-toast";
+import { Layout, MAX_LAYOUT } from "./layout";
 import { Params, paramsToString, ParamValue } from "./utils";
 
 if (!TWITCH_CLIENT_ID) {
@@ -55,14 +56,22 @@ export function handleTwitchAuthCallback() {
       document.location.hash = "";
       const rawStreamState = Cookies.get(STREAM_STATE_COOKIE);
       if (rawStreamState) {
-        const parsedStreamState: {
-          streams: string[];
-          primary: string[];
-          layout: Layout | undefined;
-        } = JSON.parse(rawStreamState);
-        reloadFromAuthStreams = parsedStreamState.streams;
-        reloadFromAuthPrimary = parsedStreamState.primary;
-        reloadFromAuthLayout = parsedStreamState.layout;
+        const restored = parseStreamStateCookie(rawStreamState);
+        if (restored) {
+          reloadFromAuthStreams = restored.streams;
+          reloadFromAuthPrimary = restored.primaryStreams;
+          reloadFromAuthLayout = restored.layout;
+        } else {
+          // the login redirect lands on the bare origin, so this cookie was
+          // the only copy of the user's streams; say so rather than silently
+          // starting empty. deferred because this runs while the app's
+          // initial state is built, before anything has rendered
+          console.error("Ignoring invalid stream state cookie", rawStreamState);
+          Cookies.remove(STREAM_STATE_COOKIE);
+          setTimeout(() =>
+            toast.error("Couldn't restore your streams after Twitch login.")
+          );
+        }
       }
     }
   }
@@ -71,6 +80,44 @@ export function handleTwitchAuthCallback() {
     reloadFromAuthPrimary,
     reloadFromAuthLayout,
     hasTwitchAuth,
+  };
+}
+
+/**
+ * The saved stream state, or null if it isn't JSON, `streams` or
+ * `primaryStreams` isn't a string array, or `layout` is outside
+ * 0..MAX_LAYOUT. `layout` may be absent (older cookies).
+ */
+function parseStreamStateCookie(raw: string): {
+  streams: string[];
+  primaryStreams: string[];
+  layout: Layout | undefined;
+} | null {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const isStringArray = (value: unknown): value is string[] =>
+    Array.isArray(value) && value.every((s) => typeof s === "string");
+  // layout is optional: cookies from before it was saved don't have it
+  const layoutValid =
+    parsed?.layout === undefined ||
+    (Number.isInteger(parsed.layout) &&
+      parsed.layout >= 0 &&
+      parsed.layout <= MAX_LAYOUT);
+  if (
+    !isStringArray(parsed?.streams) ||
+    !isStringArray(parsed.primaryStreams) ||
+    !layoutValid
+  ) {
+    return null;
+  }
+  return {
+    streams: parsed.streams,
+    primaryStreams: parsed.primaryStreams,
+    layout: parsed.layout,
   };
 }
 
@@ -281,22 +328,27 @@ export function useTwitchUser(login) {
   });
 }
 
-export async function getFollowedStreams({
-  userId,
-  first,
-  after,
-}: {
-  userId: ParamValue;
-  first?: ParamValue;
-  after?: ParamValue;
-}) {
-  const response = await callTwitch<PaginatedResponse<StreamData>>(
-    "/streams/followed",
-    {
-      params: { userId, first, after },
-    }
-  );
-  return response.data;
+const FOLLOWED_STREAMS_MAX_PAGES = 5;
+
+/**
+ * All live followed streams. The endpoint returns at most 100 per page (also
+ * its default), so follow the cursor (up to 500 streams). With more live
+ * followed channels than one page holds, streams drop in and out of the list,
+ * which shows up as false "went live" toasts.
+ */
+export async function getFollowedStreams({ userId }: { userId: ParamValue }) {
+  const streams: StreamData[] = [];
+  let after: string | undefined;
+  for (let page = 0; page < FOLLOWED_STREAMS_MAX_PAGES; page++) {
+    const response = await callTwitch<PaginatedResponse<StreamData>>(
+      "/streams/followed",
+      { params: { userId, first: 100, after } }
+    );
+    streams.push(...response.data);
+    after = response.pagination?.cursor;
+    if (!after || !response.data.length) break;
+  }
+  return streams;
 }
 
 export type CategoryData = {

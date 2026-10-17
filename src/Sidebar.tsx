@@ -88,9 +88,9 @@ export function Sidebar({
               .map((stream) => (
                 <FollowedStream
                   key={stream.userId}
-                  isOpen={streams.includes(stream.userName.toLowerCase())}
+                  isOpen={streams.includes(stream.userLogin.toLowerCase())}
                   isPrimary={primaryStreams.includes(
-                    stream.userName.toLowerCase()
+                    stream.userLogin.toLowerCase()
                   )}
                   stream={stream}
                   addStream={addStream}
@@ -284,9 +284,8 @@ function FollowedStream({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={classNames(
-          "bg-opacity-50",
-          isPrimary && "bg-red-600",
-          isOpen && !isPrimary && "bg-blue-800"
+          isPrimary && "bg-red-600/50",
+          isOpen && !isPrimary && "bg-blue-800/50"
         )}
       >
         <label className="flex">

@@ -1,8 +1,12 @@
 import classNames from "classnames";
-import { Fragment, ReactNode, useState } from "react";
+import { Fragment, ReactNode, useEffect, useState } from "react";
 import { faUsers, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  UseInfiniteQueryResult,
+} from "@tanstack/react-query";
 import { faTwitch } from "@fortawesome/free-brands-svg-icons";
 import { InView } from "react-intersection-observer";
 
@@ -159,7 +163,7 @@ function Categories({ addNewStream, isOpen }) {
 function BrowseCategories({ setCategory }) {
   const [query, setQuery] = useState("");
 
-  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery({
+  const search = useInfiniteQuery({
     queryKey: ["searchCategories", query],
     queryFn: ({ pageParam }) => searchCategories({ query, after: pageParam }),
     initialPageParam: undefined as string | undefined,
@@ -169,7 +173,7 @@ function BrowseCategories({ setCategory }) {
     staleTime: 5000,
   });
 
-  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery({
+  const top = useInfiniteQuery({
     queryKey: ["topGames"],
     queryFn: ({ pageParam }) =>
       getTopGames({ first: pageParam ? undefined : 50, after: pageParam }),
@@ -179,7 +183,7 @@ function BrowseCategories({ setCategory }) {
     refetchInterval: TWITCH_CATEGORY_REFETCH,
   });
 
-  const data = query ? queryData : topData;
+  const active = query ? search : top;
 
   return (
     <>
@@ -196,7 +200,7 @@ function BrowseCategories({ setCategory }) {
         className="flex flex-wrap gap-3 justify-center overflow-y-auto"
         style={{ maxHeight: "calc(100% - 2.75rem)" }}
       >
-        {data?.pages?.map((page, pageIdx) => (
+        {active.data?.pages?.map((page, pageIdx) => (
           <Fragment key={pageIdx}>
             {page.data.map((category) => (
               <CategoryListing
@@ -207,13 +211,7 @@ function BrowseCategories({ setCategory }) {
             ))}
           </Fragment>
         ))}
-        <InView
-          as="span"
-          onChange={(inView) =>
-            inView && (query ? fetchNextQuery() : fetchNextTop())
-          }
-          key={data?.pages?.length}
-        />
+        <ListEnd query={active} emptyText="No categories found." />
       </div>
     </>
   );
@@ -256,7 +254,7 @@ function ShowCategory({
   addNewStream: (name: string) => void;
   isOpen: boolean;
 }) {
-  const { data, fetchNextPage } = useInfiniteQuery({
+  const streams = useInfiniteQuery({
     queryKey: ["getStreamsByGameId", category?.id],
     queryFn: ({ pageParam }) =>
       getStreams({
@@ -288,7 +286,7 @@ function ShowCategory({
         className="flex flex-wrap gap-3 justify-center overflow-y-auto"
         style={{ maxHeight: "calc(100% - 4rem)" }}
       >
-        {data?.pages.map((page, pageIdx) => (
+        {streams.data?.pages.map((page, pageIdx) => (
           <Fragment key={pageIdx}>
             {page.data.map((stream) => (
               <Stream
@@ -299,10 +297,9 @@ function ShowCategory({
             ))}
           </Fragment>
         ))}
-        <InView
-          as="span"
-          onChange={(inView) => inView && fetchNextPage()}
-          key={data?.pages?.length}
+        <ListEnd
+          query={streams}
+          emptyText="No live streams in this category."
         />
       </div>
     </>
@@ -319,15 +316,41 @@ function Channels({
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 1000);
 
-  const { data: queryData, fetchNextPage: fetchNextQuery } = useInfiniteQuery({
+  const search = useInfiniteQuery({
     queryKey: ["searchStreams", debouncedQuery],
     queryFn: async ({ pageParam }) => {
-      const channels = await searchChannels(debouncedQuery, {
+      let channels = await searchChannels(debouncedQuery, {
         first: pageParam ? undefined : 50,
         after: pageParam,
       });
+      // Twitch can return an empty page that still has a cursor; look a few
+      // pages ahead before deciding the results have run out
+      for (
+        let skipped = 0;
+        !channels.data.length &&
+        channels.pagination.cursor &&
+        skipped < EMPTY_SEARCH_PAGE_LOOKAHEAD;
+        skipped++
+      ) {
+        channels = await searchChannels(debouncedQuery, {
+          after: channels.pagination.cursor,
+        });
+      }
+      if (!channels.data.length) {
+        // an empty user_login filter would return Twitch's top streams
+        // instead. if Twitch still has a cursor, keep it but mark the page
+        // stalled: ListEnd then offers a manual "Load more" rather than
+        // letting the on-screen sentinel page through empty results forever
+        return {
+          data: [] as StreamData[],
+          pagination: channels.pagination,
+          stalled: true,
+        };
+      }
       const streams = await getStreams({
         userLogin: channels.data.map((c) => c.broadcasterLogin),
+        // /streams defaults to 20 results; ask for one per channel
+        first: channels.data.length,
       });
       return {
         ...streams,
@@ -340,7 +363,7 @@ function Channels({
     refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
     enabled: isOpen && !!debouncedQuery,
   });
-  const { data: topData, fetchNextPage: fetchNextTop } = useInfiniteQuery({
+  const top = useInfiniteQuery({
     queryKey: ["getTopStreams"],
     queryFn: ({ pageParam }) =>
       getStreams({
@@ -349,12 +372,13 @@ function Channels({
         first: pageParam ? undefined : 50,
       }),
     initialPageParam: undefined as string | undefined,
-    enabled: isOpen && !query,
+    enabled: isOpen && !debouncedQuery,
     refetchInterval: TWITCH_BROWSER_CHANNELS_REFETCH,
     getNextPageParam: (lastPage) => lastPage.pagination.cursor,
   });
 
-  const data = query ? queryData : topData;
+  // key off the debounced value so we never page the disabled empty-query search
+  const active = debouncedQuery ? search : top;
 
   return (
     <>
@@ -371,7 +395,7 @@ function Channels({
         className="flex flex-wrap gap-3 justify-center overflow-y-auto"
         style={{ maxHeight: "calc(100% - 2.75rem)" }}
       >
-        {data?.pages.map((page: PaginatedResponse<StreamData>, pageIdx) => (
+        {active.data?.pages.map((page, pageIdx) => (
           <Fragment key={pageIdx}>
             {page.data.map((stream) => (
               <Stream
@@ -382,14 +406,113 @@ function Channels({
             ))}
           </Fragment>
         ))}
-        <InView
-          as="span"
-          onChange={(inView) =>
-            inView && (query ? fetchNextQuery() : fetchNextTop())
-          }
-          key={data?.pages?.length}
-        />
+        <ListEnd query={active} emptyText="No live channels found." />
       </div>
     </>
   );
 }
+
+const EMPTY_SEARCH_PAGE_LOOKAHEAD = 3;
+
+/**
+ * Bottom of an infinitely scrolling list: loads the next page when scrolled
+ * into view, and says when a list is empty, has ended, or failed to load.
+ */
+function ListEnd({
+  query,
+  emptyText,
+}: {
+  query: UseInfiniteQueryResult<InfiniteData<ListPage>>;
+  emptyText: string;
+}) {
+  const {
+    data,
+    dataUpdatedAt,
+    error,
+    hasNextPage,
+    isFetching,
+    isFetchNextPageError,
+    isRefetchError,
+    fetchNextPage,
+    refetch,
+  } = query;
+  const pages = data?.pages ?? [];
+  const isEmpty = pages.every((page) => !page.data.length);
+  // a failed background refetch keeps the data already on screen, so only
+  // report errors that left the list without what it asked for
+  const failed = !!error && (!data || isFetchNextPageError);
+  const stalled = !!pages.at(-1)?.stalled;
+
+  useEffect(() => {
+    if (error) console.error("Twitch browser list failed to load", error);
+  }, [error]);
+
+  // the list is kept after a failed background refetch, but say it's stale
+  const staleNotice = isRefetchError &&
+    !isFetchNextPageError &&
+    !isFetching && (
+      <>
+        Couldn't refresh ({error.message}); showing results from{" "}
+        {new Date(dataUpdatedAt).toLocaleTimeString()}.{" "}
+        <button className="underline" onClick={() => refetch()}>
+          Refresh
+        </button>
+      </>
+    );
+
+  let message: ReactNode = null;
+  if (failed) {
+    message = isFetching ? (
+      "Retrying…"
+    ) : (
+      <>
+        Couldn't load {isFetchNextPageError ? "more " : ""}results (
+        {error.message}).{" "}
+        <button
+          className="underline"
+          onClick={() => (isFetchNextPageError ? fetchNextPage() : refetch())}
+        >
+          Retry
+        </button>
+      </>
+    );
+  } else if (stalled && hasNextPage && !isFetching) {
+    message = (
+      <>
+        No {isEmpty ? "" : "more "}matches in the next few pages.{" "}
+        <button className="underline" onClick={() => fetchNextPage()}>
+          Load more
+        </button>
+      </>
+    );
+  } else if (data && !hasNextPage && !isFetching) {
+    message = isEmpty ? emptyText : "End of results.";
+  }
+
+  return (
+    <>
+      {/* not mounted while anything is fetching: fetchNextPage would cancel a
+          background refetch (which is also when a next-page error clears).
+          InView only reports visibility changes, so mounting it fresh after
+          each fetch is what makes a sentinel still on screen fire again */}
+      {hasNextPage && !failed && !stalled && !isFetching && (
+        <InView
+          as="span"
+          data-testid="list-end-sentinel"
+          onChange={(inView) => inView && fetchNextPage()}
+        />
+      )}
+      {staleNotice && (
+        <div className="w-full py-4 text-center text-gray-400">
+          {staleNotice}
+        </div>
+      )}
+      {message && (
+        <div className="w-full py-4 text-center text-gray-400">{message}</div>
+      )}
+    </>
+  );
+}
+
+/** A list page; `stalled` marks a search page that gave up on empty results. */
+type ListPage = PaginatedResponse<unknown> & { stalled?: boolean };
