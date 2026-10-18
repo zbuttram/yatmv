@@ -106,6 +106,21 @@ test("unmutes the first slot on READY", async () => {
   expect(player.setMuted).toHaveBeenLastCalledWith(false);
 });
 
+test("a stream made primary before READY is unmuted on READY and stays so on PLAYING", async () => {
+  const { player, moveTo } = await renderStream(-1);
+  moveTo(0);
+
+  // the embed drops anything sent before READY, so only calls after it count
+  player.setMuted.mockClear();
+  player.fire("ready");
+  expect(player.setMuted).toHaveBeenLastCalledWith(false);
+
+  // PLAYING re-applies it too; clear first so the assertion can't pass on READY's call
+  player.setMuted.mockClear();
+  player.fire("playing");
+  expect(player.setMuted).toHaveBeenLastCalledWith(false);
+});
+
 test("re-applies mute when READY fires again after a reload", async () => {
   const { player, moveTo } = await renderStream(0);
   player.fire("ready");
